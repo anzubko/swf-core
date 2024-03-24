@@ -1,0 +1,33 @@
+{
+    "name": "anzubko/swf-core",
+    "description": "SWF core",
+    "type": "library",
+    "license": "GPL-3.0-or-later",
+    "autoload": {
+        "psr-4": {
+            "SWF\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Andrian Zubko",
+            "email": "ondr@mail.ru"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "ext-curl": "*",
+        "ext-gd": "*",
+        "ext-intl": "*",
+        "ext-zlib": "*",
+        "ext-mbstring": "*",
+        "psr/log": "^3.0",
+        "psr/event-dispatcher": "^1.0",
+        "mrclay/jsmin-php": "^2.4",
+        "phpmailer/phpmailer": "^v6.8",
+        "anzubko/swf-cacher": "^0",
+        "anzubko/swf-databaser": "^0",
+        "anzubko/swf-paginator": "^0.1",
+        "anzubko/swf-templater": "^0"
+    }
+}
