@@ -25,8 +25,8 @@ final class CommonLogger
     /**
      * Logs with an arbitrary level.
      *
-     * @param array<int|string,mixed> $context
-     * @param array<string,mixed> $options
+     * @param mixed[] $context
+     * @param mixed[] $options
      */
     public function log(mixed $level, string|Stringable $message, array $context = [], array $options = []): void
     {
@@ -85,7 +85,7 @@ final class CommonLogger
     }
 
     /**
-     * @param array<string,mixed> $options
+     * @param mixed[] $options
      *
      * @return array{string|null, int|null}
      */

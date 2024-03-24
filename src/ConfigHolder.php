@@ -43,7 +43,7 @@ final class ConfigHolder
     }
 
     /**
-     * @return array<int|string,mixed>
+     * @return mixed[]
      */
     private static function getEnv(): array
     {

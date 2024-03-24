@@ -9,14 +9,10 @@ final class ImprovedCurl
 {
     private ?string $body = null;
 
-    /**
-     * @var string[]
-     */
+    /** @var string[] */
     private array $headers = [];
 
-    /**
-     * @var mixed[]
-     */
+    /** @var mixed[] */
     private array $info;
 
     /**

@@ -8,7 +8,7 @@ use function is_array;
 
 abstract class AbstractRouter
 {
-    /** @var array<string,mixed> */
+    /** @var mixed[] */
     protected static array $cache;
 
     protected string $appNs = 'App\\';

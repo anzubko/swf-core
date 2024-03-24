@@ -65,13 +65,9 @@ final class TransactionRunner
                 }
 
                 if (in_array($e->getSqlState(), $retryAt, true) && $retry < $retries) {
-                    EventDispatcher::getInstance()->dispatch(
-                        new TransactionFailEvent(LogLevel::INFO, $e, $retry),
-                    );
+                    EventDispatcher::getInstance()->dispatch(new TransactionFailEvent(LogLevel::INFO, $e, $retry));
                 } else {
-                    EventDispatcher::getInstance()->dispatch(
-                        new TransactionFailEvent(LogLevel::ERROR, $e, $retry),
-                    );
+                    EventDispatcher::getInstance()->dispatch(new TransactionFailEvent(LogLevel::ERROR, $e, $retry));
 
                     throw $e;
                 }

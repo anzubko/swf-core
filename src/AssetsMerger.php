@@ -10,9 +10,10 @@ use function is_array;
 
 final class AssetsMerger
 {
-    /** @var array<int|string,mixed> */
+    /** @var mixed[] */
     private array $cache;
-    /** @var array<string,mixed> */
+
+    /** @var mixed[] */
     private array $files;
 
     /**
@@ -20,7 +21,7 @@ final class AssetsMerger
      * @param string $dir Target directory for merged assets.
      * @param string $docRoot Web server document root directory.
      * @param string $cacheFile Cache file for internal data.
-     * @param array<string, string|string[]> $assets Assets to merge (targets are just filenames, assets are absolute).
+     * @param string[]|string[][] $assets Assets to merge (targets are just filenames, assets are absolute).
      * @param string $lockKey Key for process locker.
      */
     public function __construct(
@@ -36,7 +37,7 @@ final class AssetsMerger
     /**
      * Merging if needed and returns merged paths.
      *
-     * @return array<int|string,string>
+     * @return string[]
      *
      * @throws LogicException
      * @throws RuntimeException
@@ -65,7 +66,7 @@ final class AssetsMerger
     }
 
     /**
-     * @return array<int|string,string>
+     * @return string[]
      */
     private function getPaths(): array
     {

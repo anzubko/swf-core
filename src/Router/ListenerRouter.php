@@ -117,7 +117,7 @@ final class ListenerRouter extends AbstractRouter
     }
 
     /**
-     * @param array<string,mixed> $initialCache
+     * @param mixed[] $initialCache
      */
     protected function rebuildCache(array $initialCache): void
     {
