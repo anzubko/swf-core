@@ -27,7 +27,7 @@
         "phpmailer/phpmailer": "^v6.8",
         "anzubko/swf-cacher": "^0",
         "anzubko/swf-databaser": "^0",
-        "anzubko/swf-paginator": "^0.1",
+        "anzubko/swf-paginator": "^0",
         "anzubko/swf-templater": "^0"
     }
 }
