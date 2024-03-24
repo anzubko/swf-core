@@ -15,7 +15,7 @@ final class ImprovedCurl
     private array $headers = [];
 
     /**
-     * @var array<string,mixed>
+     * @var mixed[]
      */
     private array $info;
 
@@ -91,7 +91,7 @@ final class ImprovedCurl
     /**
      * Gets response info.
      *
-     * @return array<string,mixed>
+     * @return mixed[]
      */
     public function getInfo(): array
     {
