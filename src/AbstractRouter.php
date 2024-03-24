@@ -85,7 +85,7 @@ abstract class AbstractRouter
         }
 
         self::$classesFiles = [];
-        foreach (DirHandler::scan(sprintf('%s/src', APP_DIR), true, true) as $item) {
+        foreach (DirHandler::scan(APP_DIR . '/src', true, true) as $item) {
             if (is_file($item) && str_ends_with($item, '.php')) {
                 self::$classesFiles[] = $item;
             }

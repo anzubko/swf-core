@@ -82,13 +82,13 @@ class FileHandler
     /**
      * Getting some file statistics.
      *
-     * @return array{name:string, size:int, w:int, h:int, mime:string|false, modified:int, created:int, exists:bool}
+     * @return array{name:string, size:int, modified:int, created:int, w:int, h:int, mime:string|null}|null
      */
-    public static function stats(string $file): array
+    public static function stats(string $file): ?array
     {
         $fileStats = @stat($file);
         if (false === $fileStats) {
-            $fileStats = [];
+            return null;
         }
 
         $imageSize = @getimagesize($file);
@@ -98,13 +98,12 @@ class FileHandler
 
         return [
             'name' => basename($file),
-            'size' => $fileStats['size'] ?? 0,
+            'size' => $fileStats['size'],
+            'modified' => $fileStats['mtime'],
+            'created' => $fileStats['ctime'],
             'w' => $imageSize[0] ?? 0,
             'h' => $imageSize[1] ?? 0,
-            'mime' => $imageSize['mime'] ?? false,
-            'modified' => $fileStats['mtime'] ?? 0,
-            'created' => $fileStats['ctime'] ?? 0,
-            'exists' => isset($fileStats['ctime']),
+            'mime' => $imageSize['mime'] ?? null,
         ];
     }
 }
