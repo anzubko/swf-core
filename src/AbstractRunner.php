@@ -29,7 +29,7 @@ abstract class AbstractRunner extends AbstractBase
         try {
             $this->init($config);
         } catch (Throwable $e) {
-            $this->error($e, 'cli' !== PHP_SAPI);
+            $this->error($e);
         }
     }
 
@@ -62,10 +62,6 @@ abstract class AbstractRunner extends AbstractBase
 
         $_SERVER['USER_URL'] = $this->getUserUrl() ?? $_SERVER['HTTP_URL'];
 
-        $_SERVER['REMOTE_ADDR'] ??= '0.0.0.0';
-
-        $_SERVER['REQUEST_METHOD'] ??= 'GET';
-
         $_SERVER['REQUEST_URI'] = $_SERVER['REDIRECT_REQUEST_URI'] ?? $_SERVER['REQUEST_URI'] ?? '/';
 
         $_SERVER['QUERY_STRING'] = explode('?', $_SERVER['REQUEST_URI'], 2)[1] ?? '';
@@ -81,14 +77,18 @@ abstract class AbstractRunner extends AbstractBase
                 ResponseManager::getInstance()->error(404);
             }
 
-            [$_SERVER['ROUTER_ACTION'], $_SERVER['ROUTER_ALIAS']] = $action;
+            $_SERVER['ROUTER_TYPE'] = 'controller';
+
+            $_SERVER['ROUTER_ACTION'] = $action[0];
+
+            $_SERVER['ROUTER_ALIAS'] = $action[1];
 
             EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
             EventDispatcher::getInstance()->dispatch(new BeforeControllerEvent());
 
             CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();
         } catch (Throwable $e) {
-            $this->error($e, true);
+            $this->error($e);
         }
     }
 
@@ -100,14 +100,18 @@ abstract class AbstractRunner extends AbstractBase
                 throw new InvalidArgumentException('Command not found');
             }
 
-            [$_SERVER['ROUTER_ACTION'], $_SERVER['ROUTER_ALIAS']] = $action;
+            $_SERVER['ROUTER_TYPE'] = 'command';
+
+            $_SERVER['ROUTER_ACTION'] = $action[0];
+
+            $_SERVER['ROUTER_ALIAS'] = $action[1];
 
             EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
             EventDispatcher::getInstance()->dispatch(new BeforeCommandEvent());
 
             CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();
         } catch (Throwable $e) {
-            $this->error($e, false);
+            $this->error($e);
         }
     }
 
@@ -120,16 +124,17 @@ abstract class AbstractRunner extends AbstractBase
             return null;
         }
 
-        $url = parse_url(ConfigHolder::get()->url);
-        if (empty($url) || !isset($url['host'])) {
+        $parsedUrl = parse_url(ConfigHolder::get()->url);
+        if (empty($parsedUrl) || !isset($parsedUrl['host'])) {
             throw new InvalidArgumentException('Incorrect URL in configuration');
         }
 
-        if (isset($url['port'])) {
-            return sprintf('%s://%s:%s', $url['scheme'] ?? 'http', $url['host'], $url['port']);
+        $parsedUrl['scheme'] ??= 'http';
+        if (isset($parsedUrl['port'])) {
+            return sprintf('%s://%s:%s', $parsedUrl['scheme'], $parsedUrl['host'], $parsedUrl['port']);
         }
 
-        return sprintf('%s://%s', $url['scheme'] ?? 'http', $url['host']);
+        return sprintf('%s://%s', $parsedUrl['scheme'], $parsedUrl['host']);
     }
 
     /**
@@ -167,7 +172,8 @@ abstract class AbstractRunner extends AbstractBase
      */
     private function cleanupAndDispatchAtShutdown(): void
     {
-        foreach ((array) (new ReflectionClass(AbstractBase::class))->getStaticPropertyValue('shared') as $class) {
+        $sharedClasses = (array) (new ReflectionClass(AbstractBase::class))->getStaticPropertyValue('shared');
+        foreach ($sharedClasses as $class) {
             if ($class instanceof DatabaserInterface && $class->isInTrans()) {
                 try {
                     $class->rollback();
@@ -179,7 +185,7 @@ abstract class AbstractRunner extends AbstractBase
         EventDispatcher::getInstance()->dispatch(new ShutdownEvent(), true);
     }
 
-    private function error(Throwable $e, bool $isController): never
+    private function error(Throwable $e): never
     {
         ListenerProvider::getInstance()->removeAllListeners(true);
 
@@ -188,10 +194,10 @@ abstract class AbstractRunner extends AbstractBase
             'append_file_and_line' => false,
         ]);
 
-        if ($isController) {
-            ResponseManager::getInstance()->error(500);
+        if ('cli' === PHP_SAPI) {
+            exit(1);
         }
 
-        exit(1);
+        ResponseManager::getInstance()->error(500);
     }
 }
