@@ -7,13 +7,18 @@ use RuntimeException;
 
 final class ProcessLocker
 {
-    /** @var string[] */
+    private string $dir;
+
+    /**
+     * @var string[]
+     */
     private array $files = [];
 
     private static self $instance;
 
     private function __construct()
     {
+        $this->dir = sprintf('%s/swf.lock.%s', sys_get_temp_dir(), md5(APP_DIR));
     }
 
     public static function getInstance(): self
@@ -33,7 +38,7 @@ final class ProcessLocker
             throw new LogicException(sprintf('You already have lock with key: %s', $key));
         }
 
-        $file = str_replace('{KEY}', $key, ConfigHolder::get()->lockFile);
+        $file = sprintf('%s/%s', $this->dir, $key);
         if (!DirHandler::create(dirname($file))) {
             throw new RuntimeException(sprintf('Unable to create directory %s', dirname($file)));
         }

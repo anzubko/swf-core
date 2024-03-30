@@ -8,8 +8,8 @@ use ReflectionClass;
 use ReflectionFunction;
 use ReflectionMethod;
 use RuntimeException;
-use SWF\Attribute\AsListener;
 use SWF\AbstractRouter;
+use SWF\Attribute\AsListener;
 use SWF\CallbackHandler;
 use SWF\CommonLogger;
 use SWF\ConfigHolder;
@@ -129,8 +129,7 @@ final class ListenerRouter extends AbstractRouter
                 continue;
             }
 
-            $rClass = new ReflectionClass($class);
-            foreach ($rClass->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            foreach ((new ReflectionClass($class))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                 foreach ($method->getAttributes(AsListener::class) as $attribute) {
                     if ($method->isConstructor()) {
                         CommonLogger::getInstance()->log(LogLevel::WARNING, "Constructor can't be a listener", options: [

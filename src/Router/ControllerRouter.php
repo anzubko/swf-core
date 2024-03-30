@@ -6,8 +6,8 @@ use Psr\Log\LogLevel;
 use ReflectionClass;
 use ReflectionMethod;
 use RuntimeException;
-use SWF\Attribute\AsController;
 use SWF\AbstractRouter;
+use SWF\Attribute\AsController;
 use SWF\CommonLogger;
 use SWF\ConfigHolder;
 use function count;
@@ -77,13 +77,6 @@ final class ControllerRouter extends AbstractRouter
         $pCount = count($params);
 
         $index = self::$cache['actions']["$action:$pCount"] ?? null;
-
-        if (null === $index) {
-            $lcAction = lcfirst($action);
-
-            $index = self::$cache['actions']["$action::$lcAction:$pCount"] ?? null;
-        }
-
         if (null === $index) {
             $message = sprintf('Unable to make URL by action %s', $action);
             if ($pCount > 0) {
@@ -123,8 +116,7 @@ final class ControllerRouter extends AbstractRouter
                 continue;
             }
 
-            $rClass = new ReflectionClass($class);
-            foreach ($rClass->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            foreach ((new ReflectionClass($class))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                 foreach ($method->getAttributes(AsController::class) as $attribute) {
                     if ($method->isConstructor()) {
                         CommonLogger::getInstance()->log(LogLevel::WARNING, "Constructor can't be a controller", options: [

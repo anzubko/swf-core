@@ -8,12 +8,16 @@ use function is_array;
 
 abstract class AbstractRouter
 {
-    /** @var mixed[] */
+    /**
+     * @var mixed[]
+     */
     protected static array $cache;
 
     protected string $appNs = 'App\\';
 
-    /** @var string[] */
+    /**
+     * @var string[]
+     */
     private static array $classesFiles;
 
     private static bool $classesLoaded = false;

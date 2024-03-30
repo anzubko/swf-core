@@ -14,7 +14,7 @@ abstract class AbstractBase
      *
      * @param class-string<AbstractShared> $className
      */
-    final protected function s(string $className): mixed
+    final public function s(string $className): mixed
     {
         return self::$shared[$className] ??= $this->getShared(new $className)->getInstance();
     }

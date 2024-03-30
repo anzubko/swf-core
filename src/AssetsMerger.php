@@ -10,10 +10,14 @@ use function is_array;
 
 final class AssetsMerger
 {
-    /** @var mixed[] */
+    /**
+     * @var mixed[]
+     */
     private array $cache;
 
-    /** @var mixed[] */
+    /**
+     * @var mixed[]
+     */
     private array $files;
 
     /**

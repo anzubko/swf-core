@@ -7,66 +7,36 @@ use Psr\Log\LogLevel;
 use ReflectionClass;
 use SWF\Event\BeforeAllEvent;
 use SWF\Event\BeforeCommandEvent;
+use SWF\Event\BeforeConsumerEvent;
 use SWF\Event\BeforeControllerEvent;
 use SWF\Event\ShutdownEvent;
 use SWF\Exception\CoreException;
 use SWF\Exception\DatabaserException;
 use SWF\Interface\DatabaserInterface;
 use SWF\Router\CommandRouter;
+use SWF\Router\ConsumerRouter;
 use SWF\Router\ControllerRouter;
 use Throwable;
 
 abstract class AbstractRunner extends AbstractBase
 {
-    private static int $initialized = 0;
+    /**
+     * @var class-string<AbstractConfig>
+     */
+    protected string $config;
 
-    public function __construct(AbstractConfig $config)
+    final public function __construct()
     {
-        if (self::$initialized++) {
+        static $initialized = 0;
+        if ($initialized++) {
             return;
         }
 
         try {
-            $this->init($config);
+            $this->initialize();
         } catch (Throwable $e) {
             $this->error($e);
         }
-    }
-
-    /**
-     * @throws Throwable
-     */
-    private function init(AbstractConfig $config): void
-    {
-        $_SERVER['STARTED_TIME'] = gettimeofday(true);
-
-        ini_set('display_errors', 'cli' === PHP_SAPI);
-        ini_set('error_reporting', E_ALL);
-        ini_set('ignore_user_abort', true);
-
-        setlocale(LC_ALL, 'C');
-
-        mb_internal_encoding('UTF-8');
-
-        ConfigHolder::set($config);
-
-        set_error_handler($this->errorHandler(...));
-
-        ini_set('date.timezone', ConfigHolder::get()->timezone);
-
-        $_SERVER['HTTP_SCHEME'] = empty($_SERVER['HTTPS']) || 'off' === $_SERVER['HTTPS'] ? 'http' : 'https';
-
-        $_SERVER['HTTP_HOST'] ??= 'localhost';
-
-        $_SERVER['HTTP_URL'] = sprintf('%s://%s', $_SERVER['HTTP_SCHEME'], $_SERVER['HTTP_HOST']);
-
-        $_SERVER['USER_URL'] = $this->getUserUrl() ?? $_SERVER['HTTP_URL'];
-
-        $_SERVER['REQUEST_URI'] = $_SERVER['REDIRECT_REQUEST_URI'] ?? $_SERVER['REQUEST_URI'] ?? '/';
-
-        $_SERVER['QUERY_STRING'] = explode('?', $_SERVER['REQUEST_URI'], 2)[1] ?? '';
-
-        register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
     }
 
     public function runController(): void
@@ -113,6 +83,42 @@ abstract class AbstractRunner extends AbstractBase
         } catch (Throwable $e) {
             $this->error($e);
         }
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function initialize(): void
+    {
+        $_SERVER['STARTED_TIME'] = gettimeofday(true);
+
+        ini_set('display_errors', 'cli' === PHP_SAPI);
+        ini_set('error_reporting', E_ALL);
+        ini_set('ignore_user_abort', true);
+
+        setlocale(LC_ALL, 'C');
+
+        mb_internal_encoding('UTF-8');
+
+        ConfigHolder::set(new $this->config);
+
+        set_error_handler($this->errorHandler(...));
+
+        ini_set('date.timezone', ConfigHolder::get()->timezone);
+
+        $_SERVER['HTTP_SCHEME'] = empty($_SERVER['HTTPS']) || 'off' === $_SERVER['HTTPS'] ? 'http' : 'https';
+
+        $_SERVER['HTTP_HOST'] ??= 'localhost';
+
+        $_SERVER['HTTP_URL'] = sprintf('%s://%s', $_SERVER['HTTP_SCHEME'], $_SERVER['HTTP_HOST']);
+
+        $_SERVER['USER_URL'] = $this->getUserUrl() ?? $_SERVER['HTTP_URL'];
+
+        $_SERVER['REQUEST_URI'] = $_SERVER['REDIRECT_REQUEST_URI'] ?? $_SERVER['REQUEST_URI'] ?? '/';
+
+        $_SERVER['QUERY_STRING'] = explode('?', $_SERVER['REQUEST_URI'], 2)[1] ?? '';
+
+        register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
     }
 
     /**

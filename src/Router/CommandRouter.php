@@ -6,8 +6,8 @@ use Psr\Log\LogLevel;
 use ReflectionClass;
 use ReflectionMethod;
 use RuntimeException;
-use SWF\Attribute\AsCommand;
 use SWF\AbstractRouter;
+use SWF\Attribute\AsCommand;
 use SWF\CommonLogger;
 use SWF\ConfigHolder;
 
@@ -36,8 +36,6 @@ final class CommandRouter extends AbstractRouter
     /**
      * Gets current action.
      *
-     * Very poor implementation. Will be better soon.
-     *
      * @return array{string, string|null}|null
      */
     public function getCurrentAction(): ?array
@@ -64,8 +62,7 @@ final class CommandRouter extends AbstractRouter
                 continue;
             }
 
-            $rClass = new ReflectionClass($class);
-            foreach ($rClass->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            foreach ((new ReflectionClass($class))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                 foreach ($method->getAttributes(AsCommand::class) as $attribute) {
                     if ($method->isConstructor()) {
                         CommonLogger::getInstance()->log(LogLevel::WARNING, "Constructor can't be a command", options: [

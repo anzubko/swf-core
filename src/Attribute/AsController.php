@@ -8,10 +8,14 @@ use function count;
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 final class AsController
 {
-    /** @var string[] */
+    /**
+     * @var string[]
+     */
     public array $url;
 
-    /** @var string[] */
+    /**
+     * @var string[]
+     */
     public array $method;
 
     public ?string $alias;

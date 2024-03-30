@@ -2,6 +2,12 @@
 
 namespace SWF;
 
+use ReflectionClass;
+use ReflectionProperty;
+use SWF\Attribute\Env;
+use function array_key_exists;
+use function is_array;
+
 abstract class AbstractConfig
 {
     /**
@@ -62,11 +68,6 @@ abstract class AbstractConfig
     public int $fileMode = 0666;
 
     /**
-     * Lock files pattern.
-     */
-    public string $lockFile = APP_DIR . '/var/locks/{KEY}.lock';
-
-    /**
      * Additional errors log file.
      */
     public ?string $errorLog = APP_DIR . '/var/log/errors.log';
@@ -75,4 +76,45 @@ abstract class AbstractConfig
      * System cache directory.
      */
     public string $sysCacheDir = APP_DIR . '/var/cache/system';
+
+    /**
+     * Config will be automatically merged with .env configs via attributes Env.
+     */
+    final public function __construct()
+    {
+        if (isset($_SERVER['APP_ENV'])) {
+            $env = @include APP_DIR . sprintf('/.env.%s.php', $_SERVER['APP_ENV']);
+
+            $localEnv = @include APP_DIR . sprintf('/.env.%s.local.php', $_SERVER['APP_ENV']);
+        } else {
+            $env = @include APP_DIR . '/.env.php';
+
+            $localEnv = @include APP_DIR . '/.env.local.php';
+        }
+
+        if (!is_array($env)) {
+            $env = [];
+        }
+
+        if (!is_array($localEnv)) {
+            $localEnv = [];
+        }
+
+        $env = $localEnv + $env;
+        foreach ((new ReflectionClass($this))->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
+            foreach ($property->getAttributes(Env::class) as $attribute) {
+                $key = $attribute->newInstance()->key;
+                if (!array_key_exists($key, $env)) {
+                    continue;
+                }
+
+                $name = $property->name;
+                if (is_array($this->{$name}) && is_array($env[$key])) {
+                    $this->{$name} = $env[$key] + $this->{$name};
+                } else {
+                    $this->{$name} = $env[$key];
+                }
+            }
+        }
+    }
 }
