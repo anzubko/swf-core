@@ -7,9 +7,9 @@ use DateTimeZone;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Stringable;
-use SWF\Event\ExceptionEvent;
 use SWF\Event\LoggerEvent;
 use Throwable;
+use function count;
 use function is_array;
 use function is_string;
 
@@ -43,20 +43,13 @@ final class CommonLogger
         }
 
         if ($message instanceof Throwable) {
-            $complexMessage = (string) $message;
-
-            try {
-                EventDispatcher::getInstance()->dispatch(new ExceptionEvent($message));
-            } catch (Throwable) {
-            }
+            $detailed = (string) $message;
         } else {
-            $complexMessage = $message;
-
+            $detailed = $message;
             if ($options['append_file_and_line'] ?? true) {
-                [$file, $line] = $this->getFileAndLine($options);
-
-                if (isset($file, $line)) {
-                    $complexMessage = sprintf('%s in %s:%s', $complexMessage, $file, $line);
+                $which = $this->getFileAndLine($options);
+                if (null !== $which) {
+                    $detailed = sprintf('%s in %s:%s', $detailed, $which['file'], $which['line']);
 
                     if (!isset($options['destination'])) {
                         try {
@@ -64,8 +57,8 @@ final class CommonLogger
                                 new LoggerEvent(
                                     $level,
                                     (string) $message,
-                                    $file,
-                                    $line,
+                                    $which['file'],
+                                    $which['line'],
                                     $context,
                                 )
                             );
@@ -75,15 +68,15 @@ final class CommonLogger
                 }
             }
 
-            if (!empty($context)) {
-                $complexMessage = sprintf('%s %s', $complexMessage, json_encode($context, JSON_UNESCAPED_UNICODE));
+            if (count($context) > 0) {
+                $detailed = sprintf('%s %s', $detailed, json_encode($context, JSON_UNESCAPED_UNICODE));
             }
         }
 
-        $complexMessage = sprintf('[%s] %s', ucfirst($level), $complexMessage);
+        $detailed = sprintf('[%s] %s', ucfirst($level), $detailed);
 
         if (!isset($options['destination'])) {
-            error_log($complexMessage);
+            error_log($detailed);
 
             if (null !== ConfigHolder::get()->errorLog) {
                 $options['destination'] = ConfigHolder::get()->errorLog;
@@ -91,15 +84,7 @@ final class CommonLogger
         }
 
         if (isset($options['destination'])) {
-            $when = new DateTime();
-            try {
-                $when->setTimezone(new DateTimeZone(ConfigHolder::get()->timezone));
-            } catch (Throwable) {
-            }
-
-            $complexMessage = sprintf("[%s] %s\n", $when->format('d-M-Y H:i:s e'), $complexMessage);
-
-            FileHandler::put($options['destination'], $complexMessage, FILE_APPEND);
+            FileHandler::put($options['destination'], sprintf("[%s] %s\n", $this->getTime(), $detailed), FILE_APPEND);
         }
 
         restore_error_handler();
@@ -108,21 +93,21 @@ final class CommonLogger
     /**
      * @param mixed[] $options
      *
-     * @return array{string|null, int|null}
+     * @return array{file:string, line:int}|null
      */
-    private function getFileAndLine(array $options): array
+    private function getFileAndLine(array $options): ?array
     {
         if (isset($options['file'], $options['line'])) {
             return [
-                (string) $options['file'],
-                (int) $options['line'],
+                'file' => (string) $options['file'],
+                'line' => (int) $options['line'],
             ];
         }
 
         if (is_array($options['trace']) && isset($options['trace'][0]['file'], $options['trace'][0]['line'])) {
             return [
-                (string) $options['trace'][0]['file'],
-                (int) $options['trace'][0]['line'],
+                'file' => (string) $options['trace'][0]['file'],
+                'line' => (int) $options['trace'][0]['line'],
             ];
         }
 
@@ -133,11 +118,23 @@ final class CommonLogger
             }
 
             return [
-                $trace[$i - 1]['file'] ?? '',
-                $trace[$i - 1]['line'] ?? 0,
+                'file' => $trace[$i - 1]['file'] ?? '',
+                'line' => $trace[$i - 1]['line'] ?? 0,
             ];
         }
 
-        return [null, null];
+        return null;
+    }
+
+    private function getTime(): string
+    {
+        $now = new DateTime();
+
+        try {
+            $now->setTimezone(new DateTimeZone(ConfigHolder::get()->timezone));
+        } catch (Throwable) {
+        }
+
+        return $now->format('d-M-Y H:i:s e');
     }
 }
