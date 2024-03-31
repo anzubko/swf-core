@@ -8,12 +8,12 @@ use function is_array;
 
 abstract class AbstractRouter
 {
+    protected const APP_NS = 'App\\';
+
     /**
      * @var mixed[]
      */
     protected static array $cache;
-
-    protected string $appNs = 'App\\';
 
     /**
      * @var string[]

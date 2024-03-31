@@ -9,7 +9,6 @@ use RuntimeException;
 use SWF\AbstractRouter;
 use SWF\Attribute\AsController;
 use SWF\CommonLogger;
-use SWF\ConfigHolder;
 use function count;
 use function is_string;
 
@@ -114,7 +113,7 @@ final class ControllerRouter extends AbstractRouter
 
         $regex = [];
         foreach (get_declared_classes() as $class) {
-            if (!str_starts_with($class, $this->appNs)) {
+            if (!str_starts_with($class, self::APP_NS)) {
                 continue;
             }
 

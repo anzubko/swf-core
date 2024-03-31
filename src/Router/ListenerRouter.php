@@ -12,7 +12,6 @@ use SWF\AbstractRouter;
 use SWF\Attribute\AsListener;
 use SWF\CallbackHandler;
 use SWF\CommonLogger;
-use SWF\ConfigHolder;
 use Throwable;
 use function in_array;
 
@@ -127,7 +126,7 @@ final class ListenerRouter extends AbstractRouter
         self::$cache['listeners'] = [];
 
         foreach (get_declared_classes() as $class) {
-            if (!str_starts_with($class, $this->appNs)) {
+            if (!str_starts_with($class, self::APP_NS)) {
                 continue;
             }
 

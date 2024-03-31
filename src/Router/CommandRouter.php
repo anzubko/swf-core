@@ -9,7 +9,6 @@ use RuntimeException;
 use SWF\AbstractRouter;
 use SWF\Attribute\AsCommand;
 use SWF\CommonLogger;
-use SWF\ConfigHolder;
 
 final class CommandRouter extends AbstractRouter
 {
@@ -60,7 +59,7 @@ final class CommandRouter extends AbstractRouter
         self::$cache['commands'] = [];
 
         foreach (get_declared_classes() as $class) {
-            if (!str_starts_with($class, $this->appNs)) {
+            if (!str_starts_with($class, self::APP_NS)) {
                 continue;
             }
 
