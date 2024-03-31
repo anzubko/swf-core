@@ -18,6 +18,11 @@ final class DelayedNotifier
 
     private static self $instance;
 
+    public static function getInstance(): self
+    {
+        return self::$instance ??= new self();
+    }
+
     private function __construct()
     {
         ListenerProvider::getInstance()->addListener(
@@ -26,11 +31,6 @@ final class DelayedNotifier
             },
             persistent: true,
         );
-    }
-
-    public static function getInstance(): self
-    {
-        return self::$instance ??= new self();
     }
 
     /**

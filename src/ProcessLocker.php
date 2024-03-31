@@ -16,14 +16,14 @@ final class ProcessLocker
 
     private static self $instance;
 
-    private function __construct()
-    {
-        $this->dir = sprintf('%s/swf.lock.%s', sys_get_temp_dir(), md5(APP_DIR));
-    }
-
     public static function getInstance(): self
     {
         return self::$instance ??= new self();
+    }
+
+    private function __construct()
+    {
+        $this->dir = sprintf('%s/swf.lock.%s', sys_get_temp_dir(), md5(APP_DIR));
     }
 
     /**

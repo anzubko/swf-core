@@ -2,23 +2,14 @@
 
 namespace SWF;
 
+use App\Config;
+
 final class ConfigHolder
 {
     private static AbstractConfig $config;
 
-    /**
-     * Sets config instance.
-     */
-    public static function set(AbstractConfig $config): void
-    {
-        self::$config = $config;
-    }
-
-    /**
-     * Gets config instance.
-     */
     public static function get(): AbstractConfig
     {
-        return self::$config;
+        return self::$config ??= new Config;
     }
 }

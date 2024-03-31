@@ -92,27 +92,26 @@ abstract class AbstractConfig
             $localEnv = @include APP_DIR . '/.env.local.php';
         }
 
-        if (!is_array($env)) {
+        if (false === $env) {
             $env = [];
         }
 
-        if (!is_array($localEnv)) {
-            $localEnv = [];
+        if (false !== $localEnv) {
+            $env = $localEnv + $env;
         }
 
-        $env = $localEnv + $env;
         foreach ((new ReflectionClass($this))->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
             foreach ($property->getAttributes(Env::class) as $attribute) {
-                $key = $attribute->newInstance()->key;
-                if (!array_key_exists($key, $env)) {
+                $envKey = $attribute->newInstance()->key;
+                if (!array_key_exists($envKey, $env)) {
                     continue;
                 }
 
                 $name = $property->name;
-                if (is_array($this->{$name}) && is_array($env[$key])) {
-                    $this->{$name} = $env[$key] + $this->{$name};
+                if (is_array($this->{$name}) && is_array($env[$envKey])) {
+                    $this->{$name} = $env[$envKey] + $this->{$name};
                 } else {
-                    $this->{$name} = $env[$key];
+                    $this->{$name} = $env[$envKey];
                 }
             }
         }

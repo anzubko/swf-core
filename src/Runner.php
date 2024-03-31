@@ -3,40 +3,48 @@
 namespace SWF;
 
 use InvalidArgumentException;
+use LogicException;
 use Psr\Log\LogLevel;
 use ReflectionClass;
 use SWF\Event\BeforeAllEvent;
 use SWF\Event\BeforeCommandEvent;
-use SWF\Event\BeforeConsumerEvent;
 use SWF\Event\BeforeControllerEvent;
 use SWF\Event\ShutdownEvent;
 use SWF\Exception\CoreException;
 use SWF\Exception\DatabaserException;
 use SWF\Interface\DatabaserInterface;
 use SWF\Router\CommandRouter;
-use SWF\Router\ConsumerRouter;
 use SWF\Router\ControllerRouter;
 use Throwable;
 
-abstract class AbstractRunner extends AbstractBase
+final class Runner extends AbstractBase
 {
-    /**
-     * @var class-string<AbstractConfig>
-     */
-    protected string $config;
+    private static self $instance;
 
-    final public function __construct()
+    public static function getInstance(): self
     {
-        static $initialized = 0;
-        if ($initialized++) {
-            return;
+        return self::$instance;
+    }
+
+    public function __construct()
+    {
+        if (isset(self::$instance)) {
+            throw new LogicException('Runner already initialized');
         }
 
+        set_error_handler($this->errorHandler(...));
+
         try {
-            $this->initialize();
+            $this->setTimezone();
+
+            $this->setStartupParameters();
         } catch (Throwable $e) {
             $this->error($e);
         }
+
+        register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
+
+        self::$instance = $this;
     }
 
     public function runController(): void
@@ -88,24 +96,16 @@ abstract class AbstractRunner extends AbstractBase
     /**
      * @throws Throwable
      */
-    private function initialize(): void
+    private function setTimezone(): void
     {
-        $_SERVER['STARTED_TIME'] = gettimeofday(true);
-
-        ini_set('display_errors', 'cli' === PHP_SAPI);
-        ini_set('error_reporting', E_ALL);
-        ini_set('ignore_user_abort', true);
-
-        setlocale(LC_ALL, 'C');
-
-        mb_internal_encoding('UTF-8');
-
-        ConfigHolder::set(new $this->config);
-
-        set_error_handler($this->errorHandler(...));
-
         ini_set('date.timezone', ConfigHolder::get()->timezone);
+    }
 
+    /**
+     * @throws InvalidArgumentException
+     */
+    private function setStartupParameters(): void
+    {
         $_SERVER['HTTP_SCHEME'] = empty($_SERVER['HTTPS']) || 'off' === $_SERVER['HTTPS'] ? 'http' : 'https';
 
         $_SERVER['HTTP_HOST'] ??= 'localhost';
@@ -117,8 +117,6 @@ abstract class AbstractRunner extends AbstractBase
         $_SERVER['REQUEST_URI'] = $_SERVER['REDIRECT_REQUEST_URI'] ?? $_SERVER['REQUEST_URI'] ?? '/';
 
         $_SERVER['QUERY_STRING'] = explode('?', $_SERVER['REQUEST_URI'], 2)[1] ?? '';
-
-        register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
     }
 
     /**
@@ -178,8 +176,7 @@ abstract class AbstractRunner extends AbstractBase
      */
     private function cleanupAndDispatchAtShutdown(): void
     {
-        $sharedClasses = (array) (new ReflectionClass(AbstractBase::class))->getStaticPropertyValue('shared');
-        foreach ($sharedClasses as $class) {
+        foreach ((array) (new ReflectionClass(AbstractBase::class))->getStaticPropertyValue('shared') as $class) {
             if ($class instanceof DatabaserInterface && $class->isInTrans()) {
                 try {
                     $class->rollback();

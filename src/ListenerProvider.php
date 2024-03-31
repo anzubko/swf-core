@@ -9,18 +9,18 @@ use Throwable;
 
 final class ListenerProvider implements ListenerProviderInterface
 {
-    private static self $instance;
-
     protected ListenerRouter $listenerRouter;
 
-    private function __construct()
-    {
-        $this->listenerRouter = ListenerRouter::getInstance();
-    }
+    private static self $instance;
 
     public static function getInstance(): self
     {
         return self::$instance ??= new self();
+    }
+
+    private function __construct()
+    {
+        $this->listenerRouter = ListenerRouter::getInstance();
     }
 
     /**

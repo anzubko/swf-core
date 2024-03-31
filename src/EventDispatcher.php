@@ -11,13 +11,13 @@ final class EventDispatcher implements EventDispatcherInterface
 {
     private static self $instance;
 
-    private function __construct()
-    {
-    }
-
     public static function getInstance(): self
     {
         return self::$instance ??= new self();
+    }
+
+    private function __construct()
+    {
     }
 
     /**

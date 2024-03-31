@@ -10,13 +10,13 @@ final class ResponseManager
 {
     private static self $instance;
 
-    private function __construct()
-    {
-    }
-
     public static function getInstance(): self
     {
         return self::$instance ??= new self();
+    }
+
+    private function __construct()
+    {
     }
 
     /**
@@ -42,7 +42,7 @@ final class ResponseManager
         http_response_code($code);
 
         header(
-            sprintf('Last-Modified: %s', gmdate('D, d M Y H:i:s \G\M\T', (int) $_SERVER['STARTED_TIME'])),
+            sprintf('Last-Modified: %s', gmdate('D, d M Y H:i:s \G\M\T', (int) APP_STARTED)),
         );
         header(sprintf('Cache-Control: private, max-age=%s', $expire));
         header(sprintf('Content-Type: %s; charset=utf-8', $mime));

@@ -20,17 +20,17 @@ final class CommandRouter extends AbstractRouter
     /**
      * @throws RuntimeException
      */
-    private function __construct()
+    public static function getInstance(): self
     {
-        $this->readCache(sprintf('%s/commands.php', ConfigHolder::get()->sysCacheDir));
+        return self::$instance ??= new self();
     }
 
     /**
      * @throws RuntimeException
      */
-    public static function getInstance(): self
+    private function __construct()
     {
-        return self::$instance ??= new self();
+        $this->readCache(sprintf('%s/commands.php', ConfigHolder::get()->sysCacheDir));
     }
 
     /**
