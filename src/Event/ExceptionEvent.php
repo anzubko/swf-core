@@ -15,9 +15,6 @@ class ExceptionEvent extends AbstractEvent
     ) {
     }
 
-    /**
-     * Returns exception.
-     */
     public function getException(): Throwable
     {
         return $this->exception;

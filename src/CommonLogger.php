@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Stringable;
 use SWF\Event\ExceptionEvent;
+use SWF\Event\LoggerEvent;
 use Throwable;
 use function is_array;
 use function is_string;
@@ -30,6 +31,8 @@ final class CommonLogger
      *
      * @param mixed[] $context
      * @param mixed[] $options
+     *
+     * @see LogLevel
      */
     public function log(mixed $level, string|Stringable $message, array $context = [], array $options = []): void
     {
@@ -40,12 +43,12 @@ final class CommonLogger
         }
 
         if ($message instanceof Throwable) {
+            $complexMessage = (string) $message;
+
             try {
                 EventDispatcher::getInstance()->dispatch(new ExceptionEvent($message));
             } catch (Throwable) {
             }
-
-            $complexMessage = (string) $message;
         } else {
             $complexMessage = $message;
 
@@ -54,6 +57,21 @@ final class CommonLogger
 
                 if (isset($file, $line)) {
                     $complexMessage = sprintf('%s in %s:%s', $complexMessage, $file, $line);
+
+                    if (!isset($options['destination'])) {
+                        try {
+                            EventDispatcher::getInstance()->dispatch(
+                                new LoggerEvent(
+                                    $level,
+                                    (string) $message,
+                                    $file,
+                                    $line,
+                                    $context,
+                                )
+                            );
+                        } catch (Throwable) {
+                        }
+                    }
                 }
             }
 

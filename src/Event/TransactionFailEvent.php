@@ -19,8 +19,6 @@ class TransactionFailEvent extends AbstractEvent
     }
 
     /**
-     * Returns error or info level.
-     *
      * @see LogLevel
      */
     public function getLevel(): string
@@ -28,17 +26,11 @@ class TransactionFailEvent extends AbstractEvent
         return $this->level;
     }
 
-    /**
-     * Returns exception with sqlstate.
-     */
     public function getException(): DatabaserException
     {
         return $this->exception;
     }
 
-    /**
-     * Returns current retry number.
-     */
     public function getRetry(): int
     {
         return $this->retry;
