@@ -2,9 +2,12 @@
 
 namespace SWF;
 
+use DateTime;
+use DateTimeZone;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Stringable;
+use SWF\Event\ExceptionEvent;
 use Throwable;
 use function is_array;
 use function is_string;
@@ -37,34 +40,32 @@ final class CommonLogger
         }
 
         if ($message instanceof Throwable) {
-            $message = (string) $message;
-        } else {
-            if (!empty($context)) {
-                $message = sprintf('%s %s', $message, json_encode($context, JSON_UNESCAPED_UNICODE));
+            try {
+                EventDispatcher::getInstance()->dispatch(new ExceptionEvent($message));
+            } catch (Throwable) {
             }
+
+            $complexMessage = (string) $message;
+        } else {
+            $complexMessage = $message;
 
             if ($options['append_file_and_line'] ?? true) {
                 [$file, $line] = $this->getFileAndLine($options);
 
                 if (isset($file, $line)) {
-                    $message = sprintf('%s in %s:%s', $message, $file, $line);
+                    $complexMessage = sprintf('%s in %s:%s', $complexMessage, $file, $line);
                 }
+            }
+
+            if (!empty($context)) {
+                $complexMessage = sprintf('%s %s', $complexMessage, json_encode($context, JSON_UNESCAPED_UNICODE));
             }
         }
 
-        $message = sprintf('[%s] %s', ucfirst($level), $message);
-
-        $timezonePrev = date_default_timezone_get();
-        if ($timezonePrev === ConfigHolder::get()->timezone) {
-            $timezonePrev = null;
-        }
-
-        if (null !== $timezonePrev) {
-            date_default_timezone_set(ConfigHolder::get()->timezone);
-        }
+        $complexMessage = sprintf('[%s] %s', ucfirst($level), $complexMessage);
 
         if (!isset($options['destination'])) {
-            error_log($message);
+            error_log($complexMessage);
 
             if (null !== ConfigHolder::get()->errorLog) {
                 $options['destination'] = ConfigHolder::get()->errorLog;
@@ -72,13 +73,15 @@ final class CommonLogger
         }
 
         if (isset($options['destination'])) {
-            $message = sprintf("[%s] %s\n", date('d-M-Y H:i:s e'), $message);
+            $when = new DateTime();
+            try {
+                $when->setTimezone(new DateTimeZone(ConfigHolder::get()->timezone));
+            } catch (Throwable) {
+            }
 
-            FileHandler::put($options['destination'], $message, FILE_APPEND);
-        }
+            $complexMessage = sprintf("[%s] %s\n", $when->format('d-M-Y H:i:s e'), $complexMessage);
 
-        if (null !== $timezonePrev) {
-            date_default_timezone_set($timezonePrev);
+            FileHandler::put($options['destination'], $complexMessage, FILE_APPEND);
         }
 
         restore_error_handler();

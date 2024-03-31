@@ -7,7 +7,7 @@ use RuntimeException;
 
 final class ProcessLocker
 {
-    private string $dir = APP_DIR . '/var/locks';
+    private const DIR = APP_DIR . '/var/locks';
 
     /**
      * @var string[]
@@ -23,8 +23,8 @@ final class ProcessLocker
 
     private function __construct()
     {
-        if (!DirHandler::create($this->dir)) {
-            throw new RuntimeException(sprintf('Unable to create directory %s', $this->dir));
+        if (!DirHandler::create(self::DIR)) {
+            throw new RuntimeException(sprintf('Unable to create directory %s', self::DIR));
         }
     }
 
@@ -40,7 +40,7 @@ final class ProcessLocker
             throw new LogicException(sprintf('You already have lock with key: %s', $key));
         }
 
-        $file = sprintf('%s/%s', $this->dir, $key);
+        $file = sprintf('%s/%s', self::DIR, $key);
 
         $handle = fopen($file, 'cb+');
         if (false === $handle) {

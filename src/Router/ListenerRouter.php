@@ -18,7 +18,7 @@ use function in_array;
 
 final class ListenerRouter extends AbstractRouter
 {
-    protected string $cacheFile = APP_DIR . '/var/cache/swf/listeners.php';
+    private const CACHE_FILE = APP_DIR . '/var/cache/swf/listeners.php';
 
     protected static array $cache;
 
@@ -37,7 +37,7 @@ final class ListenerRouter extends AbstractRouter
      */
     private function __construct()
     {
-        $this->readCache($this->cacheFile);
+        $this->readCache(self::CACHE_FILE);
     }
 
     /**
