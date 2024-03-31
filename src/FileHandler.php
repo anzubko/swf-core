@@ -2,7 +2,7 @@
 
 namespace SWF;
 
-class FileHandler
+final class FileHandler
 {
     /**
      * Getting file contents into string.

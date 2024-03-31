@@ -4,7 +4,7 @@ namespace SWF;
 
 use function strlen;
 
-class TextHandler
+final class TextHandler
 {
     /**
      * To lower case.

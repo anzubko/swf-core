@@ -9,9 +9,14 @@ use function is_string;
 final class CallbackHandler
 {
     /**
+     * @var object[]
+     */
+    private static array $instances = [];
+
+    /**
      * Normalizes callback.
      *
-     * @param callable|array{object|string, string}|string $callback
+     * @param callable|mixed[]|string $callback
      *
      * @throws Throwable
      */
@@ -25,11 +30,11 @@ final class CallbackHandler
             $callback = explode('::', $callback);
         }
 
-        static $instances = [];
-
-        $callback[0] = $instances[$callback[0]] ??= new $callback[0];
-        if (is_callable($callback)) {
-            return $callback;
+        if (is_string($callback[0])) {
+            $callback[0] = self::$instances[$callback[0]] ??= new $callback[0];
+            if (is_callable($callback)) {
+                return $callback;
+            }
         }
 
         throw new LogicException('Unable to normalize callback');

@@ -13,6 +13,8 @@ use SWF\ConfigHolder;
 
 final class CommandRouter extends AbstractRouter
 {
+    protected string $cacheFile = APP_DIR . '/var/cache/swf/commands.php';
+
     protected static array $cache;
 
     private static self $instance;
@@ -30,7 +32,7 @@ final class CommandRouter extends AbstractRouter
      */
     private function __construct()
     {
-        $this->readCache(sprintf('%s/commands.php', ConfigHolder::get()->sysCacheDir));
+        $this->readCache($this->cacheFile);
     }
 
     /**

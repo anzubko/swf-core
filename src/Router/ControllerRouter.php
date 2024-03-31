@@ -15,6 +15,8 @@ use function is_string;
 
 final class ControllerRouter extends AbstractRouter
 {
+    protected string $cacheFile = APP_DIR . '/var/cache/swf/controllers.php';
+
     protected static array $cache;
 
     private static self $instance;
@@ -32,7 +34,7 @@ final class ControllerRouter extends AbstractRouter
      */
     private function __construct()
     {
-        $this->readCache(sprintf('%s/controllers.php', ConfigHolder::get()->sysCacheDir));
+        $this->readCache($this->cacheFile);
     }
 
     /**

@@ -4,8 +4,15 @@ namespace SWF;
 
 use RuntimeException;
 
-class DirHandler
+final class DirHandler
 {
+    private static string $tempDir;
+
+    /**
+     * @var string[]
+     */
+    private static array $tempSubDirs = [];
+
     /**
      * Directory scanning.
      *
@@ -35,7 +42,7 @@ class DirHandler
                     $scanned[] = $item;
                 }
             } else {
-                foreach (static::scan("$dir/$item", true, false, $order) as $subItem) {
+                foreach (self::scan("$dir/$item", true, false, $order) as $subItem) {
                     if ($withDir) {
                         $scanned[] = "$dir/$item/$subItem";
                     } else {
@@ -87,7 +94,7 @@ class DirHandler
                 }
 
                 if (is_dir("$dir/$item")) {
-                    if (!static::remove("$dir/$item")) {
+                    if (!self::remove("$dir/$item")) {
                         $success = false;
                     }
                 } elseif (!unlink("$dir/$item")) {
@@ -124,7 +131,7 @@ class DirHandler
             }
 
             if (is_dir("$dir/$item")) {
-                if (!static::remove("$dir/$item", $recursive)) {
+                if (!self::remove("$dir/$item", $recursive)) {
                     $success = false;
                 }
             } elseif (!unlink("$dir/$item")) {
@@ -140,7 +147,7 @@ class DirHandler
      */
     public static function copy(string $source, string $target): bool
     {
-        if (!static::create($target)) {
+        if (!self::create($target)) {
             return false;
         }
 
@@ -156,7 +163,7 @@ class DirHandler
             }
 
             if (is_dir("$source/$item")) {
-                if (!static::copy("$source/$item", "$target/$item")) {
+                if (!self::copy("$source/$item", "$target/$item")) {
                     $success = false;
                 }
             } elseif (!FileHandler::copy("$source/$item", "$target/$item", false)) {
@@ -172,7 +179,7 @@ class DirHandler
      */
     public static function move(string $source, string $target): bool
     {
-        return static::create(dirname($target)) && rename($source, $target);
+        return self::create(dirname($target)) && rename($source, $target);
     }
 
     /**
@@ -182,22 +189,20 @@ class DirHandler
      */
     public static function temporary(): string
     {
-        static $tempDir, $tempSubDirs = [];
-
-        if (!isset($tempDir)) {
+        if (!isset(self::$tempDir)) {
             $tempDir = realpath(sys_get_temp_dir());
             if (false === $tempDir) {
                 throw new RuntimeException('Invalid system temporary directory');
             }
 
             register_shutdown_function(
-                function () use ($tempSubDirs) {
+                function () {
                     register_shutdown_function(
-                        function () use ($tempSubDirs) {
+                        function () {
                             register_shutdown_function(
-                                function () use ($tempSubDirs) {
-                                    foreach ($tempSubDirs as $dir) {
-                                        static::remove($dir);
+                                function () {
+                                    foreach (self::$tempSubDirs as $dir) {
+                                        self::remove($dir);
                                     }
                                 }
                             );
@@ -205,14 +210,14 @@ class DirHandler
                     );
                 }
             );
+
+            self::$tempDir = $tempDir;
         }
 
         for ($i = 1; $i <= 7; $i++) {
-            $tempSubDir = sprintf('%s/%s', $tempDir, TextHandler::random());
+            $tempSubDir = sprintf('%s/%s', self::$tempDir, TextHandler::random());
             if (@mkdir($tempSubDir, 0600, true)) {
-                $tempSubDirs[] = $tempSubDir;
-
-                return $tempSubDir;
+                return self::$tempSubDirs[] = $tempSubDir;
             }
         }
 

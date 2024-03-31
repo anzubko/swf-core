@@ -73,11 +73,6 @@ abstract class AbstractConfig
     public ?string $errorLog = APP_DIR . '/var/log/errors.log';
 
     /**
-     * System cache directory.
-     */
-    public string $sysCacheDir = APP_DIR . '/var/cache/system';
-
-    /**
      * Config will be automatically merged with .env configs via attributes Env.
      */
     final public function __construct()

@@ -7,7 +7,7 @@ use RuntimeException;
 
 final class ProcessLocker
 {
-    private string $dir;
+    private string $dir = APP_DIR . '/var/locks';
 
     /**
      * @var string[]
@@ -23,25 +23,24 @@ final class ProcessLocker
 
     private function __construct()
     {
-        $this->dir = sprintf('%s/swf.lock.%s', sys_get_temp_dir(), md5(APP_DIR));
+        if (!DirHandler::create($this->dir)) {
+            throw new RuntimeException(sprintf('Unable to create directory %s', $this->dir));
+        }
     }
 
     /**
-     * Obtains lock and returns true on success or false if another process has this lock.
+     * Acquires lock.
      *
      * @throws LogicException
      * @throws RuntimeException
      */
-    public function lock(string $key): bool
+    public function acquire(string $key): bool
     {
         if (isset($this->files[$key])) {
             throw new LogicException(sprintf('You already have lock with key: %s', $key));
         }
 
         $file = sprintf('%s/%s', $this->dir, $key);
-        if (!DirHandler::create(dirname($file))) {
-            throw new RuntimeException(sprintf('Unable to create directory %s', dirname($file)));
-        }
 
         $handle = fopen($file, 'cb+');
         if (false === $handle) {
@@ -63,18 +62,18 @@ final class ProcessLocker
      * @throws LogicException
      * @throws RuntimeException
      */
-    public function unlock(string $key): void
+    public function release(string $key): void
     {
         if (!isset($this->files[$key])) {
             throw new LogicException(sprintf("Lock with key '%s' is not exists", $key));
         }
 
-        $file = $this->files[$key];
-
-        unset($this->files[$key]);
-
-        if (!unlink($file)) {
-            throw new RuntimeException(sprintf('Unable to delete file %s', $file));
+        try {
+            if (!unlink($this->files[$key])) {
+                throw new RuntimeException(sprintf('Unable to delete file %s', $this->files[$key]));
+            }
+        } finally {
+            unset($this->files[$key]);
         }
     }
 }

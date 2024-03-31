@@ -4,7 +4,7 @@ namespace SWF;
 
 use GdImage;
 
-class ImageHandler
+final class ImageHandler
 {
     /**
      * Reading image from string.
