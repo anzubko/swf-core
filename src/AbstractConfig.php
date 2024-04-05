@@ -36,11 +36,6 @@ abstract class AbstractConfig
     public string $timezone = 'UTC';
 
     /**
-     * How many times retry failed transactions with expected sql states.
-     */
-    public int $transactionRetries = 7;
-
-    /**
      * Optional error document file.
      */
     public ?string $errorDocument = null;

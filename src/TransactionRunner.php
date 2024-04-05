@@ -2,7 +2,6 @@
 
 namespace SWF;
 
-use Psr\Log\LogLevel;
 use SWF\Event\TransactionCommitEvent;
 use SWF\Event\TransactionFailEvent;
 use SWF\Event\TransactionRollbackEvent;
@@ -32,9 +31,9 @@ final class TransactionRunner
      * @throws DatabaserException
      * @throws Throwable
      */
-    public function run(DatabaserInterface $db, callable $body, ?string $isolation, array $retryAt): void
+    public function run(DatabaserInterface $db, callable $body, ?string $isolation, array $retryAt, int $retries = 7): void
     {
-        for ($retry = 1, $retries = ConfigHolder::get()->transactionRetries; $retry <= $retries; $retry++) {
+        while (--$retries >= 0) {
             try {
                 ListenerProvider::getInstance()->removeListenersByType([
                     TransactionCommitEvent::class,
@@ -64,11 +63,9 @@ final class TransactionRunner
                     throw $e;
                 }
 
-                if (in_array($e->getSqlState(), $retryAt, true) && $retry < $retries) {
-                    EventDispatcher::getInstance()->dispatch(new TransactionFailEvent(LogLevel::INFO, $e, $retry));
-                } else {
-                    EventDispatcher::getInstance()->dispatch(new TransactionFailEvent(LogLevel::ERROR, $e, $retry));
+                EventDispatcher::getInstance()->dispatch(new TransactionFailEvent($e, $retries));
 
+                if ($retries === 0 || !in_array($e->getSqlState(), $retryAt, true)) {
                     throw $e;
                 }
             }

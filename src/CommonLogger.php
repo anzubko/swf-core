@@ -4,17 +4,20 @@ namespace SWF;
 
 use DateTime;
 use DateTimeZone;
+use Exception;
+use JsonException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Stringable;
-use SWF\Event\LoggerEvent;
+use SWF\Event\LogEvent;
 use Throwable;
-use function count;
 use function is_array;
 use function is_string;
 
-final class CommonLogger
+final class CommonLogger implements LoggerInterface
 {
+    private ?DateTimeZone $timezone = null;
+
     private static self $instance;
 
     public static function getInstance(): self
@@ -24,6 +27,98 @@ final class CommonLogger
 
     private function __construct()
     {
+        try {
+            $this->timezone = new DateTimeZone(ConfigHolder::get()->timezone);
+        } catch (Exception) {
+        }
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @param mixed[] $context
+     * @param mixed[] $options
+     */
+    public function emergency(string|Stringable $message, array $context = [], array $options = []): void
+    {
+        $this->log(LogLevel::EMERGENCY, $message, $context, $options);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @param mixed[] $context
+     * @param mixed[] $options
+     */
+    public function alert(string|Stringable $message, array $context = [], array $options = []): void
+    {
+        $this->log(LogLevel::ALERT, $message, $context, $options);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @param mixed[] $context
+     * @param mixed[] $options
+     */
+    public function critical(string|Stringable $message, array $context = [], array $options = []): void
+    {
+        $this->log(LogLevel::CRITICAL, $message, $context, $options);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @param mixed[] $context
+     * @param mixed[] $options
+     */
+    public function error(string|Stringable $message, array $context = [], array $options = []): void
+    {
+        $this->log(LogLevel::ERROR, $message, $context, $options);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @param mixed[] $context
+     * @param mixed[] $options
+     */
+    public function warning(string|Stringable $message, array $context = [], array $options = []): void
+    {
+        $this->log(LogLevel::WARNING, $message, $context, $options);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @param mixed[] $context
+     * @param mixed[] $options
+     */
+    public function notice(string|Stringable $message, array $context = [], array $options = []): void
+    {
+        $this->log(LogLevel::NOTICE, $message, $context, $options);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @param mixed[] $context
+     * @param mixed[] $options
+     */
+    public function info(string|Stringable $message, array $context = [], array $options = []): void
+    {
+        $this->log(LogLevel::INFO, $message, $context, $options);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @param mixed[] $context
+     * @param mixed[] $options
+     */
+    public function debug(string|Stringable $message, array $context = [], array $options = []): void
+    {
+        $this->log(LogLevel::DEBUG, $message, $context, $options);
     }
 
     /**
@@ -36,105 +131,104 @@ final class CommonLogger
      */
     public function log(mixed $level, string|Stringable $message, array $context = [], array $options = []): void
     {
-        set_error_handler(fn() => true);
-
         if (!is_string($level)) {
             $level = LogLevel::ERROR;
         }
 
-        if ($message instanceof Throwable) {
-            $detailed = (string) $message;
-        } else {
-            $detailed = $message;
-            if ($options['append_file_and_line'] ?? true) {
-                $which = $this->getFileAndLine($options);
-                if (null !== $which) {
-                    $detailed = sprintf('%s in %s:%s', $detailed, $which['file'], $which['line']);
+        set_error_handler(fn() => true);
 
-                    if (!isset($options['destination'])) {
-                        try {
-                            EventDispatcher::getInstance()->dispatch(
-                                new LoggerEvent(
-                                    $level,
-                                    (string) $message,
-                                    $which['file'],
-                                    $which['line'],
-                                    $context,
-                                )
-                            );
-                        } catch (Throwable) {
-                        }
-                    }
-                }
-            }
+        $complexMessage = $this->getComplexMessage($level, $message, $context, $options);
 
-            if (count($context) > 0) {
-                $detailed = sprintf('%s %s', $detailed, json_encode($context, JSON_UNESCAPED_UNICODE));
-            }
-        }
+        error_log($complexMessage);
 
-        $detailed = sprintf('[%s] %s', ucfirst($level), $detailed);
-
-        if (!isset($options['destination'])) {
-            error_log($detailed);
-
-            if (null !== ConfigHolder::get()->errorLog) {
-                $options['destination'] = ConfigHolder::get()->errorLog;
-            }
-        }
-
-        if (isset($options['destination'])) {
-            FileHandler::put($options['destination'], sprintf("[%s] %s\n", $this->getTime(), $detailed), FILE_APPEND);
+        try {
+            EventDispatcher::getInstance()->dispatch(
+                new LogEvent(
+                    $level,
+                    $complexMessage,
+                    $message instanceof Throwable ? $message : null,
+                )
+            );
+        } catch (Throwable) {
         }
 
         restore_error_handler();
     }
 
     /**
+     * Just saves message in some log file with datetime in default timezone.
+     */
+    public function customLog(string $file, string $message): void
+    {
+        $datetime = new DateTime();
+        if (null !== $this->timezone) {
+            $datetime->setTimezone($this->timezone);
+        }
+
+        FileHandler::put($file, sprintf('[%s] %s', $datetime->format('d-M-Y H:i:s e'), $message), FILE_APPEND);
+    }
+
+    /**
+     * @param mixed[] $context
+     * @param mixed[] $options
+     */
+    private function getComplexMessage(string $level, string|Stringable $message, array $context, array $options): string
+    {
+        $complexMessage = (string) $message;
+        if (!$message instanceof Throwable) {
+            [$file, $line] = $this->getFileAndLine($options);
+
+            if (isset($file, $line)) {
+                $complexMessage = sprintf('%s in %s:%s', $complexMessage, $file, $line);
+            }
+        }
+
+        if (!empty($context)) {
+            try {
+                $encodedContext = json_encode($context, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            } catch (JsonException $e) {
+                $encodedContext = sprintf('[...%s...]', $e->getMessage());
+            }
+
+            $complexMessage = sprintf('%s %s', $complexMessage, $encodedContext);
+        }
+
+        return sprintf('[%s] %s', ucfirst($level), $complexMessage);
+    }
+
+    /**
      * @param mixed[] $options
      *
-     * @return array{file:string, line:int}|null
+     * @return array{string|null, int|null}
      */
-    private function getFileAndLine(array $options): ?array
+    private function getFileAndLine(array $options): array
     {
         if (isset($options['file'], $options['line'])) {
             return [
-                'file' => (string) $options['file'],
-                'line' => (int) $options['line'],
+                (string) $options['file'],
+                (int) $options['line'],
             ];
         }
 
         if (is_array($options['trace']) && isset($options['trace'][0]['file'], $options['trace'][0]['line'])) {
             return [
-                'file' => (string) $options['trace'][0]['file'],
-                'line' => (int) $options['trace'][0]['line'],
+                (string) $options['trace'][0]['file'],
+                (int) $options['trace'][0]['line'],
             ];
         }
 
         $trace = debug_backtrace(3);
         foreach ($trace as $i => $item) {
-            if (isset($item['object']) && ($item['object'] instanceof self || $item['object'] instanceof LoggerInterface)) {
+            if (isset($item['object']) && $item['object'] instanceof LoggerInterface) {
                 continue;
             }
 
             return [
-                'file' => $trace[$i - 1]['file'] ?? '',
-                'line' => $trace[$i - 1]['line'] ?? 0,
+                $trace[$i - 1]['file'] ?? '',
+                $trace[$i - 1]['line'] ?? 0,
             ];
         }
 
-        return null;
-    }
-
-    private function getTime(): string
-    {
-        $now = new DateTime();
-
-        try {
-            $now->setTimezone(new DateTimeZone(ConfigHolder::get()->timezone));
-        } catch (Throwable) {
-        }
-
-        return $now->format('d-M-Y H:i:s e');
+        return [null, null];
     }
 }

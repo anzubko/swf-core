@@ -9,7 +9,6 @@ use ReflectionClass;
 use SWF\Event\BeforeAllEvent;
 use SWF\Event\BeforeCommandEvent;
 use SWF\Event\BeforeControllerEvent;
-use SWF\Event\ExceptionEvent;
 use SWF\Event\ShutdownEvent;
 use SWF\Exception\CoreException;
 use SWF\Exception\DatabaserException;
@@ -191,15 +190,7 @@ final class Runner extends AbstractBase
 
     private function error(Throwable $e): never
     {
-        try {
-            EventDispatcher::getInstance()->dispatch(new ExceptionEvent($e));
-        } catch (Throwable) {
-        }
-
         CommonLogger::getInstance()->log(LogLevel::ERROR, $e);
-        CommonLogger::getInstance()->log(LogLevel::EMERGENCY, 'Application terminated!', options: [
-            'append_file_and_line' => false,
-        ]);
 
         ListenerProvider::getInstance()->removeAllListeners(true);
 

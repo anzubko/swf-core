@@ -2,7 +2,6 @@
 
 namespace SWF\Event;
 
-use Psr\Log\LogLevel;
 use SWF\AbstractEvent;
 use SWF\Exception\DatabaserException;
 
@@ -12,18 +11,9 @@ use SWF\Exception\DatabaserException;
 class TransactionFailEvent extends AbstractEvent
 {
     public function __construct(
-        private readonly string $level,
         private readonly DatabaserException $exception,
-        private readonly int $retry,
+        private readonly int $retries,
     ) {
-    }
-
-    /**
-     * @see LogLevel
-     */
-    public function getLevel(): string
-    {
-        return $this->level;
     }
 
     public function getException(): DatabaserException
@@ -31,8 +21,8 @@ class TransactionFailEvent extends AbstractEvent
         return $this->exception;
     }
 
-    public function getRetry(): int
+    public function getRetries(): int
     {
-        return $this->retry;
+        return $this->retries;
     }
 }
