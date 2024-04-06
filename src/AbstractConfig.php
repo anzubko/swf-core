@@ -46,23 +46,6 @@ abstract class AbstractConfig
     public int $fileMode = 0666;
 
     /**
-     * Optional error document file.
-     */
-    public ?string $errorDocument = null;
-
-    /**
-     * Compress output if size more this value in bytes.
-     */
-    public int $compressMin = 32 * 1024;
-
-    /**
-     * Compress output with only these mime types.
-     *
-     * @var string[]
-     */
-    public array $compressMimes = [];
-
-    /**
      * Config will be automatically merged with .env configs via attributes Env.
      */
     final public function __construct()

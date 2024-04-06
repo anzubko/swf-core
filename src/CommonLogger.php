@@ -9,7 +9,7 @@ use JsonException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Stringable;
-use SWF\Event\LogEvent;
+use SWF\Event\LoggerEvent;
 use Throwable;
 use function is_array;
 use function is_string;
@@ -143,7 +143,7 @@ final class CommonLogger implements LoggerInterface
 
         try {
             EventDispatcher::getInstance()->dispatch(
-                new LogEvent(
+                new LoggerEvent(
                     $level,
                     $complexMessage,
                     $message instanceof Throwable ? $message : null,
@@ -207,13 +207,6 @@ final class CommonLogger implements LoggerInterface
             return [
                 (string) $options['file'],
                 (int) $options['line'],
-            ];
-        }
-
-        if (is_array($options['trace']) && isset($options['trace'][0]['file'], $options['trace'][0]['line'])) {
-            return [
-                (string) $options['trace'][0]['file'],
-                (int) $options['trace'][0]['line'],
             ];
         }
 

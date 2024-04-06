@@ -2,7 +2,6 @@
 
 namespace SWF\Router;
 
-use Psr\Log\LogLevel;
 use ReflectionClass;
 use ReflectionMethod;
 use RuntimeException;
@@ -66,7 +65,7 @@ final class CommandRouter extends AbstractRouter
             foreach ((new ReflectionClass($class))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                 foreach ($method->getAttributes(AsCommand::class) as $attribute) {
                     if ($method->isConstructor()) {
-                        CommonLogger::getInstance()->log(LogLevel::WARNING, "Constructor can't be a command", options: [
+                        CommonLogger::getInstance()->warning("Constructor can't be a command", options: [
                             'file' => $method->getFileName(),
                             'line' => $method->getStartLine(),
                         ]);

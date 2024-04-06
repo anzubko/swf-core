@@ -3,6 +3,8 @@
 namespace SWF;
 
 use LogicException;
+use SWF\Event\ResponseErrorEvent;
+use Throwable;
 use function in_array;
 use function strlen;
 
@@ -22,6 +24,8 @@ final class ResponseManager
     /**
      * Base method for outputs.
      *
+     * @param string[] $compressMimes
+     *
      * @throws LogicException
      */
     public function output(
@@ -31,6 +35,8 @@ final class ResponseManager
         int $code,
         int $expire,
         ?string $filename,
+        array $compressMimes = [],
+        int $compressMin = 32 * 1024,
         bool $exit = true,
     ): void {
         if (headers_sent()) {
@@ -54,13 +60,9 @@ final class ResponseManager
         }
 
         if (
-            isset(
-                ConfigHolder::get()->compressMimes,
-                ConfigHolder::get()->compressMin,
-                $_SERVER['HTTP_ACCEPT_ENCODING'],
-            )
-            && strlen($contents) > ConfigHolder::get()->compressMin
-            && in_array($mime, ConfigHolder::get()->compressMimes, true)
+            isset($_SERVER['HTTP_ACCEPT_ENCODING'])
+            && strlen($contents) > $compressMin
+            && in_array($mime, $compressMimes, true)
             && preg_match('/(deflate|gzip)/', $_SERVER['HTTP_ACCEPT_ENCODING'], $M)
         ) {
             if ('gzip' === $M[1]) {
@@ -129,12 +131,10 @@ final class ResponseManager
         if (!headers_sent() && !ob_get_length()) {
             http_response_code($code);
 
-            $errorDocument = ConfigHolder::get()->errorDocument;
-            if (null !== $errorDocument) {
-                $errorDocument = str_replace('{CODE}', (string) $code, $errorDocument);
-                if (is_file($errorDocument)) {
-                    include $errorDocument;
-                }
+            try {
+                EventDispatcher::getInstance()->dispatch(new ResponseErrorEvent($code));
+            } catch (Throwable $e) {
+                CommonLogger::getInstance()->error($e);
             }
         }
 

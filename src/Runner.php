@@ -4,7 +4,6 @@ namespace SWF;
 
 use InvalidArgumentException;
 use LogicException;
-use Psr\Log\LogLevel;
 use ReflectionClass;
 use SWF\Event\BeforeAllEvent;
 use SWF\Event\BeforeCommandEvent;
@@ -38,7 +37,7 @@ final class Runner extends AbstractBase
             $this->setTimezone();
             $this->setStartupParameters();
         } catch (Throwable $e) {
-            $this->error($e);
+            $this->terminate($e);
         }
 
         register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
@@ -63,7 +62,7 @@ final class Runner extends AbstractBase
 
             CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();
         } catch (Throwable $e) {
-            $this->error($e);
+            $this->terminate($e);
         }
     }
 
@@ -84,7 +83,7 @@ final class Runner extends AbstractBase
 
             CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();
         } catch (Throwable $e) {
-            $this->error($e);
+            $this->terminate($e);
         }
     }
 
@@ -146,7 +145,7 @@ final class Runner extends AbstractBase
         }
 
         if (in_array($code, [E_NOTICE, E_USER_NOTICE, E_DEPRECATED, E_USER_DEPRECATED], true)) {
-            CommonLogger::getInstance()->log(LogLevel::NOTICE, $message, options: [
+            CommonLogger::getInstance()->notice($message, options: [
                 'file' => $file,
                 'line' => $line,
             ]);
@@ -155,7 +154,7 @@ final class Runner extends AbstractBase
         }
 
         if (in_array($code, [E_WARNING, E_USER_WARNING, E_STRICT], true) && !ConfigHolder::get()->strict) {
-            CommonLogger::getInstance()->log(LogLevel::WARNING, $message, options: [
+            CommonLogger::getInstance()->warning($message, options: [
                 'file' => $file,
                 'line' => $line,
             ]);
@@ -180,13 +179,17 @@ final class Runner extends AbstractBase
         try {
             EventDispatcher::getInstance()->dispatch(new ShutdownEvent());
         } catch (Throwable $e) {
-            CommonLogger::getInstance()->log(LogLevel::ERROR, $e);
+            CommonLogger::getInstance()->error($e);
         }
     }
 
-    private function error(Throwable $e): never
+    private function terminate(Throwable $e): never
     {
-        CommonLogger::getInstance()->log(LogLevel::ERROR, $e);
+        CommonLogger::getInstance()->error($e);
+        CommonLogger::getInstance()->emergency('Application terminated', options: [
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
 
         ListenerProvider::getInstance()->removeAllListeners(true);
 

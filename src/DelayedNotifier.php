@@ -2,7 +2,6 @@
 
 namespace SWF;
 
-use Psr\Log\LogLevel;
 use ReflectionClass;
 use SWF\Event\ShutdownEvent;
 use SWF\Event\TransactionCommitEvent;
@@ -63,7 +62,7 @@ final class DelayedNotifier
             try {
                 array_shift($this->notifies)->send();
             } catch (Throwable $e) {
-                CommonLogger::getInstance()->log(LogLevel::ERROR, $e);
+                CommonLogger::getInstance()->error($e);
             }
         }
     }

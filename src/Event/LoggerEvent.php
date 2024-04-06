@@ -9,7 +9,7 @@ use Throwable;
 /**
  * Emits at logger calls.
  */
-class LogEvent extends AbstractEvent
+class LoggerEvent extends AbstractEvent
 {
     public function __construct(
         private readonly string $level,
