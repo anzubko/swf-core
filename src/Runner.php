@@ -36,7 +36,6 @@ final class Runner extends AbstractBase
 
         try {
             $this->setTimezone();
-
             $this->setStartupParameters();
         } catch (Throwable $e) {
             $this->error($e);
@@ -56,9 +55,7 @@ final class Runner extends AbstractBase
             }
 
             $_SERVER['ROUTER_TYPE'] = 'controller';
-
             $_SERVER['ROUTER_ACTION'] = $action[0];
-
             $_SERVER['ROUTER_ALIAS'] = $action[1];
 
             EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
@@ -79,9 +76,7 @@ final class Runner extends AbstractBase
             }
 
             $_SERVER['ROUTER_TYPE'] = 'command';
-
             $_SERVER['ROUTER_ACTION'] = $action[0];
-
             $_SERVER['ROUTER_ALIAS'] = $action[1];
 
             EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
@@ -171,9 +166,6 @@ final class Runner extends AbstractBase
         throw (new CoreException($message))->setFileAndLine($file, $line);
     }
 
-    /**
-     * @throws Throwable
-     */
     private function cleanupAndDispatchAtShutdown(): void
     {
         foreach ((array) (new ReflectionClass(AbstractBase::class))->getStaticPropertyValue('shared') as $class) {
@@ -185,7 +177,11 @@ final class Runner extends AbstractBase
             }
         }
 
-        EventDispatcher::getInstance()->dispatch(new ShutdownEvent(), true);
+        try {
+            EventDispatcher::getInstance()->dispatch(new ShutdownEvent());
+        } catch (Throwable $e) {
+            CommonLogger::getInstance()->log(LogLevel::ERROR, $e);
+        }
     }
 
     private function error(Throwable $e): never

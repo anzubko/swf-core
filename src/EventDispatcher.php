@@ -31,22 +31,14 @@ final class EventDispatcher implements EventDispatcherInterface
      *
      * @throws Throwable
      */
-    public function dispatch(object $event, bool $silent = false)
+    public function dispatch(object $event)
     {
         foreach (ListenerProvider::getInstance()->getListenersForEvent($event) as $listener) {
             if ($event instanceof StoppableEventInterface && $event->isPropagationStopped()) {
                 return $event;
             }
 
-            if ($silent) {
-                try {
-                    $listener($event);
-                } catch (Throwable $e) {
-                    CommonLogger::getInstance()->log(LogLevel::ERROR, $e);
-                }
-            } else {
-                $listener($event);
-            }
+            $listener($event);
         }
 
         return $event;

@@ -131,11 +131,11 @@ final class CommonLogger implements LoggerInterface
      */
     public function log(mixed $level, string|Stringable $message, array $context = [], array $options = []): void
     {
+        set_error_handler(fn() => true);
+
         if (!is_string($level)) {
             $level = LogLevel::ERROR;
         }
-
-        set_error_handler(fn() => true);
 
         $complexMessage = $this->getComplexMessage($level, $message, $context, $options);
 
