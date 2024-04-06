@@ -36,6 +36,16 @@ abstract class AbstractConfig
     public string $timezone = 'UTC';
 
     /**
+     * Default mode for new directories.
+     */
+    public int $dirMode = 0777;
+
+    /**
+     * Default mode for new/updated files.
+     */
+    public int $fileMode = 0666;
+
+    /**
      * Optional error document file.
      */
     public ?string $errorDocument = null;
@@ -51,21 +61,6 @@ abstract class AbstractConfig
      * @var string[]
      */
     public array $compressMimes = [];
-
-    /**
-     * Default mode for new directories.
-     */
-    public int $dirMode = 0777;
-
-    /**
-     * Default mode for new/updated files.
-     */
-    public int $fileMode = 0666;
-
-    /**
-     * Additional errors log file.
-     */
-    public ?string $errorLog = APP_DIR . '/var/log/errors.log';
 
     /**
      * Config will be automatically merged with .env configs via attributes Env.
