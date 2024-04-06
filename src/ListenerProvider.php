@@ -43,7 +43,7 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function removeListenersByType(array|string $type, bool $force = false): void
     {
-        $this->listenerRouter->removeByType($type, $force);
+        $this->listenerRouter->removeByTypes((array) $type, $force);
     }
 
     /**

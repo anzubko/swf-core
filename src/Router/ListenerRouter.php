@@ -64,15 +64,14 @@ final class ListenerRouter extends AbstractRouter
     }
 
     /**
-     * Removes listeners by event type.
+     * Removes listeners by event types.
      *
-     * @param string|string[] $type
+     * @param string[] $types
      */
-    public function removeByType(array|string $type, bool $force = false): void
+    public function removeByTypes(array $types, bool $force = false): void
     {
-        $type = (array) $type;
         foreach (self::$cache['listeners'] as $i => $listener) {
-            if (($force || !$listener['persistent']) && in_array($listener['type'], $type, true)) {
+            if (($force || !$listener['persistent']) && in_array($listener['type'], $types, true)) {
                 unset(self::$cache['listeners'][$i]);
             }
         }
