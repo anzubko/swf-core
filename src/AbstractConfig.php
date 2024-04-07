@@ -21,7 +21,7 @@ abstract class AbstractConfig
     public bool $debug = false;
 
     /**
-     * Treats errors except deprecations and notices as fatal.
+     * Treats errors except deprecations and notices as fatal and sets Twig to strict mode.
      */
     public bool $strict = true;
 
@@ -36,12 +36,12 @@ abstract class AbstractConfig
     public string $timezone = 'UTC';
 
     /**
-     * Default mode for new directories.
+     * Default mode for created directories.
      */
     public int $dirMode = 0777;
 
     /**
-     * Default mode for new/updated files.
+     * Default mode for created/updated files.
      */
     public int $fileMode = 0666;
 

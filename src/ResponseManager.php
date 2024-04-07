@@ -2,7 +2,6 @@
 
 namespace SWF;
 
-use LogicException;
 use SWF\Event\ResponseErrorEvent;
 use Throwable;
 use function in_array;
@@ -25,8 +24,6 @@ final class ResponseManager
      * Base method for outputs.
      *
      * @param string[] $compressMimes
-     *
-     * @throws LogicException
      */
     public function output(
         string $disposition,
@@ -39,17 +36,11 @@ final class ResponseManager
         int $compressMin = 32 * 1024,
         bool $exit = true,
     ): void {
-        if (headers_sent()) {
-            throw new LogicException('Headers already sent');
-        }
-
         ini_set('zlib.output_compression', false);
 
         http_response_code($code);
 
-        header(
-            sprintf('Last-Modified: %s', gmdate('D, d M Y H:i:s \G\M\T', (int) APP_STARTED)),
-        );
+        header(sprintf('Last-Modified: %s', gmdate('D, d M Y H:i:s \G\M\T', (int) APP_STARTED)));
         header(sprintf('Cache-Control: private, max-age=%s', $expire));
         header(sprintf('Content-Type: %s; charset=utf-8', $mime));
 
@@ -60,10 +51,9 @@ final class ResponseManager
         }
 
         if (
-            isset($_SERVER['HTTP_ACCEPT_ENCODING'])
-            && strlen($contents) > $compressMin
+            strlen($contents) > $compressMin
             && in_array($mime, $compressMimes, true)
-            && preg_match('/(deflate|gzip)/', $_SERVER['HTTP_ACCEPT_ENCODING'], $M)
+            && preg_match('/(deflate|gzip)/', $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '', $M)
         ) {
             if ('gzip' === $M[1]) {
                 $contents = (string) gzencode($contents, 1);
@@ -107,15 +97,9 @@ final class ResponseManager
 
     /**
      * Redirect.
-     *
-     * @throws LogicException
      */
     public function redirect(string $uri, int $code = 302, bool $exit = true): void
     {
-        if (headers_sent()) {
-            throw new LogicException('Headers already sent');
-        }
-
         header(sprintf('Location: %s', $uri), response_code: $code);
 
         if ($exit) {
