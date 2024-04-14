@@ -68,12 +68,10 @@ final class ProcessLocker
             throw new LogicException(sprintf("Lock with key '%s' is not exists", $key));
         }
 
-        try {
-            if (!unlink($this->files[$key])) {
-                throw new RuntimeException(sprintf('Unable to delete file %s', $this->files[$key]));
-            }
-        } finally {
-            unset($this->files[$key]);
+        if (!unlink($this->files[$key])) {
+            throw new RuntimeException(sprintf('Unable to delete file %s', $this->files[$key]));
         }
+
+        unset($this->files[$key]);
     }
 }

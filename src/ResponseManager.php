@@ -84,19 +84,8 @@ final class ResponseManager
         }
     }
 
-    private function outputAndFlush(string $contents): void
-    {
-        echo $contents;
-
-        while (ob_get_length()) {
-            ob_end_flush();
-        }
-
-        flush();
-    }
-
     /**
-     * Redirect.
+     * Redirects to specified url.
      */
     public function redirect(string $uri, int $code = 302, bool $exit = true): void
     {
@@ -123,5 +112,16 @@ final class ResponseManager
         }
 
         exit(1);
+    }
+
+    private function outputAndFlush(string $contents): void
+    {
+        echo $contents;
+
+        while (ob_get_length()) {
+            ob_end_flush();
+        }
+
+        flush();
     }
 }
