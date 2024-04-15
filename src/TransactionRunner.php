@@ -12,17 +12,6 @@ use function in_array;
 
 final class TransactionRunner
 {
-    private static self $instance;
-
-    public static function getInstance(): self
-    {
-        return self::$instance ??= new self();
-    }
-
-    private function __construct()
-    {
-    }
-
     /**
      * Base method for processing transaction.
      *
@@ -35,7 +24,7 @@ final class TransactionRunner
     {
         while (--$retries >= 0) {
             try {
-                ListenerProvider::getInstance()->removeListenersByType([
+                InstanceHolder::get(ListenerProvider::class)->removeListenersByType([
                     TransactionCommitEvent::class,
                     TransactionRollbackEvent::class,
                 ]);
@@ -45,11 +34,11 @@ final class TransactionRunner
                 if (false !== $body()) {
                     $db->commit();
 
-                    EventDispatcher::getInstance()->dispatch(new TransactionCommitEvent());
+                    InstanceHolder::get(EventDispatcher::class)->dispatch(new TransactionCommitEvent());
                 } else {
                     $db->rollback();
 
-                    EventDispatcher::getInstance()->dispatch(new TransactionRollbackEvent());
+                    InstanceHolder::get(EventDispatcher::class)->dispatch(new TransactionRollbackEvent());
                 }
 
                 return;
@@ -63,7 +52,7 @@ final class TransactionRunner
                     throw $e;
                 }
 
-                EventDispatcher::getInstance()->dispatch(new TransactionFailEvent($e, $retries));
+                InstanceHolder::get(EventDispatcher::class)->dispatch(new TransactionFailEvent($e, $retries));
 
                 if ($retries === 0 || !in_array($e->getSqlState(), $retryAt, true)) {
                     throw $e;

@@ -11,6 +11,7 @@ use SWF\AbstractRouter;
 use SWF\Attribute\AsListener;
 use SWF\CallbackHandler;
 use SWF\CommonLogger;
+use SWF\InstanceHolder;
 use Throwable;
 use function in_array;
 
@@ -131,7 +132,7 @@ final class ListenerRouter extends AbstractRouter
             foreach ((new ReflectionClass($class))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                 foreach ($method->getAttributes(AsListener::class) as $attribute) {
                     if ($method->isConstructor()) {
-                        CommonLogger::getInstance()->warning("Constructor can't be a listener", options: [
+                        InstanceHolder::get(CommonLogger::class)->warning("Constructor can't be a listener", options: [
                             'file' => $method->getFileName(),
                             'line' => $method->getStartLine(),
                         ]);
@@ -141,7 +142,7 @@ final class ListenerRouter extends AbstractRouter
                     $params = $method->getParameters();
                     $type = $params ? $params[0]->getType() : null;
                     if (null === $type) {
-                        CommonLogger::getInstance()->warning('Listener must have first parameter with declared type', options: [
+                        InstanceHolder::get(CommonLogger::class)->warning('Listener must have first parameter with declared type', options: [
                             'file' => $method->getFileName(),
                             'line' => $method->getStartLine(),
                         ]);

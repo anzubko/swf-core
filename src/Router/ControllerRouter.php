@@ -8,6 +8,7 @@ use RuntimeException;
 use SWF\AbstractRouter;
 use SWF\Attribute\AsController;
 use SWF\CommonLogger;
+use SWF\InstanceHolder;
 use function count;
 use function is_string;
 
@@ -83,7 +84,7 @@ final class ControllerRouter extends AbstractRouter
                 $message = sprintf('%s and %s parameter%s', $message, $pCount, 1 === $pCount ? '' : 's');
             }
 
-            CommonLogger::getInstance()->warning($message, options: debug_backtrace(2)[1]);
+            InstanceHolder::get(CommonLogger::class)->warning($message, options: debug_backtrace(2)[1]);
 
             return '/';
         }
@@ -119,7 +120,7 @@ final class ControllerRouter extends AbstractRouter
             foreach ((new ReflectionClass($class))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                 foreach ($method->getAttributes(AsController::class) as $attribute) {
                     if ($method->isConstructor()) {
-                        CommonLogger::getInstance()->warning("Constructor can't be a controller", options: [
+                        InstanceHolder::get(CommonLogger::class)->warning("Constructor can't be a controller", options: [
                             'file' => $method->getFileName(),
                             'line' => $method->getStartLine(),
                         ]);

@@ -15,16 +15,9 @@ final class DelayedNotifier
      */
     private array $notifies = [];
 
-    private static self $instance;
-
-    public static function getInstance(): self
+    public function __construct()
     {
-        return self::$instance ??= new self();
-    }
-
-    private function __construct()
-    {
-        ListenerProvider::getInstance()->addListener(
+        InstanceHolder::get(ListenerProvider::class)->addListener(
             function (ShutdownEvent $event) {
                 register_shutdown_function($this->sendAll(...));
             },
@@ -37,9 +30,10 @@ final class DelayedNotifier
      */
     public function add(AbstractNotify $notify): void
     {
-        foreach ((array) (new ReflectionClass(AbstractBase::class))->getStaticPropertyValue('shared') as $class) {
+        $sharedClasses = (array) (new ReflectionClass(AbstractBase::class))->getStaticPropertyValue('shared');
+        foreach ($sharedClasses as $class) {
             if ($class instanceof DatabaserInterface && $class->isInTrans()) {
-                ListenerProvider::getInstance()->addListener(
+                InstanceHolder::get(ListenerProvider::class)->addListener(
                     function (TransactionCommitEvent $event) use ($notify) {
                         $this->add($notify);
                     },
@@ -62,7 +56,7 @@ final class DelayedNotifier
             try {
                 array_shift($this->notifies)->send();
             } catch (Throwable $e) {
-                CommonLogger::getInstance()->error($e);
+                InstanceHolder::get(CommonLogger::class)->error($e);
             }
         }
     }

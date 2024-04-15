@@ -5,7 +5,7 @@ namespace SWF;
 abstract class AbstractBase
 {
     /**
-     * @var array<class-string<AbstractShared>, object>
+     * @var mixed[]
      */
     private static array $shared = [];
 

@@ -50,15 +50,15 @@ final class Runner extends AbstractBase
         try {
             $action = ControllerRouter::getInstance()->getCurrentAction();
             if (null === $action) {
-                ResponseManager::getInstance()->error(404);
+                InstanceHolder::get(ResponseManager::class)->error(404);
             }
 
             $_SERVER['ROUTER_TYPE'] = 'controller';
             $_SERVER['ROUTER_ACTION'] = $action[0];
             $_SERVER['ROUTER_ALIAS'] = $action[1];
 
-            EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
-            EventDispatcher::getInstance()->dispatch(new BeforeControllerEvent());
+            InstanceHolder::get(EventDispatcher::class)->dispatch(new BeforeAllEvent());
+            InstanceHolder::get(EventDispatcher::class)->dispatch(new BeforeControllerEvent());
 
             CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();
         } catch (Throwable $e) {
@@ -78,8 +78,8 @@ final class Runner extends AbstractBase
             $_SERVER['ROUTER_ACTION'] = $action[0];
             $_SERVER['ROUTER_ALIAS'] = $action[1];
 
-            EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
-            EventDispatcher::getInstance()->dispatch(new BeforeCommandEvent());
+            InstanceHolder::get(EventDispatcher::class)->dispatch(new BeforeAllEvent());
+            InstanceHolder::get(EventDispatcher::class)->dispatch(new BeforeCommandEvent());
 
             CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();
         } catch (Throwable $e) {
@@ -92,7 +92,7 @@ final class Runner extends AbstractBase
      */
     private function setTimezone(): void
     {
-        ini_set('date.timezone', ConfigGetter::getInstance()->get('system', 'timezone'));
+        ini_set('date.timezone', ConfigProvider::get('system', 'timezone'));
     }
 
     /**
@@ -118,11 +118,11 @@ final class Runner extends AbstractBase
      */
     private function getUserUrl(): ?string
     {
-        if (null === ConfigGetter::getInstance()->get('system', 'url')) {
+        if (null === ConfigProvider::get('system', 'url')) {
             return null;
         }
 
-        $parsedUrl = parse_url(ConfigGetter::getInstance()->get('system', 'url'));
+        $parsedUrl = parse_url(ConfigProvider::get('system', 'url'));
         if (empty($parsedUrl) || !isset($parsedUrl['host'])) {
             throw new InvalidArgumentException('Incorrect URL in configuration');
         }
@@ -145,7 +145,7 @@ final class Runner extends AbstractBase
         }
 
         if (in_array($code, [E_NOTICE, E_USER_NOTICE, E_DEPRECATED, E_USER_DEPRECATED], true)) {
-            CommonLogger::getInstance()->notice($message, options: [
+            InstanceHolder::get(CommonLogger::class)->notice($message, options: [
                 'file' => $file,
                 'line' => $line,
             ]);
@@ -153,8 +153,8 @@ final class Runner extends AbstractBase
             return true;
         }
 
-        if (in_array($code, [E_WARNING, E_USER_WARNING, E_STRICT], true) && !ConfigGetter::getInstance()->get('system', 'strict')) {
-            CommonLogger::getInstance()->warning($message, options: [
+        if (in_array($code, [E_WARNING, E_USER_WARNING, E_STRICT], true) && !ConfigProvider::get('system', 'strict')) {
+            InstanceHolder::get(CommonLogger::class)->warning($message, options: [
                 'file' => $file,
                 'line' => $line,
             ]);
@@ -167,7 +167,8 @@ final class Runner extends AbstractBase
 
     private function cleanupAndDispatchAtShutdown(): void
     {
-        foreach ((array) (new ReflectionClass(AbstractBase::class))->getStaticPropertyValue('shared') as $class) {
+        $sharedClasses = (array) (new ReflectionClass(AbstractBase::class))->getStaticPropertyValue('shared');
+        foreach ($sharedClasses as $class) {
             if ($class instanceof DatabaserInterface && $class->isInTrans()) {
                 try {
                     $class->rollback();
@@ -177,26 +178,26 @@ final class Runner extends AbstractBase
         }
 
         try {
-            EventDispatcher::getInstance()->dispatch(new ShutdownEvent());
+            InstanceHolder::get(EventDispatcher::class)->dispatch(new ShutdownEvent());
         } catch (Throwable $e) {
-            CommonLogger::getInstance()->error($e);
+            InstanceHolder::get(CommonLogger::class)->error($e);
         }
     }
 
     private function terminate(Throwable $e): never
     {
-        CommonLogger::getInstance()->error($e);
-        CommonLogger::getInstance()->emergency('Application terminated', options: [
+        InstanceHolder::get(CommonLogger::class)->error($e);
+        InstanceHolder::get(CommonLogger::class)->emergency('Application terminated', options: [
             'file' => $e->getFile(),
             'line' => $e->getLine(),
         ]);
 
-        ListenerProvider::getInstance()->removeAllListeners(true);
+        InstanceHolder::get(ListenerProvider::class)->removeAllListeners(true);
 
         if ('cli' === PHP_SAPI) {
             exit(1);
         }
 
-        ResponseManager::getInstance()->error(500);
+        InstanceHolder::get(ResponseManager::class)->error(500);
     }
 }

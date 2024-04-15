@@ -28,7 +28,7 @@ final class ImageHandler
      */
     public static function fromFile(string $file): GdImage|false
     {
-        return static::fromString(FileHandler::get($file));
+        return self::fromString(FileHandler::get($file));
     }
 
     /**
@@ -41,7 +41,7 @@ final class ImageHandler
         if (null !== $file) {
             $success = imagepng($image, $file, $quality);
             if ($success) {
-                @chmod($file, ConfigGetter::getInstance()->get('system', 'fileMode'));
+                @chmod($file, ConfigProvider::get('system', 'fileMode'));
             }
 
             return $success;
@@ -70,7 +70,7 @@ final class ImageHandler
         if (null !== $file) {
             $success = imagejpeg($fixed, $file, $quality);
             if ($success) {
-                @chmod($file, ConfigGetter::getInstance()->get('system', 'fileMode'));
+                @chmod($file, ConfigProvider::get('system', 'fileMode'));
             }
 
             return $success;
@@ -95,9 +95,9 @@ final class ImageHandler
         }
 
         if ($crop) {
-            $resized = static::resizeWithCrop($image, $nW, $nH, $oW, $oH);
+            $resized = self::resizeWithCrop($image, $nW, $nH, $oW, $oH);
         } else {
-            $resized = static::resizeNoCrop($image, $nW, $nH, $oW, $oH);
+            $resized = self::resizeNoCrop($image, $nW, $nH, $oW, $oH);
         }
 
         return $resized;

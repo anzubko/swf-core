@@ -9,17 +9,6 @@ use function strlen;
 
 final class ResponseManager
 {
-    private static self $instance;
-
-    public static function getInstance(): self
-    {
-        return self::$instance ??= new self();
-    }
-
-    private function __construct()
-    {
-    }
-
     /**
      * Base method for outputs.
      *
@@ -105,9 +94,9 @@ final class ResponseManager
             http_response_code($code);
 
             try {
-                EventDispatcher::getInstance()->dispatch(new ResponseErrorEvent($code));
+                InstanceHolder::get(EventDispatcher::class)->dispatch(new ResponseErrorEvent($code));
             } catch (Throwable $e) {
-                CommonLogger::getInstance()->error($e);
+                InstanceHolder::get(CommonLogger::class)->error($e);
             }
         }
 

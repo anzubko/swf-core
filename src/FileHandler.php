@@ -21,7 +21,7 @@ final class FileHandler
             return false;
         }
 
-        @chmod($file, ConfigGetter::getInstance()->get('system', 'fileMode'));
+        @chmod($file, ConfigProvider::get('system', 'fileMode'));
 
         return true;
     }
@@ -33,7 +33,7 @@ final class FileHandler
     {
         $contents = sprintf("<?php\n\nreturn %s;\n", var_export($variable, true));
 
-        $success = static::put($file, $contents, $flags, $createDir);
+        $success = self::put($file, $contents, $flags, $createDir);
         if ($success && extension_loaded('zend-opcache')) {
             opcache_invalidate($file, true);
         }
@@ -62,7 +62,7 @@ final class FileHandler
             return false;
         }
 
-        @chmod($target, ConfigGetter::getInstance()->get('system', 'fileMode'));
+        @chmod($target, ConfigProvider::get('system', 'fileMode'));
 
         return true;
     }

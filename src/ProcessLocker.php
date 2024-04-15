@@ -14,14 +14,7 @@ final class ProcessLocker
      */
     private array $files = [];
 
-    private static self $instance;
-
-    public static function getInstance(): self
-    {
-        return self::$instance ??= new self();
-    }
-
-    private function __construct()
+    public function __construct()
     {
         if (!DirHandler::create(self::DIR)) {
             throw new RuntimeException(sprintf('Unable to create directory %s', self::DIR));

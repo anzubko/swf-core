@@ -11,24 +11,16 @@ use Psr\Log\LogLevel;
 use Stringable;
 use SWF\Event\LoggerEvent;
 use Throwable;
-use function is_array;
 use function is_string;
 
 final class CommonLogger implements LoggerInterface
 {
     private ?DateTimeZone $timezone = null;
 
-    private static self $instance;
-
-    public static function getInstance(): self
-    {
-        return self::$instance ??= new self();
-    }
-
-    private function __construct()
+    public function __construct()
     {
         try {
-            $this->timezone = new DateTimeZone(ConfigGetter::getInstance()->get('system', 'timezone'));
+            $this->timezone = new DateTimeZone(ConfigProvider::get('system', 'timezone'));
         } catch (Exception) {
         }
     }
@@ -142,7 +134,7 @@ final class CommonLogger implements LoggerInterface
         error_log($complexMessage);
 
         try {
-            EventDispatcher::getInstance()->dispatch(
+            InstanceHolder::get(EventDispatcher::class)->dispatch(
                 new LoggerEvent(
                     $level,
                     $complexMessage,

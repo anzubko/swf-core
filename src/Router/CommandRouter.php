@@ -8,6 +8,7 @@ use RuntimeException;
 use SWF\AbstractRouter;
 use SWF\Attribute\AsCommand;
 use SWF\CommonLogger;
+use SWF\InstanceHolder;
 
 final class CommandRouter extends AbstractRouter
 {
@@ -65,7 +66,7 @@ final class CommandRouter extends AbstractRouter
             foreach ((new ReflectionClass($class))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                 foreach ($method->getAttributes(AsCommand::class) as $attribute) {
                     if ($method->isConstructor()) {
-                        CommonLogger::getInstance()->warning("Constructor can't be a command", options: [
+                        InstanceHolder::get(CommonLogger::class)->warning("Constructor can't be a command", options: [
                             'file' => $method->getFileName(),
                             'line' => $method->getStartLine(),
                         ]);
