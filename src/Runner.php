@@ -15,6 +15,7 @@ use SWF\Interface\DatabaserInterface;
 use SWF\Router\CommandRouter;
 use SWF\Router\ControllerRouter;
 use Throwable;
+use function array_key_exists;
 
 final class Runner extends AbstractBase
 {

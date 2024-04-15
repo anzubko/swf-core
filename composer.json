@@ -6,7 +6,10 @@
     "autoload": {
         "psr-4": {
             "SWF\\": "src/"
-        }
+        },
+        "files": [
+            "functions.php"
+        ]
     },
     "authors": [
         {
