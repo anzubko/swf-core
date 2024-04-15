@@ -15,7 +15,6 @@ use SWF\Interface\DatabaserInterface;
 use SWF\Router\CommandRouter;
 use SWF\Router\ControllerRouter;
 use Throwable;
-use function array_key_exists;
 
 final class Runner extends AbstractBase
 {
@@ -93,7 +92,7 @@ final class Runner extends AbstractBase
      */
     private function setTimezone(): void
     {
-        ini_set('date.timezone', ConfigHolder::get()->timezone);
+        ini_set('date.timezone', ConfigGetter::getInstance()->get('system', 'timezone'));
     }
 
     /**
@@ -119,11 +118,11 @@ final class Runner extends AbstractBase
      */
     private function getUserUrl(): ?string
     {
-        if (null === ConfigHolder::get()->url) {
+        if (null === ConfigGetter::getInstance()->get('system', 'url')) {
             return null;
         }
 
-        $parsedUrl = parse_url(ConfigHolder::get()->url);
+        $parsedUrl = parse_url(ConfigGetter::getInstance()->get('system', 'url'));
         if (empty($parsedUrl) || !isset($parsedUrl['host'])) {
             throw new InvalidArgumentException('Incorrect URL in configuration');
         }
@@ -154,7 +153,7 @@ final class Runner extends AbstractBase
             return true;
         }
 
-        if (in_array($code, [E_WARNING, E_USER_WARNING, E_STRICT], true) && !ConfigHolder::get()->strict) {
+        if (in_array($code, [E_WARNING, E_USER_WARNING, E_STRICT], true) && !ConfigGetter::getInstance()->get('system', 'strict')) {
             CommonLogger::getInstance()->warning($message, options: [
                 'file' => $file,
                 'line' => $line,

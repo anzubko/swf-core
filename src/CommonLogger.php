@@ -28,7 +28,7 @@ final class CommonLogger implements LoggerInterface
     private function __construct()
     {
         try {
-            $this->timezone = new DateTimeZone(ConfigHolder::get()->timezone);
+            $this->timezone = new DateTimeZone(ConfigGetter::getInstance()->get('system', 'timezone'));
         } catch (Exception) {
         }
     }

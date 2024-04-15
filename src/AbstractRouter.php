@@ -32,7 +32,7 @@ abstract class AbstractRouter
         $cache = @include $cacheFile;
         if (is_array($cache)) {
             static::$cache = $cache;
-            if ('prod' === ConfigHolder::get()->env || $this->isCacheActual()) {
+            if ('prod' === ConfigGetter::getInstance()->get('system', 'env') || $this->isCacheActual()) {
                 return;
             }
         }

@@ -41,7 +41,7 @@ final class ImageHandler
         if (null !== $file) {
             $success = imagepng($image, $file, $quality);
             if ($success) {
-                @chmod($file, ConfigHolder::get()->fileMode);
+                @chmod($file, ConfigGetter::getInstance()->get('system', 'fileMode'));
             }
 
             return $success;
@@ -70,7 +70,7 @@ final class ImageHandler
         if (null !== $file) {
             $success = imagejpeg($fixed, $file, $quality);
             if ($success) {
-                @chmod($file, ConfigHolder::get()->fileMode);
+                @chmod($file, ConfigGetter::getInstance()->get('system', 'fileMode'));
             }
 
             return $success;
