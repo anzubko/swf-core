@@ -2,7 +2,7 @@
 
 namespace SWF;
 
-abstract class AbstractShared extends AbstractBase
+abstract class AbstractShared
 {
     /**
      * @internal

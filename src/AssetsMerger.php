@@ -51,7 +51,7 @@ final class AssetsMerger
         $cache = @include $this->cacheFile;
         if (is_array($cache)) {
             $this->cache = $cache;
-            if ('prod' === ConfigProvider::get('system', 'env') && $this->cache['debug'] === ConfigProvider::get('system', 'debug')) {
+            if ('prod' === config('system')->get('env') && $this->cache['debug'] === config('system')->get('debug')) {
                 return $this->getPaths();
             }
         }
@@ -109,7 +109,7 @@ final class AssetsMerger
 
     private function isOutdated(): bool
     {
-        if (!isset($this->cache) || ConfigProvider::get('system', 'debug') !== $this->cache['debug']) {
+        if (!isset($this->cache) || config('system')->get('debug') !== $this->cache['debug']) {
             return true;
         }
 
@@ -149,7 +149,7 @@ final class AssetsMerger
     {
         DirHandler::clear($this->dir);
 
-        $this->cache = ['time' => time(), 'debug' => ConfigProvider::get('system', 'debug')];
+        $this->cache = ['time' => time(), 'debug' => config('system')->get('debug')];
 
         $this->scanForFiles();
 
@@ -184,7 +184,7 @@ final class AssetsMerger
     {
         $merged = $this->mergeFiles($files);
 
-        if (ConfigProvider::get('system', 'debug')) {
+        if (config('system')->get('debug')) {
             return $merged;
         }
 
@@ -203,7 +203,7 @@ final class AssetsMerger
     private function mergeCss(array $files): string
     {
         $merged = $this->mergeFiles($files);
-        if (!ConfigProvider::get('system', 'debug')) {
+        if (!config('system')->get('debug')) {
             $merged = TextHandler::fTrim(preg_replace('~/\*(.*?)\*/~us', '', $merged));
         }
 

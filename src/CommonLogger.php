@@ -20,7 +20,7 @@ final class CommonLogger implements LoggerInterface
     public function __construct()
     {
         try {
-            $this->timezone = new DateTimeZone(ConfigProvider::get('system', 'timezone'));
+            $this->timezone = new DateTimeZone(config('system')->get('timezone'));
         } catch (Exception) {
         }
     }

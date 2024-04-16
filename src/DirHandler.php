@@ -66,7 +66,7 @@ final class DirHandler
 
         $success = mkdir($dir, recursive: true);
         if ($success) {
-            @chmod($dir, ConfigProvider::get('system', 'dirMode'));
+            @chmod($dir, config('system')->get('dirMode'));
         }
 
         return $success;

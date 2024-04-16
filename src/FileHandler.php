@@ -21,7 +21,7 @@ final class FileHandler
             return false;
         }
 
-        @chmod($file, ConfigProvider::get('system', 'fileMode'));
+        @chmod($file, config('system')->get('fileMode'));
 
         return true;
     }
@@ -62,7 +62,7 @@ final class FileHandler
             return false;
         }
 
-        @chmod($target, ConfigProvider::get('system', 'fileMode'));
+        @chmod($target, config('system')->get('fileMode'));
 
         return true;
     }

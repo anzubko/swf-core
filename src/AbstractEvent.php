@@ -4,7 +4,7 @@ namespace SWF;
 
 use Psr\EventDispatcher\StoppableEventInterface;
 
-abstract class AbstractEvent extends AbstractBase implements StoppableEventInterface
+abstract class AbstractEvent implements StoppableEventInterface
 {
     private bool $propagationStopped = false;
 

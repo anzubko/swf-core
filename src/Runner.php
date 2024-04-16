@@ -4,7 +4,7 @@ namespace SWF;
 
 use InvalidArgumentException;
 use LogicException;
-use ReflectionClass;
+use ReflectionFunction;
 use SWF\Event\BeforeAllEvent;
 use SWF\Event\BeforeCommandEvent;
 use SWF\Event\BeforeControllerEvent;
@@ -16,7 +16,7 @@ use SWF\Router\CommandRouter;
 use SWF\Router\ControllerRouter;
 use Throwable;
 
-final class Runner extends AbstractBase
+final class Runner
 {
     private static self $instance;
 
@@ -92,7 +92,7 @@ final class Runner extends AbstractBase
      */
     private function setTimezone(): void
     {
-        ini_set('date.timezone', ConfigProvider::get('system', 'timezone'));
+        ini_set('date.timezone', config('system')->get('timezone'));
     }
 
     /**
@@ -118,11 +118,11 @@ final class Runner extends AbstractBase
      */
     private function getUserUrl(): ?string
     {
-        if (null === ConfigProvider::get('system', 'url')) {
+        if (null === config('system')->get('url')) {
             return null;
         }
 
-        $parsedUrl = parse_url(ConfigProvider::get('system', 'url'));
+        $parsedUrl = parse_url(config('system')->get('url'));
         if (empty($parsedUrl) || !isset($parsedUrl['host'])) {
             throw new InvalidArgumentException('Incorrect URL in configuration');
         }
@@ -153,7 +153,7 @@ final class Runner extends AbstractBase
             return true;
         }
 
-        if (in_array($code, [E_WARNING, E_USER_WARNING, E_STRICT], true) && !ConfigProvider::get('system', 'strict')) {
+        if (in_array($code, [E_WARNING, E_USER_WARNING, E_STRICT], true) && !config('system')->get('strict')) {
             InstanceHolder::get(CommonLogger::class)->warning($message, options: [
                 'file' => $file,
                 'line' => $line,
@@ -167,8 +167,7 @@ final class Runner extends AbstractBase
 
     private function cleanupAndDispatchAtShutdown(): void
     {
-        $sharedClasses = (array) (new ReflectionClass(AbstractBase::class))->getStaticPropertyValue('shared');
-        foreach ($sharedClasses as $class) {
+        foreach ((new ReflectionFunction('shared'))->getStaticVariables()['shared'] as $class) {
             if ($class instanceof DatabaserInterface && $class->isInTrans()) {
                 try {
                     $class->rollback();

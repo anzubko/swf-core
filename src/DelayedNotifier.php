@@ -2,7 +2,7 @@
 
 namespace SWF;
 
-use ReflectionClass;
+use ReflectionFunction;
 use SWF\Event\ShutdownEvent;
 use SWF\Event\TransactionCommitEvent;
 use SWF\Interface\DatabaserInterface;
@@ -30,8 +30,7 @@ final class DelayedNotifier
      */
     public function add(AbstractNotify $notify): void
     {
-        $sharedClasses = (array) (new ReflectionClass(AbstractBase::class))->getStaticPropertyValue('shared');
-        foreach ($sharedClasses as $class) {
+        foreach ((new ReflectionFunction('shared'))->getStaticVariables()['shared'] as $class) {
             if ($class instanceof DatabaserInterface && $class->isInTrans()) {
                 InstanceHolder::get(ListenerProvider::class)->addListener(
                     function (TransactionCommitEvent $event) use ($notify) {
