@@ -20,7 +20,7 @@ final class TransactionRunner
      * @throws DatabaserException
      * @throws Throwable
      */
-    public function run(DatabaserInterface $db, callable $body, ?string $isolation, array $retryAt, int $retries = 7): void
+    public function run(DatabaserInterface $db, callable $body, ?string $isolation, array $retryAt, int $retries = 3): void
     {
         while (--$retries >= 0) {
             try {
