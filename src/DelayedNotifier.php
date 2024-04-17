@@ -17,7 +17,7 @@ final class DelayedNotifier
 
     public function __construct()
     {
-        InstanceHolder::get(ListenerProvider::class)->addListener(
+        ListenerProvider::getInstance()->addListener(
             function (ShutdownEvent $event) {
                 register_shutdown_function($this->sendAll(...));
             },
@@ -32,7 +32,7 @@ final class DelayedNotifier
     {
         foreach ((new ReflectionFunction('shared'))->getStaticVariables()['shared'] as $class) {
             if ($class instanceof DatabaserInterface && $class->isInTrans()) {
-                InstanceHolder::get(ListenerProvider::class)->addListener(
+                ListenerProvider::getInstance()->addListener(
                     function (TransactionCommitEvent $event) use ($notify) {
                         $this->add($notify);
                     },
@@ -55,7 +55,7 @@ final class DelayedNotifier
             try {
                 array_shift($this->notifies)->send();
             } catch (Throwable $e) {
-                InstanceHolder::get(CommonLogger::class)->error($e);
+                CommonLogger::getInstance()->error($e);
             }
         }
     }

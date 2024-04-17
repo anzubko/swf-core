@@ -14,7 +14,7 @@ final class ResponseManager
      *
      * @param string[] $compressMimes
      */
-    public function output(
+    public static function output(
         string $disposition,
         string $contents,
         string $mime,
@@ -59,13 +59,13 @@ final class ResponseManager
         header(sprintf('Content-Length: %s', strlen($contents)));
 
         if (function_exists('fastcgi_finish_request')) {
-            $this->outputAndFlush($contents);
+            self::outputAndFlush($contents);
 
             fastcgi_finish_request();
         } else {
             header('Connection: close');
 
-            $this->outputAndFlush($contents);
+            self::outputAndFlush($contents);
         }
 
         if ($exit) {
@@ -76,7 +76,7 @@ final class ResponseManager
     /**
      * Redirects to specified url.
      */
-    public function redirect(string $uri, int $code = 302, bool $exit = true): void
+    public static function redirect(string $uri, int $code = 302, bool $exit = true): void
     {
         header(sprintf('Location: %s', $uri), response_code: $code);
 
@@ -88,22 +88,22 @@ final class ResponseManager
     /**
      * Shows error page.
      */
-    public function error(int $code): never
+    public static function error(int $code): never
     {
         if (!headers_sent() && !ob_get_length()) {
             http_response_code($code);
 
             try {
-                InstanceHolder::get(EventDispatcher::class)->dispatch(new ResponseErrorEvent($code));
+                EventDispatcher::getInstance()->dispatch(new ResponseErrorEvent($code));
             } catch (Throwable $e) {
-                InstanceHolder::get(CommonLogger::class)->error($e);
+                CommonLogger::getInstance()->error($e);
             }
         }
 
         exit(1);
     }
 
-    private function outputAndFlush(string $contents): void
+    private static function outputAndFlush(string $contents): void
     {
         echo $contents;
 

@@ -20,11 +20,11 @@ final class TransactionRunner
      * @throws DatabaserException
      * @throws Throwable
      */
-    public function run(DatabaserInterface $db, callable $body, ?string $isolation, array $retryAt, int $retries = 3): void
+    public static function run(DatabaserInterface $db, callable $body, ?string $isolation, array $retryAt, int $retries = 3): void
     {
         while (--$retries >= 0) {
             try {
-                InstanceHolder::get(ListenerProvider::class)->removeListenersByType([
+                ListenerProvider::getInstance()->removeListenersByType([
                     TransactionCommitEvent::class,
                     TransactionRollbackEvent::class,
                 ]);
@@ -34,11 +34,11 @@ final class TransactionRunner
                 if (false !== $body()) {
                     $db->commit();
 
-                    InstanceHolder::get(EventDispatcher::class)->dispatch(new TransactionCommitEvent());
+                    EventDispatcher::getInstance()->dispatch(new TransactionCommitEvent());
                 } else {
                     $db->rollback();
 
-                    InstanceHolder::get(EventDispatcher::class)->dispatch(new TransactionRollbackEvent());
+                    EventDispatcher::getInstance()->dispatch(new TransactionRollbackEvent());
                 }
 
                 return;
@@ -52,7 +52,7 @@ final class TransactionRunner
                     throw $e;
                 }
 
-                InstanceHolder::get(EventDispatcher::class)->dispatch(new TransactionFailEvent($e, $retries));
+                EventDispatcher::getInstance()->dispatch(new TransactionFailEvent($e, $retries));
 
                 if ($retries === 0 || !in_array($e->getSqlState(), $retryAt, true)) {
                     throw $e;

@@ -50,15 +50,15 @@ final class Runner
         try {
             $action = ControllerRouter::getInstance()->getCurrentAction();
             if (null === $action) {
-                InstanceHolder::get(ResponseManager::class)->error(404);
+                ResponseManager::error(404);
             }
 
             $_SERVER['ROUTER_TYPE'] = 'controller';
             $_SERVER['ROUTER_ACTION'] = $action[0];
             $_SERVER['ROUTER_ALIAS'] = $action[1];
 
-            InstanceHolder::get(EventDispatcher::class)->dispatch(new BeforeAllEvent());
-            InstanceHolder::get(EventDispatcher::class)->dispatch(new BeforeControllerEvent());
+            EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
+            EventDispatcher::getInstance()->dispatch(new BeforeControllerEvent());
 
             CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();
         } catch (Throwable $e) {
@@ -78,8 +78,8 @@ final class Runner
             $_SERVER['ROUTER_ACTION'] = $action[0];
             $_SERVER['ROUTER_ALIAS'] = $action[1];
 
-            InstanceHolder::get(EventDispatcher::class)->dispatch(new BeforeAllEvent());
-            InstanceHolder::get(EventDispatcher::class)->dispatch(new BeforeCommandEvent());
+            EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
+            EventDispatcher::getInstance()->dispatch(new BeforeCommandEvent());
 
             CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();
         } catch (Throwable $e) {
@@ -145,7 +145,7 @@ final class Runner
         }
 
         if (in_array($code, [E_NOTICE, E_USER_NOTICE, E_DEPRECATED, E_USER_DEPRECATED], true)) {
-            InstanceHolder::get(CommonLogger::class)->notice($message, options: [
+            CommonLogger::getInstance()->notice($message, options: [
                 'file' => $file,
                 'line' => $line,
             ]);
@@ -154,7 +154,7 @@ final class Runner
         }
 
         if (in_array($code, [E_WARNING, E_USER_WARNING, E_STRICT], true) && !config('system')->get('strict')) {
-            InstanceHolder::get(CommonLogger::class)->warning($message, options: [
+            CommonLogger::getInstance()->warning($message, options: [
                 'file' => $file,
                 'line' => $line,
             ]);
@@ -177,26 +177,26 @@ final class Runner
         }
 
         try {
-            InstanceHolder::get(EventDispatcher::class)->dispatch(new ShutdownEvent());
+            EventDispatcher::getInstance()->dispatch(new ShutdownEvent());
         } catch (Throwable $e) {
-            InstanceHolder::get(CommonLogger::class)->error($e);
+            CommonLogger::getInstance()->error($e);
         }
     }
 
     private function terminate(Throwable $e): never
     {
-        InstanceHolder::get(CommonLogger::class)->error($e);
-        InstanceHolder::get(CommonLogger::class)->emergency('Application terminated', options: [
+        CommonLogger::getInstance()->error($e);
+        CommonLogger::getInstance()->emergency('Application terminated', options: [
             'file' => $e->getFile(),
             'line' => $e->getLine(),
         ]);
 
-        InstanceHolder::get(ListenerProvider::class)->removeAllListeners(true);
+        ListenerProvider::getInstance()->removeAllListeners(true);
 
         if ('cli' === PHP_SAPI) {
             exit(1);
         }
 
-        InstanceHolder::get(ResponseManager::class)->error(500);
+        ResponseManager::error(500);
     }
 }

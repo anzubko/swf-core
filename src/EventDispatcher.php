@@ -8,6 +8,17 @@ use Throwable;
 
 final class EventDispatcher implements EventDispatcherInterface
 {
+    private static self $instance;
+
+    private function __construct()
+    {
+    }
+
+    public static function getInstance(): self
+    {
+        return self::$instance ??= new self();
+    }
+
     /**
      * @inheritDoc
      *
@@ -21,7 +32,7 @@ final class EventDispatcher implements EventDispatcherInterface
      */
     public function dispatch(object $event)
     {
-        foreach (InstanceHolder::get(ListenerProvider::class)->getListenersForEvent($event) as $listener) {
+        foreach (ListenerProvider::getInstance()->getListenersForEvent($event) as $listener) {
             if ($event instanceof StoppableEventInterface && $event->isPropagationStopped()) {
                 return $event;
             }

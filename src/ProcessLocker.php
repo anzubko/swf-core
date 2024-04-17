@@ -9,16 +9,23 @@ final class ProcessLocker
 {
     private const DIR = APP_DIR . '/var/locks';
 
+    private static self $instance;
+
     /**
      * @var string[]
      */
     private array $files = [];
 
-    public function __construct()
+    private function __construct()
     {
         if (!DirHandler::create(self::DIR)) {
             throw new RuntimeException(sprintf('Unable to create directory %s', self::DIR));
         }
+    }
+
+    public static function getInstance(): self
+    {
+        return self::$instance ??= new self();
     }
 
     /**

@@ -15,14 +15,21 @@ use function is_string;
 
 final class CommonLogger implements LoggerInterface
 {
+    private static self $instance;
+
     private ?DateTimeZone $timezone = null;
 
-    public function __construct()
+    private function __construct()
     {
         try {
             $this->timezone = new DateTimeZone(config('system')->get('timezone'));
         } catch (Exception) {
         }
+    }
+
+    public static function getInstance(): self
+    {
+        return self::$instance ??= new self();
     }
 
     /**
@@ -134,7 +141,7 @@ final class CommonLogger implements LoggerInterface
         error_log($complexMessage);
 
         try {
-            InstanceHolder::get(EventDispatcher::class)->dispatch(
+            EventDispatcher::getInstance()->dispatch(
                 new LoggerEvent(
                     $level,
                     $complexMessage,

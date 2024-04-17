@@ -56,7 +56,7 @@ final class AssetsMerger
             }
         }
 
-        if (!InstanceHolder::get(ProcessLocker::class)->acquire($this->lockKey)) {
+        if (!ProcessLocker::getInstance()->acquire($this->lockKey)) {
             return $this->getPaths();
         }
 
@@ -64,7 +64,7 @@ final class AssetsMerger
             $this->recombine();
         }
 
-        InstanceHolder::get(ProcessLocker::class)->release($this->lockKey);
+        ProcessLocker::getInstance()->release($this->lockKey);
 
         return $this->getPaths();
     }
