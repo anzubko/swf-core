@@ -7,8 +7,8 @@ abstract class AbstractShared
     /**
      * @internal
      */
-    protected function getInstance(): object
+    protected static function getInstance(): object
     {
-        return $this;
+        return new static(); // @phpstan-ignore-line
     }
 }

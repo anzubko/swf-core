@@ -12,7 +12,7 @@ function shared(string $className): mixed
 {
     static $shared = [];
 
-    return $shared[$className] ??= (new ReflectionClass($className))->getMethod('getInstance')->invoke(new $className);
+    return $shared[$className] ??= (new ReflectionClass($className))->getMethod('getInstance')->invoke(null);
 }
 
 /**
