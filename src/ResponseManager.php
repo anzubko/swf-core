@@ -2,70 +2,55 @@
 
 namespace SWF;
 
+use SWF\Event\BeforeResponseSendEvent;
 use SWF\Event\ResponseErrorEvent;
 use Throwable;
-use function in_array;
-use function strlen;
+use function is_resource;
+use function is_string;
 
 final class ResponseManager
 {
+    private static HeaderRegistry $headers;
+
     /**
-     * Base method for outputs.
-     *
-     * @param string[] $compressMimes
+     * Returns headers registry.
      */
-    public static function output(
-        string $disposition,
-        string $contents,
-        string $mime,
-        int $code,
-        int $expire,
-        ?string $filename,
-        array $compressMimes = [],
-        int $compressMin = 32 * 1024,
-        bool $exit = true,
-    ): void {
-        ini_set('zlib.output_compression', false);
+    public static function headers(): HeaderRegistry
+    {
+        return self::$headers ??= new HeaderRegistry();
+    }
+
+    /**
+     * Sends response.
+     *
+     * @param string|resource $body
+     *
+     * @throws Throwable
+     */
+    public static function send(mixed $body, int $code = 200, bool $exit = true): void
+    {
+        while (ob_get_length()) {
+            ob_end_clean();
+        }
+
+        $body = EventDispatcher::getInstance()->dispatch(new BeforeResponseSendEvent(self::$headers, $body))->getBody();
 
         http_response_code($code);
 
-        header(sprintf('Last-Modified: %s', gmdate('D, d M Y H:i:s \G\M\T', (int) APP_STARTED)));
-        header(sprintf('Cache-Control: private, max-age=%s', $expire));
-        header(sprintf('Content-Type: %s; charset=utf-8', $mime));
-
-        if (null !== $filename) {
-            header(sprintf('Content-Disposition: %s; filename="%s"', $disposition, $filename));
-        } else {
-            header(sprintf('Content-Disposition: %s', $disposition));
+        foreach (self::headers()->getAllLines() as $line) {
+            header($line);
         }
 
-        if (
-            strlen($contents) > $compressMin
-            && in_array($mime, $compressMimes, true)
-            && preg_match('/(deflate|gzip)/', $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '', $M)
-        ) {
-            if ('gzip' === $M[1]) {
-                $contents = (string) gzencode($contents, 1);
-            } else {
-                $contents = (string) gzdeflate($contents, 1);
-            }
-
-            header(sprintf('Content-Encoding: %s', $M[1]));
-            header('Vary: Accept-Encoding');
-        } else {
-            header('Content-Encoding: none');
+        if (is_resource($body)) {
+            fpassthru($body);
+        } elseif (is_string($body)) {
+            echo $body;
         }
 
-        header(sprintf('Content-Length: %s', strlen($contents)));
+        flush();
 
         if (function_exists('fastcgi_finish_request')) {
-            self::outputAndFlush($contents);
-
             fastcgi_finish_request();
-        } else {
-            header('Connection: close');
-
-            self::outputAndFlush($contents);
         }
 
         if ($exit) {
@@ -76,9 +61,9 @@ final class ResponseManager
     /**
      * Redirects to specified url.
      */
-    public static function redirect(string $uri, int $code = 302, bool $exit = true): void
+    public static function redirect(string $url, int $code = 302, bool $exit = true): void
     {
-        header(sprintf('Location: %s', $uri), response_code: $code);
+        header(sprintf('Location: %s', $url), true, $code);
 
         if ($exit) {
             exit(0);
@@ -86,7 +71,7 @@ final class ResponseManager
     }
 
     /**
-     * Shows error page.
+     * Shows error page and exit.
      */
     public static function error(int $code): never
     {
@@ -101,16 +86,5 @@ final class ResponseManager
         }
 
         exit(1);
-    }
-
-    private static function outputAndFlush(string $contents): void
-    {
-        echo $contents;
-
-        while (ob_get_length()) {
-            ob_end_flush();
-        }
-
-        flush();
     }
 }

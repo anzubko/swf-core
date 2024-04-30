@@ -5,7 +5,7 @@ namespace SWF;
 use InvalidArgumentException;
 use LogicException;
 use ReflectionFunction;
-use SWF\Event\BeforeAllEvent;
+use SWF\Event\BeforeActionEvent;
 use SWF\Event\BeforeCommandEvent;
 use SWF\Event\BeforeControllerEvent;
 use SWF\Event\ShutdownEvent;
@@ -57,7 +57,7 @@ final class Runner
             $_SERVER['ROUTER_ACTION'] = $action[0];
             $_SERVER['ROUTER_ALIAS'] = $action[1];
 
-            EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
+            EventDispatcher::getInstance()->dispatch(new BeforeActionEvent());
             EventDispatcher::getInstance()->dispatch(new BeforeControllerEvent());
 
             CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();
@@ -78,7 +78,7 @@ final class Runner
             $_SERVER['ROUTER_ACTION'] = $action[0];
             $_SERVER['ROUTER_ALIAS'] = $action[1];
 
-            EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
+            EventDispatcher::getInstance()->dispatch(new BeforeActionEvent());
             EventDispatcher::getInstance()->dispatch(new BeforeCommandEvent());
 
             CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();

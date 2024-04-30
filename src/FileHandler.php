@@ -82,7 +82,7 @@ final class FileHandler
     /**
      * Getting some file statistics.
      *
-     * @return array{name:string, size:int, modified:int, created:int, w:int, h:int, mime:string|null}|null
+     * @return array{name:string, size:int, modified:int, created:int, w:int, h:int, type:string|null}|null
      */
     public static function stats(string $file): ?array
     {
@@ -103,7 +103,7 @@ final class FileHandler
             'created' => $fileStats['ctime'],
             'w' => $imageSize[0] ?? 0,
             'h' => $imageSize[1] ?? 0,
-            'mime' => $imageSize['mime'] ?? null,
+            'type' => $imageSize['mime'] ?? null,
         ];
     }
 }

@@ -31,7 +31,6 @@
         "anzubko/swf-cacher": "^0",
         "anzubko/swf-databaser": "^0",
         "anzubko/swf-paginator": "^0",
-        "anzubko/swf-templater": "^0",
-        "anzubko/swf-http": "^0"
+        "anzubko/swf-templater": "^0"
     }
 }

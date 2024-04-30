@@ -2,9 +2,7 @@
 
 namespace SWF\Event;
 
-use Psr\Log\LogLevel;
 use SWF\AbstractEvent;
-use Throwable;
 
 /**
  * Emits at response error (only if headers not sent yet).

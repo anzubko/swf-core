@@ -5,7 +5,7 @@ namespace SWF\Event;
 use SWF\AbstractEvent;
 
 /**
- * Emits before controller call.
+ * Emits before controller action.
  */
 class BeforeControllerEvent extends AbstractEvent
 {
