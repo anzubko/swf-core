@@ -8,7 +8,7 @@ use SWF\HeaderRegistry;
 /**
  * Emits before response sending.
  */
-class BeforeResponseSendEvent extends AbstractEvent
+class BeforeResponseEvent extends AbstractEvent
 {
     /**
      * @param string|resource $body

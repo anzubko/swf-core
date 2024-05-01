@@ -2,14 +2,14 @@
 
 namespace SWF;
 
+use Exception;
 use InvalidArgumentException;
 use LogicException;
 use ReflectionFunction;
-use SWF\Event\BeforeActionEvent;
+use SWF\Event\BeforeAllEvent;
 use SWF\Event\BeforeCommandEvent;
 use SWF\Event\BeforeControllerEvent;
 use SWF\Event\ShutdownEvent;
-use SWF\Exception\CoreException;
 use SWF\Exception\DatabaserException;
 use SWF\Interface\DatabaserInterface;
 use SWF\Router\CommandRouter;
@@ -57,7 +57,7 @@ final class Runner
             $_SERVER['ROUTER_ACTION'] = $action[0];
             $_SERVER['ROUTER_ALIAS'] = $action[1];
 
-            EventDispatcher::getInstance()->dispatch(new BeforeActionEvent());
+            EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
             EventDispatcher::getInstance()->dispatch(new BeforeControllerEvent());
 
             CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();
@@ -78,7 +78,7 @@ final class Runner
             $_SERVER['ROUTER_ACTION'] = $action[0];
             $_SERVER['ROUTER_ALIAS'] = $action[1];
 
-            EventDispatcher::getInstance()->dispatch(new BeforeActionEvent());
+            EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
             EventDispatcher::getInstance()->dispatch(new BeforeCommandEvent());
 
             CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();
@@ -136,7 +136,7 @@ final class Runner
     }
 
     /**
-     * @throws CoreException
+     * @throws Exception
      */
     private function errorHandler(int $code, string $message, string $file, int $line): bool
     {
@@ -162,7 +162,7 @@ final class Runner
             return true;
         }
 
-        throw (new CoreException($message))->setFileAndLine($file, $line);
+        throw ExceptionHandler::overrideFileAndLine(new Exception($message), $file, $line);
     }
 
     private function cleanupAndDispatchAtShutdown(): void

@@ -2,7 +2,7 @@
 
 namespace SWF;
 
-use SWF\Event\BeforeResponseSendEvent;
+use SWF\Event\BeforeResponseEvent;
 use SWF\Event\ResponseErrorEvent;
 use Throwable;
 use function is_resource;
@@ -29,11 +29,7 @@ final class ResponseManager
      */
     public static function send(mixed $body, int $code = 200, bool $exit = true): void
     {
-        while (ob_get_length()) {
-            ob_end_clean();
-        }
-
-        $body = EventDispatcher::getInstance()->dispatch(new BeforeResponseSendEvent(self::$headers, $body))->getBody();
+        $body = EventDispatcher::getInstance()->dispatch(new BeforeResponseEvent(self::$headers, $body))->getBody();
 
         http_response_code($code);
 
@@ -46,8 +42,6 @@ final class ResponseManager
         } elseif (is_string($body)) {
             echo $body;
         }
-
-        flush();
 
         if (function_exists('fastcgi_finish_request')) {
             fastcgi_finish_request();
@@ -75,14 +69,20 @@ final class ResponseManager
      */
     public static function error(int $code): never
     {
-        if (!headers_sent() && !ob_get_length()) {
-            http_response_code($code);
+        if (headers_sent()) {
+            exit(1);
+        }
 
-            try {
-                EventDispatcher::getInstance()->dispatch(new ResponseErrorEvent($code));
-            } catch (Throwable $e) {
-                CommonLogger::getInstance()->error($e);
-            }
+        while (ob_get_length()) {
+            ob_end_clean();
+        }
+
+        http_response_code($code);
+
+        try {
+            EventDispatcher::getInstance()->dispatch(new ResponseErrorEvent($code));
+        } catch (Throwable $e) {
+            CommonLogger::getInstance()->error($e);
         }
 
         exit(1);

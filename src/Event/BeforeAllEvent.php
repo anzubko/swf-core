@@ -7,6 +7,6 @@ use SWF\AbstractEvent;
 /**
  * Emits before command or controller action.
  */
-class BeforeActionEvent extends AbstractEvent
+class BeforeAllEvent extends AbstractEvent
 {
 }
