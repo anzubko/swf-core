@@ -2,9 +2,12 @@
 
 namespace SWF;
 
+use DateInterval;
+use DateTime;
 use DateTimeInterface;
 use function array_key_exists;
-use function count;
+use function is_int;
+use function is_numeric;
 
 final class HeaderRegistry
 {
@@ -87,34 +90,6 @@ final class HeaderRegistry
     }
 
     /**
-     * Checks header exists by all keys.
-     */
-    public function hasAll(string ...$keys): bool
-    {
-        foreach ($keys as $key) {
-            if (!array_key_exists(strtolower($key), $this->headers)) {
-                return false;
-            }
-        }
-
-        return count($keys) > 0;
-    }
-
-    /**
-     * Checks header exists by any keys.
-     */
-    public function hasAny(string ...$keys): bool
-    {
-        foreach ($keys as $key) {
-            if (array_key_exists(strtolower($key), $this->headers)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Remove header by key.
      */
     public function remove(string ...$keys): self
@@ -174,17 +149,13 @@ final class HeaderRegistry
     /**
      * Sets last modified header.
      */
-    public function setLastModified(DateTimeInterface|int $modified, bool $overwrite = true): self
+    public function setLastModified(DateTimeInterface|string|int $modified, bool $overwrite = true): self
     {
         if (!$overwrite && array_key_exists('last-modified', $this->headers)) {
             return $this;
         }
 
-        if ($modified instanceof DateTimeInterface) {
-            $modified = $modified->getTimestamp();
-        }
-
-        $this->headers['last-modified'] = [gmdate('D, d M Y H:i:s \G\M\T', $modified)];
+        $this->headers['last-modified'] = [$this->normalizeDatetime($modified)];
 
         return $this;
     }
@@ -192,17 +163,13 @@ final class HeaderRegistry
     /**
      * Sets expires header.
      */
-    public function setExpires(DateTimeInterface|int $expires, bool $overwrite = true): self
+    public function setExpires(DateTimeInterface|string|int $expires, bool $overwrite = true): self
     {
         if (!$overwrite && array_key_exists('expires', $this->headers)) {
             return $this;
         }
 
-        if ($expires instanceof DateTimeInterface) {
-            $expires = $expires->getTimestamp();
-        }
-
-        $this->headers['expires'] = [gmdate('D, d M Y H:i:s \G\M\T', $expires)];
+        $this->headers['expires'] = [$this->normalizeDatetime($expires)];
 
         return $this;
     }
@@ -241,5 +208,110 @@ final class HeaderRegistry
         }
 
         return $this;
+    }
+
+    /**
+     * Sets cache control header.
+     *
+     * @param mixed[] $options
+     */
+    public function setCacheControl(array $options = [], bool $overwrite = true): self
+    {
+        if (!$overwrite && array_key_exists('cache-control', $this->headers)) {
+            return $this;
+        }
+
+        $this->headers['cache-control'] = [];
+
+        return $this->addCacheControl($options);
+    }
+
+    /**
+     * Adds cache control header.
+     *
+     * @param mixed[] $options
+     */
+    public function addCacheControl(array $options = []): self
+    {
+        $options = array_change_key_case($options);
+
+        foreach (['max-age', 's-maxage', 'max-stale', 'min-fresh', 'stale-while-revalidate', 'stale-if-error'] as $field) {
+            if (array_key_exists($field, $options)) {
+                $options[$field] = $this->normalizeInterval($options[$field]);
+            }
+        }
+
+        foreach ($options as $key => $oValue) {
+            if (is_int($key)) {
+                $this->headers['cache-control'][] = $oValue;
+            } else {
+                $this->headers['cache-control'][] = sprintf('%s=%s', $key, $oValue);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Adds cookie header.
+     *
+     * @param mixed[] $options
+     */
+    public function addCookie(string $name, ?string $value, array $options = []): self
+    {
+        $options = array_change_key_case($options);
+
+        $options['path'] ??= '/';
+
+        $chunks = [];
+        if (null === $value) {
+            $chunks[] = sprintf('%s=deleted', $name);
+
+            $options['max-age'] = 0;
+        } elseif ($options['raw'] ?? false) {
+            $chunks[] = sprintf('%s=%s', $name, rawurlencode($value));
+        } else {
+            $chunks[] = sprintf('%s=%s', $name, $value);
+        }
+
+        if (array_key_exists('max-age', $options)) {
+            $options['max-age'] = $this->normalizeInterval($options['max-age']);
+        }
+
+        if (array_key_exists('expires', $options)) {
+            $options['expires'] = $this->normalizeDatetime($options['expires']);
+        }
+
+        foreach ($options as $key => $oValue) {
+            if (is_int($key)) {
+                $chunks[] = $oValue;
+            } else {
+                $chunks[] = sprintf('%s=%s', $key, $oValue);
+            }
+        }
+
+        $this->headers['set-cookie'][] = implode('; ', $chunks);
+
+        return $this;
+    }
+
+    private function normalizeInterval(mixed $value): int
+    {
+        if ($value instanceof DateInterval) {
+            return (new DateTime())->setTimestamp(0)->add($value)->getTimestamp();
+        }
+
+        return (int) $value;
+    }
+
+    private function normalizeDatetime(mixed $value): string
+    {
+        if ($value instanceof DateTimeInterface) {
+            $value = $value->getTimestamp();
+        } elseif (!is_numeric($value)) {
+            $value = strtotime($value);
+        }
+
+        return gmdate('D, d M Y H:i:s T', (int) $value);
     }
 }
