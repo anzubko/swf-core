@@ -268,10 +268,8 @@ final class HeaderRegistry
             $chunks[] = sprintf('%s=deleted', $name);
 
             $options['max-age'] = 0;
-        } elseif ($options['raw'] ?? false) {
-            $chunks[] = sprintf('%s=%s', $name, rawurlencode($value));
         } else {
-            $chunks[] = sprintf('%s=%s', $name, $value);
+            $chunks[] = sprintf('%s=%s', $name, ($options['raw'] ?? false) ? $value : rawurlencode($value));
         }
 
         if (array_key_exists('max-age', $options)) {
