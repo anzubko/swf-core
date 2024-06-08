@@ -9,7 +9,7 @@ use JsonException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Stringable;
-use SWF\Event\LoggerEvent;
+use SWF\Event\LogEvent;
 use Throwable;
 use function is_string;
 
@@ -142,11 +142,11 @@ final class CommonLogger implements LoggerInterface
 
         try {
             EventDispatcher::getInstance()->dispatch(
-                new LoggerEvent(
+                new LogEvent(
                     $level,
                     $complexMessage,
                     $message instanceof Throwable ? $message : null,
-                )
+                ),
             );
         } catch (Throwable) {
         }

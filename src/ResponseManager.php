@@ -2,8 +2,8 @@
 
 namespace SWF;
 
-use SWF\Event\BeforeResponseEvent;
-use SWF\Event\ResponseErrorEvent;
+use SWF\Event\ResponseEvent;
+use SWF\Event\HttpErrorEvent;
 use Throwable;
 use function is_resource;
 use function is_string;
@@ -29,7 +29,7 @@ final class ResponseManager
      */
     public static function send(mixed $body, int $code = 200, bool $exit = true): void
     {
-        $body = EventDispatcher::getInstance()->dispatch(new BeforeResponseEvent(self::$headers, $body))->getBody();
+        $body = EventDispatcher::getInstance()->dispatch(new ResponseEvent(self::$headers, $body))->getBody();
 
         http_response_code($code);
 
@@ -80,7 +80,7 @@ final class ResponseManager
         http_response_code($code);
 
         try {
-            EventDispatcher::getInstance()->dispatch(new ResponseErrorEvent($code));
+            EventDispatcher::getInstance()->dispatch(new HttpErrorEvent($code));
         } catch (Throwable $e) {
             CommonLogger::getInstance()->error($e);
         }
