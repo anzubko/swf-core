@@ -12,8 +12,6 @@ use SWF\Event\BeforeControllerEvent;
 use SWF\Event\ShutdownEvent;
 use SWF\Exception\DatabaserException;
 use SWF\Interface\DatabaserInterface;
-use SWF\Router\CommandRouter;
-use SWF\Router\ControllerRouter;
 use Throwable;
 
 final class Runner
@@ -40,15 +38,13 @@ final class Runner
             $this->terminate($e);
         }
 
-        register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
-
         self::$instance = $this;
     }
 
     public function runController(): void
     {
         try {
-            $action = ControllerRouter::getInstance()->getCurrentAction();
+            $action = ControllerProvider::getInstance()->getCurrentAction();
             if (null === $action) {
                 ResponseManager::error(404);
             }
@@ -56,6 +52,8 @@ final class Runner
             $_SERVER['ROUTER_TYPE'] = 'controller';
             $_SERVER['ROUTER_ACTION'] = $action[0];
             $_SERVER['ROUTER_ALIAS'] = $action[1];
+
+            register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
 
             EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
             EventDispatcher::getInstance()->dispatch(new BeforeControllerEvent());
@@ -69,7 +67,7 @@ final class Runner
     public function runCommand(): void
     {
         try {
-            $action = CommandRouter::getInstance()->getCurrentAction();
+            $action = CommandProvider::getInstance()->getCurrentAction();
             if (null === $action) {
                 throw new InvalidArgumentException('Command not found');
             }
@@ -77,6 +75,8 @@ final class Runner
             $_SERVER['ROUTER_TYPE'] = 'command';
             $_SERVER['ROUTER_ACTION'] = $action[0];
             $_SERVER['ROUTER_ALIAS'] = $action[1];
+
+            register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
 
             EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
             EventDispatcher::getInstance()->dispatch(new BeforeCommandEvent());

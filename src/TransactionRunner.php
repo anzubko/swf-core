@@ -54,7 +54,7 @@ final class TransactionRunner
 
                 EventDispatcher::getInstance()->dispatch(new TransactionFailEvent($e, $retries));
 
-                if ($retries === 0 || !in_array($e->getSqlState(), $retryAt, true)) {
+                if (0 === $retries || !in_array($e->getSqlState(), $retryAt, true)) {
                     throw $e;
                 }
             }

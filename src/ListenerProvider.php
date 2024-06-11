@@ -4,18 +4,20 @@ namespace SWF;
 
 use InvalidArgumentException;
 use Psr\EventDispatcher\ListenerProviderInterface;
-use SWF\Router\ListenerRouter;
+use ReflectionFunction;
 use Throwable;
+use function count;
+use function in_array;
 
 final class ListenerProvider implements ListenerProviderInterface
 {
-    private static self $instance;
+    private static ActionCache $cache;
 
-    private ListenerRouter $listenerRouter;
+    private static self $instance;
 
     private function __construct()
     {
-        $this->listenerRouter = ListenerRouter::getInstance();
+        self::$cache = ActionManager::getInstance()->getCache(ListenerProcessor::class);
     }
 
     public static function getInstance(): self
@@ -33,17 +35,32 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function addListener(callable $callback, bool $disposable = false, bool $persistent = false): void
     {
-        $this->listenerRouter->add($callback, $disposable, $persistent);
+        $params = (new ReflectionFunction($callback(...)))->getParameters();
+        $type = count($params) === 0 ? null : $params[0]->getType();
+        if (null === $type) {
+            throw new InvalidArgumentException('Listener must have first parameter with declared type');
+        }
+
+        self::$cache->data['listeners'][] = [
+            'callback' => $callback,
+            'type' => (string) $type,
+            'disposable' => $disposable,
+            'persistent' => $persistent,
+        ];
     }
 
     /**
      * Removes listeners by event type.
      *
-     * @param string|string[] $type
+     * @param string|string[] $types
      */
-    public function removeListenersByType(array|string $type, bool $force = false): void
+    public function removeListenersByType(array|string $types, bool $force = false): void
     {
-        $this->listenerRouter->removeByTypes((array) $type, $force);
+        foreach (self::$cache->data['listeners'] as $i => $listener) {
+            if (($force || !$listener['persistent']) && in_array($listener['type'], (array) $types, true)) {
+                unset(self::$cache->data['listeners'][$i]);
+            }
+        }
     }
 
     /**
@@ -51,7 +68,15 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function removeAllListeners(bool $force = false): void
     {
-        $this->listenerRouter->removeAll($force);
+        if ($force) {
+            self::$cache->data['listeners'] = [];
+        } else {
+            foreach (self::$cache->data['listeners'] as $i => $listener) {
+                if (!$listener['persistent']) {
+                    unset(self::$cache->data['listeners'][$i]);
+                }
+            }
+        }
     }
 
     /**
@@ -63,6 +88,18 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function getListenersForEvent(object $event): iterable
     {
-        yield from $this->listenerRouter->getForEvent($event);
+        foreach (self::$cache->data['listeners'] as $i => &$listener) {
+            if (!$event instanceof $listener['type']) {
+                continue;
+            }
+
+            $listener['callback'] = CallbackHandler::normalize($listener['callback']);
+
+            if ($listener['disposable']) {
+                unset(self::$cache->data['listeners'][$i]);
+            }
+
+            yield $listener['callback'];
+        }
     }
 }
