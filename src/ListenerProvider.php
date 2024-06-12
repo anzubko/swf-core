@@ -3,8 +3,10 @@
 namespace SWF;
 
 use InvalidArgumentException;
+use LogicException;
 use Psr\EventDispatcher\ListenerProviderInterface;
 use ReflectionFunction;
+use RuntimeException;
 use Throwable;
 use function count;
 use function in_array;
@@ -15,11 +17,19 @@ final class ListenerProvider implements ListenerProviderInterface
 
     private static self $instance;
 
+    /**
+     * @throws LogicException
+     * @throws RuntimeException
+     */
     private function __construct()
     {
         self::$cache = ActionManager::getInstance()->getCache(ListenerProcessor::class);
     }
 
+    /**
+     * @throws LogicException
+     * @throws RuntimeException
+     */
     public static function getInstance(): self
     {
         return self::$instance ??= new self();

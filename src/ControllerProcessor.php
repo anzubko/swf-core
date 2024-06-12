@@ -9,7 +9,7 @@ use function is_string;
 
 final class ControllerProcessor extends AbstractActionProcessor
 {
-    protected string $cacheFile = APP_DIR . '/var/cache/.swf/controllers.php';
+    protected string $cacheFile = APP_DIR . '/var/cache/.swf/actions/controllers.php';
 
     public function initializeCache(): ActionCache
     {
@@ -52,11 +52,7 @@ final class ControllerProcessor extends AbstractActionProcessor
             if (preg_match_all('/{([^}]+)}/', $url, $M)) {
                 unset($cache->data['static'][$url]);
 
-                $regex[] = sprintf(
-                    '%s(*:%d)',
-                    preg_replace('/\\\\{[^}]+}/', '([^/]+)', preg_quote($url)),
-                    count($cache->data['dynamic']),
-                );
+                $regex[] = sprintf('%s(*:%d)', preg_replace('/\\\\{[^}]+}/', '([^/]+)', preg_quote($url)), count($cache->data['dynamic']));
 
                 $cache->data['dynamic'][] = [$actions, $M[1]];
 

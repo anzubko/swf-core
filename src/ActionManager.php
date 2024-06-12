@@ -3,6 +3,7 @@
 namespace SWF;
 
 use Composer\Autoload\ClassLoader;
+use LogicException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
@@ -14,6 +15,8 @@ use function is_array;
 final class ActionManager
 {
     private string $metricsFile = APP_DIR . '/var/cache/.swf/actions.metrics.php';
+
+    private string $lockKey = '.swf.action.manager';
 
     /**
      * @var AbstractActionProcessor[]
@@ -38,17 +41,18 @@ final class ActionManager
     private static self $instance;
 
     /**
+     * @throws LogicException
      * @throws RuntimeException
      */
     private function __construct()
     {
-        $this->allowedNss = config('system')->get('namespaces');
-
         $this->processors = [
             new CommandProcessor(),
             new ControllerProcessor(),
             new ListenerProcessor(),
         ];
+
+        $this->allowedNss = config('system')->get('namespaces');
 
         if ('prod' === config('system')->get('env')) {
             if ($this->readCaches()) {
@@ -60,9 +64,17 @@ final class ActionManager
             }
         }
 
+        LocalLocker::getInstance()->acquire($this->lockKey);
+
         $this->rebuild();
+
+        LocalLocker::getInstance()->release($this->lockKey);
     }
 
+    /**
+     * @throws LogicException
+     * @throws RuntimeException
+     */
     public static function getInstance(): self
     {
         return self::$instance ??= new self();
@@ -86,7 +98,7 @@ final class ActionManager
             return false;
         }
 
-        $this->findClassesFiles();
+        $this->scanForClassesFiles();
 
         if (count($this->classesFiles) !== $metrics['count']) {
             return false;
@@ -103,6 +115,7 @@ final class ActionManager
 
     private function readCaches(): bool
     {
+        $this->caches = [];
         foreach ($this->processors as $processor) {
             $cache = @include $processor->getCacheFile();
             if (!is_array($cache)) {
@@ -122,12 +135,13 @@ final class ActionManager
      */
     private function rebuild(): void
     {
-        $this->findClassesFiles();
+        $this->scanForClassesFiles();
 
         foreach ($this->classesFiles as $file => $mTime) {
             require_once $file;
         }
 
+        $this->caches = [];
         foreach ($this->processors as $processor) {
             $this->caches[$processor::class] = $processor->initializeCache();
         }
@@ -149,9 +163,7 @@ final class ActionManager
             $processor->saveCache($this->caches[$processor::class]);
         }
 
-        $metric = ['time' => time(), 'count' => count($this->classesFiles)];
-
-        if (!FileHandler::putVar($this->metricsFile, $metric, LOCK_EX)) {
+        if (!FileHandler::putVar($this->metricsFile, ['time' => time(), 'count' => count($this->classesFiles)])) {
             throw new RuntimeException(sprintf('Unable to write file %s', $this->metricsFile));
         }
     }
@@ -159,7 +171,7 @@ final class ActionManager
     /**
      * @throws RuntimeException
      */
-    private function findClassesFiles(): void
+    private function scanForClassesFiles(): void
     {
         if (isset($this->classesFiles)) {
             return;
@@ -176,9 +188,11 @@ final class ActionManager
             foreach ($dirs as $dir) {
                 /** @var RecursiveDirectoryIterator $info */
                 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir)) as $info) {
-                    if ($info->isFile() && false !== $info->getMTime() && 'php' === $info->getExtension()) {
-                        $this->classesFiles[$info->getPathname()] = $info->getMTime();
+                    if (!$info->isFile() || false === $info->getMTime() || 'php' !== $info->getExtension()) {
+                        continue;
                     }
+
+                    $this->classesFiles[$info->getPathname()] = $info->getMTime();
                 }
             }
         }
@@ -190,11 +204,13 @@ final class ActionManager
     private function getLoader(): ClassLoader
     {
         foreach (get_declared_classes() as $className) {
-            if (str_starts_with($className, 'ComposerAutoloaderInit')) {
-                $loaderGetter = sprintf('%s::getLoader', $className);
-                if (is_callable($loaderGetter)) {
-                    return $loaderGetter();
-                }
+            if (!str_starts_with($className, 'ComposerAutoloaderInit')) {
+                continue;
+            }
+
+            $loaderGetter = sprintf('%s::getLoader', $className);
+            if (is_callable($loaderGetter)) {
+                return $loaderGetter();
             }
         }
 

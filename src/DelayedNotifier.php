@@ -2,7 +2,9 @@
 
 namespace SWF;
 
+use LogicException;
 use ReflectionFunction;
+use RuntimeException;
 use SWF\Event\ShutdownEvent;
 use SWF\Event\TransactionCommitEvent;
 use SWF\Interface\DatabaserInterface;
@@ -15,6 +17,10 @@ final class DelayedNotifier
      */
     private array $notifies = [];
 
+    /**
+     * @throws LogicException
+     * @throws RuntimeException
+     */
     public function __construct()
     {
         ListenerProvider::getInstance()->addListener(
@@ -27,6 +33,9 @@ final class DelayedNotifier
 
     /**
      * Adds notify to queue only if current transaction successful commit, or it's called outside of transaction.
+     *
+     * @throws LogicException
+     * @throws RuntimeException
      */
     public function add(AbstractNotify $notify): void
     {

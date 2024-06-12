@@ -25,7 +25,7 @@ abstract class AbstractActionProcessor
      */
     public function saveCache(ActionCache $cache): void
     {
-        if (!FileHandler::putVar($this->cacheFile, $cache->data, LOCK_EX)) {
+        if (!FileHandler::putVar($this->cacheFile, $cache->data)) {
             throw new RuntimeException(sprintf('Unable to write file %s', $this->cacheFile));
         }
     }

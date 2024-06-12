@@ -31,14 +31,15 @@ final class FileHandler
      */
     public static function putVar(string $file, mixed $variable, int $flags = 0, bool $createDir = true): bool
     {
-        $contents = sprintf("<?php\n\nreturn %s;\n", var_export($variable, true));
+        if (!self::put($file, sprintf("<?php\n\nreturn %s;\n", var_export($variable, true)), $flags, $createDir)) {
+            return false;
+        }
 
-        $success = self::put($file, $contents, $flags, $createDir);
-        if ($success && extension_loaded('zend-opcache')) {
+        if (extension_loaded('zend-opcache')) {
             opcache_invalidate($file, true);
         }
 
-        return $success;
+        return true;
     }
 
     /**

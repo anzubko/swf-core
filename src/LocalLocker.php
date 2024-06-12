@@ -4,18 +4,22 @@ namespace SWF;
 
 use LogicException;
 use RuntimeException;
+use function array_key_exists;
 
-final class ProcessLocker
+final class LocalLocker
 {
     private const DIR = APP_DIR . '/var/locks';
 
     private static self $instance;
 
     /**
-     * @var string[]
+     * @var array<array{file:string, handle:resource}>
      */
     private array $files = [];
 
+    /**
+     * @throws RuntimeException
+     */
     private function __construct()
     {
         if (!DirHandler::create(self::DIR)) {
@@ -23,6 +27,9 @@ final class ProcessLocker
         }
     }
 
+    /**
+     * @throws RuntimeException
+     */
     public static function getInstance(): self
     {
         return self::$instance ??= new self();
@@ -34,7 +41,7 @@ final class ProcessLocker
      * @throws LogicException
      * @throws RuntimeException
      */
-    public function acquire(string $key): bool
+    public function acquire(string $key, bool $wait = true): bool
     {
         if (isset($this->files[$key])) {
             throw new LogicException(sprintf('You already have lock with key: %s', $key));
@@ -47,11 +54,17 @@ final class ProcessLocker
             throw new RuntimeException(sprintf('Unable to open file %s', $file));
         }
 
-        if (!flock($handle, LOCK_EX | LOCK_NB)) {
-            return false;
+        if ($wait) {
+            if (!flock($handle, LOCK_EX)) {
+                throw new RuntimeException(sprintf('Unable to lock file %s', $file));
+            }
+        } else {
+            if (!flock($handle, LOCK_EX | LOCK_NB)) {
+                return false;
+            }
         }
 
-        $this->files[$key] = $file;
+        $this->files[$key] = ['file' => $file, 'handle' => $handle];
 
         return true;
     }
@@ -64,12 +77,12 @@ final class ProcessLocker
      */
     public function release(string $key): void
     {
-        if (!isset($this->files[$key])) {
-            throw new LogicException(sprintf("Lock with key '%s' is not exists", $key));
+        if (!array_key_exists($key, $this->files)) {
+            throw new LogicException(sprintf('Lock with key %s is not exists', $key));
         }
 
-        if (!unlink($this->files[$key])) {
-            throw new RuntimeException(sprintf('Unable to delete file %s', $this->files[$key]));
+        if (!flock($this->files[$key]['handle'], LOCK_UN)) {
+            throw new RuntimeException(sprintf('Unable to unlock file %s', $this->files[$key]['file']));
         }
 
         unset($this->files[$key]);

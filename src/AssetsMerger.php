@@ -34,7 +34,7 @@ final class AssetsMerger
         private readonly string $docRoot,
         private readonly string $cacheFile,
         private readonly array $assets = [],
-        private readonly string $lockKey = 'merger',
+        private readonly string $lockKey = '.swf.assets.merger',
     ) {
     }
 
@@ -56,15 +56,13 @@ final class AssetsMerger
             }
         }
 
-        if (!ProcessLocker::getInstance()->acquire($this->lockKey)) {
-            return $this->getPaths();
-        }
+        LocalLocker::getInstance()->acquire($this->lockKey);
 
         if ($this->isOutdated()) {
             $this->recombine();
         }
 
-        ProcessLocker::getInstance()->release($this->lockKey);
+        LocalLocker::getInstance()->release($this->lockKey);
 
         return $this->getPaths();
     }
@@ -74,11 +72,9 @@ final class AssetsMerger
      */
     private function getPaths(): array
     {
-        $time = isset($this->cache) ? $this->cache['time'] : 0;
-
         $paths = [];
         foreach ($this->assets as $target => $files) {
-            $paths[$target] = sprintf('%s/%s.%s', $this->location, $time, $target);
+            $paths[$target] = sprintf('%s/%s.%s', $this->location, $this->cache['time'], $target);
         }
 
         return $paths;
@@ -115,11 +111,11 @@ final class AssetsMerger
 
         $targets = [];
         foreach (DirHandler::scan($this->dir, false, true) as $item) {
-            if (is_file($item) && preg_match('~/(\d+)\.(.+)$~', $item, $M) && (int) $M[1] === $this->cache['time']) {
-                $targets[] = $M[2];
-            } else {
+            if (!is_file($item) || !preg_match('~/(\d+)\.(.+)$~', $item, $M) || (int) $M[1] !== $this->cache['time']) {
                 return true;
             }
+
+            $targets[] = $M[2];
         }
 
         $this->scanForFiles();

@@ -2,6 +2,8 @@
 
 namespace SWF;
 
+use LogicException;
+use RuntimeException;
 use function count;
 use function is_string;
 
@@ -11,11 +13,19 @@ final class ControllerProvider
 
     private static self $instance;
 
+    /**
+     * @throws LogicException
+     * @throws RuntimeException
+     */
     private function __construct()
     {
         self::$cache = ActionManager::getInstance()->getCache(ControllerProcessor::class);
     }
 
+    /**
+     * @throws LogicException
+     * @throws RuntimeException
+     */
     public static function getInstance(): self
     {
         return self::$instance ??= new self();
