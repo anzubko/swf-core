@@ -11,12 +11,7 @@ use function is_array;
 final class AssetsMerger
 {
     /**
-     * @var mixed[]
-     */
-    private array $cache;
-
-    /**
-     * @var mixed[]
+     * @var string[][][]
      */
     private array $files;
 
@@ -24,7 +19,7 @@ final class AssetsMerger
      * @param string $location Target URL location for merged assets.
      * @param string $dir Target directory for merged assets.
      * @param string $docRoot Web server document root directory.
-     * @param string $cacheFile Cache file for internal data.
+     * @param string $metricsFile Path to file for internal metrics data.
      * @param string[]|string[][] $assets Assets to merge (targets are just filenames, assets are absolute).
      * @param string $lockKey Key for process locker.
      */
@@ -32,7 +27,7 @@ final class AssetsMerger
         private readonly string $location,
         private readonly string $dir,
         private readonly string $docRoot,
-        private readonly string $cacheFile,
+        private readonly string $metricsFile,
         private readonly array $assets = [],
         private readonly string $lockKey = '.swf.assets.merger',
     ) {
@@ -48,36 +43,130 @@ final class AssetsMerger
      */
     public function merge(): array
     {
-        $cache = @include $this->cacheFile;
-        if (is_array($cache)) {
-            $this->cache = $cache;
-            if ('prod' === config('system')->get('env') && $this->cache['debug'] === config('system')->get('debug')) {
-                return $this->getPaths();
-            }
+        $metrics = $this->getMetrics();
+        if (null !== $metrics && !$this->isOutdated($metrics)) {
+            return $this->getPaths($metrics);
         }
 
         LocalLocker::getInstance()->acquire($this->lockKey);
 
-        if ($this->isOutdated()) {
-            $this->recombine();
-        }
+        $metrics = $this->getMetrics($metrics) ?? $this->rebuild();
 
         LocalLocker::getInstance()->release($this->lockKey);
 
-        return $this->getPaths();
+        return $this->getPaths($metrics);
     }
 
     /**
+     * @param mixed[]|null $oldMetrics
+     *
+     * @return mixed[]|null
+     */
+    private function getMetrics(?array $oldMetrics = null): ?array
+    {
+        $metrics = @include $this->metricsFile;
+        if (!is_array($metrics) || $metrics === $oldMetrics) {
+            return null;
+        }
+
+        return $metrics;
+    }
+
+    /**
+     * @param mixed[] $metrics
+     *
      * @return string[]
      */
-    private function getPaths(): array
+    private function getPaths(array $metrics): array
     {
         $paths = [];
         foreach ($this->assets as $target => $files) {
-            $paths[$target] = sprintf('%s/%s.%s', $this->location, $this->cache['time'], $target);
+            $paths[$target] = sprintf('%s/%s.%s', $this->location, $metrics['time'], $target);
         }
 
         return $paths;
+    }
+
+    /**
+     * @param mixed[] $metrics
+     */
+    private function isOutdated(array $metrics): bool
+    {
+        if (config('system')->get('env') === 'prod') {
+            return false;
+        }
+
+        if (config('system')->get('debug') !== $metrics['debug']) {
+            return true;
+        }
+
+        $targets = [];
+        foreach (DirHandler::scan($this->dir, false, true) as $item) {
+            if (!is_file($item) || !preg_match('~/(\d+)\.(.+)$~', $item, $M) || (int) $M[1] !== $metrics['time']) {
+                return true;
+            }
+
+            $targets[] = $M[2];
+        }
+
+        $this->scanForFiles();
+
+        if (array_keys(array_merge(...array_values($this->files))) !== $targets) {
+            return true;
+        }
+
+        foreach (array_keys($this->files) as $type) {
+            foreach ($this->files[$type] as $files) {
+                foreach ($files as $file) {
+                    if ((int) filemtime($file) > $metrics['time']) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return mixed[]
+     *
+     * @throws LogicException
+     * @throws RuntimeException
+     */
+    private function rebuild(): array
+    {
+        DirHandler::clear($this->dir);
+
+        $this->scanForFiles();
+
+        $metrics = [
+            'time' => time(),
+            'debug' => config('system')->get('debug'),
+            'hash' => TextHandler::random(),
+        ];
+
+        foreach (array_keys($this->files) as $type) {
+            foreach ($this->files[$type] as $target => $files) {
+                $file = sprintf('%s/%s.%s', $this->dir, $metrics['time'], $target);
+
+                if ('js' === $type) {
+                    $contents = $this->mergeJs($files);
+                } else {
+                    $contents = $this->mergeCss($files);
+                }
+
+                if (!FileHandler::put($file, $contents)) {
+                    throw new RuntimeException(sprintf('Unable to write file %s', $file));
+                }
+            }
+        }
+
+        if (!FileHandler::putVar($this->metricsFile, $metrics)) {
+            throw new RuntimeException(sprintf('Unable to write file %s', $this->metricsFile));
+        }
+
+        return $metrics;
     }
 
     private function scanForFiles(): void
@@ -100,73 +189,6 @@ final class AssetsMerger
                     }
                 }
             }
-        }
-    }
-
-    private function isOutdated(): bool
-    {
-        if (!isset($this->cache) || config('system')->get('debug') !== $this->cache['debug']) {
-            return true;
-        }
-
-        $targets = [];
-        foreach (DirHandler::scan($this->dir, false, true) as $item) {
-            if (!is_file($item) || !preg_match('~/(\d+)\.(.+)$~', $item, $M) || (int) $M[1] !== $this->cache['time']) {
-                return true;
-            }
-
-            $targets[] = $M[2];
-        }
-
-        $this->scanForFiles();
-
-        if (array_diff(array_keys(array_merge(...array_values($this->files))), $targets)) {
-            return true;
-        }
-
-        foreach (array_keys($this->files) as $type) {
-            foreach ($this->files[$type] as $files) {
-                foreach ($files as $file) {
-                    if ((int) filemtime($file) > $this->cache['time']) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
-    private function recombine(): void
-    {
-        DirHandler::clear($this->dir);
-
-        $this->cache = ['time' => time(), 'debug' => config('system')->get('debug')];
-
-        $this->scanForFiles();
-
-        foreach (array_keys($this->files) as $type) {
-            foreach ($this->files[$type] as $target => $files) {
-                $file = sprintf('%s/%s.%s', $this->dir, $this->cache['time'], $target);
-
-                if ('js' === $type) {
-                    $contents = $this->mergeJs($files);
-                } else {
-                    $contents = $this->mergeCss($files);
-                }
-
-                if (!FileHandler::put($file, $contents)) {
-                    throw new RuntimeException(sprintf('Unable to write file %s', $file));
-                }
-            }
-        }
-
-        if (!FileHandler::putVar($this->cacheFile, $this->cache)) {
-            throw new RuntimeException(sprintf('Unable to write file %s', $this->cacheFile));
         }
     }
 

@@ -31,7 +31,7 @@ final class ActionManager
     /**
      * @var string[]
      */
-    private array $allowedNss;
+    private array $namespaces;
 
     /**
      * @var array<string, int>
@@ -52,21 +52,17 @@ final class ActionManager
             new ListenerProcessor(),
         ];
 
-        $this->allowedNss = config('system')->get('namespaces');
+        $this->namespaces = config('system')->get('namespaces');
 
-        if ('prod' === config('system')->get('env')) {
-            if ($this->readCaches()) {
-                return;
-            }
-        } elseif ($this->compareMetrics()) {
-            if ($this->readCaches()) {
-                return;
-            }
+        if (!$this->isOutdated() && $this->readCaches()) {
+            return;
         }
 
         LocalLocker::getInstance()->acquire($this->lockKey);
 
-        $this->rebuild();
+        if (!$this->readCaches()) {
+            $this->rebuild();
+        }
 
         LocalLocker::getInstance()->release($this->lockKey);
     }
@@ -91,26 +87,30 @@ final class ActionManager
     /**
      * @throws RuntimeException
      */
-    private function compareMetrics(): bool
+    private function isOutdated(): bool
     {
+        if (config('system')->get('env') === 'prod') {
+            return false;
+        }
+
         $metrics = @include $this->metricsFile;
         if (!is_array($metrics)) {
-            return false;
+            return true;
         }
 
         $this->scanForClassesFiles();
 
         if (count($this->classesFiles) !== $metrics['count']) {
-            return false;
+            return true;
         }
 
         foreach ($this->classesFiles as $mTime) {
             if ($mTime > $metrics['time']) {
-                return false;
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     private function readCaches(): bool
@@ -219,7 +219,7 @@ final class ActionManager
 
     private function isNsAllowed(string $ns): bool
     {
-        foreach ($this->allowedNss as $allowedNs) {
+        foreach ($this->namespaces as $allowedNs) {
             if (str_starts_with($ns, $allowedNs)) {
                 return true;
             }
