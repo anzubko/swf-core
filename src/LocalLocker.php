@@ -13,7 +13,7 @@ final class LocalLocker
     private static self $instance;
 
     /**
-     * @var array<array{file:string, handle:resource}>
+     * @var mixed[]
      */
     private array $files = [];
 

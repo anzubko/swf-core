@@ -219,8 +219,8 @@ final class ActionManager
 
     private function isNsAllowed(string $ns): bool
     {
-        foreach ($this->namespaces as $allowedNs) {
-            if (str_starts_with($ns, $allowedNs)) {
+        foreach ($this->namespaces as $namespace) {
+            if (str_starts_with($ns, $namespace)) {
                 return true;
             }
         }

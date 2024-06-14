@@ -92,37 +92,40 @@ final class AssetsMerger
      */
     private function isOutdated(array $metrics): bool
     {
-        if (config('system')->get('env') === 'prod') {
-            return false;
-        }
-
         if (config('system')->get('debug') !== $metrics['debug']) {
             return true;
         }
 
-        $targets = [];
+        if (config('system')->get('env') === 'prod') {
+            return false;
+        }
+
+        $oldTargets = [];
         foreach (DirHandler::scan($this->dir, false, true) as $item) {
             if (!is_file($item) || !preg_match('~/(\d+)\.(.+)$~', $item, $M) || (int) $M[1] !== $metrics['time']) {
                 return true;
             }
 
-            $targets[] = $M[2];
+            $oldTargets[] = $M[2];
         }
 
         $this->scanForFiles();
 
-        if (array_keys(array_merge(...array_values($this->files))) !== $targets) {
-            return true;
-        }
-
+        $newTargets = [];
         foreach (array_keys($this->files) as $type) {
-            foreach ($this->files[$type] as $files) {
+            foreach ($this->files[$type] as $target => $files) {
                 foreach ($files as $file) {
                     if ((int) filemtime($file) > $metrics['time']) {
                         return true;
                     }
                 }
+
+                $newTargets[] = $target;
             }
+        }
+
+        if ($newTargets !== $oldTargets) {
+            return true;
         }
 
         return false;
