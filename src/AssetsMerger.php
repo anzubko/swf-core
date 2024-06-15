@@ -79,12 +79,12 @@ final class AssetsMerger
      */
     private function getTargetFiles(array $metrics): array
     {
-        $paths = [];
+        $targetFiles = [];
         foreach ($this->assets as $target => $files) {
-            $paths[$target] = sprintf('%s/%s.%s', $this->location, $metrics['time'], $target);
+            $targetFiles[$target] = sprintf('%s/%s.%s', $this->location, $metrics['time'], $target);
         }
 
-        return $paths;
+        return $targetFiles;
     }
 
     /**
