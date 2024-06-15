@@ -38,7 +38,7 @@ final class RelationProvider
      *
      * @return array<class-string<T>>
      */
-    public function getChilds(string $className): array
+    public function getChildren(string $className): array
     {
         return self::$cache->data['relations'][$className] ?? [];
     }

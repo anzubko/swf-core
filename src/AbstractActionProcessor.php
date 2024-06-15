@@ -6,11 +6,11 @@ use RuntimeException;
 
 abstract class AbstractActionProcessor
 {
-    protected string $cachePath;
+    protected string $cacheFile;
 
-    public function getCachePath(): string
+    public function getCacheFile(): string
     {
-        return $this->cachePath;
+        return $this->cacheFile;
     }
 
     abstract public function buildCache(ActionClasses $classes): ActionCache;
@@ -20,8 +20,8 @@ abstract class AbstractActionProcessor
      */
     public function saveCache(ActionCache $cache): void
     {
-        if (!FileHandler::putVar($this->cachePath, $cache->data)) {
-            throw new RuntimeException(sprintf('Unable to write file %s', $this->cachePath));
+        if (!FileHandler::putVar($this->cacheFile, $cache->data)) {
+            throw new RuntimeException(sprintf('Unable to write file %s', $this->cacheFile));
         }
     }
 }

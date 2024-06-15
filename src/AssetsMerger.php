@@ -45,16 +45,16 @@ final class AssetsMerger
     {
         $metrics = $this->getMetrics();
         if (null !== $metrics && !$this->isOutdated($metrics)) {
-            return $this->getPaths($metrics);
+            return $this->getTargetFiles($metrics);
         }
 
-        LocalLocker::getInstance()->acquire($this->lockKey);
+        FileLocker::getInstance()->acquire($this->lockKey);
 
         $metrics = $this->getMetrics($metrics) ?? $this->rebuild();
 
-        LocalLocker::getInstance()->release($this->lockKey);
+        FileLocker::getInstance()->release($this->lockKey);
 
-        return $this->getPaths($metrics);
+        return $this->getTargetFiles($metrics);
     }
 
     /**
@@ -77,7 +77,7 @@ final class AssetsMerger
      *
      * @return string[]
      */
-    private function getPaths(array $metrics): array
+    private function getTargetFiles(array $metrics): array
     {
         $paths = [];
         foreach ($this->assets as $target => $files) {

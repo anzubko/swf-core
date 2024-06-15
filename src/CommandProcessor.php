@@ -7,7 +7,7 @@ use SWF\Attribute\AsCommand;
 
 final class CommandProcessor extends AbstractActionProcessor
 {
-    protected string $cachePath = APP_DIR . '/var/cache/.swf/commands.php';
+    protected string $cacheFile = APP_DIR . '/var/cache/.swf/commands.php';
 
     public function buildCache(ActionClasses $classes): ActionCache
     {

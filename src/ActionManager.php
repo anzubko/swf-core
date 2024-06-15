@@ -63,13 +63,13 @@ final class ActionManager
             return;
         }
 
-        LocalLocker::getInstance()->acquire($this->lockKey);
+        FileLocker::getInstance()->acquire($this->lockKey);
 
         if (null === $this->getMetrics($metrics) || !$this->readCaches()) {
             $this->rebuild();
         }
 
-        LocalLocker::getInstance()->release($this->lockKey);
+        FileLocker::getInstance()->release($this->lockKey);
     }
 
     /**
@@ -130,7 +130,7 @@ final class ActionManager
     {
         $caches = [];
         foreach ($this->processors as $processor) {
-            $cache = @include $processor->getCachePath();
+            $cache = @include $processor->getCacheFile();
             if (!is_array($cache)) {
                 return false;
             }

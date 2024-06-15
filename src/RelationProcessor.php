@@ -6,7 +6,7 @@ use ReflectionMethod;
 
 final class RelationProcessor extends AbstractActionProcessor
 {
-    protected string $cachePath = APP_DIR . '/var/cache/.swf/relations.php';
+    protected string $cacheFile = APP_DIR . '/var/cache/.swf/relations.php';
 
     public function buildCache(ActionClasses $classes): ActionCache
     {

@@ -25,9 +25,9 @@ function shared(string $className): mixed
  *
  * @return array<class-string<T>>
  */
-function childs(string $className): array
+function children(string $className): array
 {
-    return RelationProvider::getInstance()->getChilds($className);
+    return RelationProvider::getInstance()->getChildren($className);
 }
 
 /**
