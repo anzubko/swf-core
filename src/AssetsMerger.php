@@ -29,7 +29,7 @@ final class AssetsMerger
         private readonly string $docRoot,
         private readonly string $metricsFile,
         private readonly array $assets = [],
-        private readonly string $lockKey = '.swf.assets.merger',
+        private readonly string $lockKey = 'assets.merger',
     ) {
     }
 

@@ -9,44 +9,42 @@ use function is_string;
 
 final class ControllerProcessor extends AbstractActionProcessor
 {
-    protected string $cacheFile = APP_DIR . '/var/cache/.swf/actions/controllers.php';
+    protected string $cachePath = APP_DIR . '/var/cache/.swf/controllers.php';
 
-    public function initializeCache(): ActionCache
+    public function buildCache(ActionClasses $classes): ActionCache
     {
-        return new ActionCache([
+        $cache = new ActionCache([
             'static' => [],
             'dynamic' => [],
             'urls' => [],
             'actions' => [],
         ]);
-    }
 
-    public function processMethod(ActionCache $cache, ReflectionMethod $method): void
-    {
-        foreach ($method->getAttributes(AsController::class) as $attribute) {
-            if ($method->isConstructor()) {
-                CommonLogger::getInstance()->warning("Constructor can't be a controller", options: [
-                    'file' => $method->getFileName(),
-                    'line' => $method->getStartLine(),
-                ]);
-                continue;
-            }
+        foreach ($classes->list as $class) {
+            foreach ($class->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+                foreach ($method->getAttributes(AsController::class) as $attribute) {
+                    if ($method->isConstructor()) {
+                        CommonLogger::getInstance()->warning("Constructor can't be a controller", options: [
+                            'file' => $method->getFileName(),
+                            'line' => $method->getStartLine(),
+                        ]);
+                        continue;
+                    }
 
-            $instance = $attribute->newInstance();
-            foreach ($instance->url as $url) {
-                foreach ($instance->method as $m) {
-                    if (null !== $instance->alias) {
-                        $cache->data['static'][$url][$m] = [sprintf('%s::%s', $method->class, $method->name), $instance->alias];
-                    } else {
-                        $cache->data['static'][$url][$m] = sprintf('%s::%s', $method->class, $method->name);
+                    $instance = $attribute->newInstance();
+                    foreach ($instance->url as $url) {
+                        foreach ($instance->method as $m) {
+                            if (null !== $instance->alias) {
+                                $cache->data['static'][$url][$m] = [sprintf('%s::%s', $class->name, $method->name), $instance->alias];
+                            } else {
+                                $cache->data['static'][$url][$m] = sprintf('%s::%s', $class->name, $method->name);
+                            }
+                        }
                     }
                 }
             }
         }
-    }
 
-    public function finalizeCache(ActionCache $cache): void
-    {
         $regex = [];
         foreach ($cache->data['static'] as $url => $actions) {
             if (preg_match_all('/{([^}]+)}/', $url, $M)) {
@@ -79,5 +77,7 @@ final class ControllerProcessor extends AbstractActionProcessor
         }
 
         $cache->data['regex'] = sprintf('{^(?|%s)$}', implode('|', $regex));
+
+        return  $cache;
     }
 }

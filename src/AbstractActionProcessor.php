@@ -2,31 +2,26 @@
 
 namespace SWF;
 
-use ReflectionMethod;
 use RuntimeException;
 
 abstract class AbstractActionProcessor
 {
-    protected string $cacheFile;
+    protected string $cachePath;
 
-    public function getCacheFile(): string
+    public function getCachePath(): string
     {
-        return $this->cacheFile;
+        return $this->cachePath;
     }
 
-    abstract public function initializeCache(): ActionCache;
-
-    abstract public function processMethod(ActionCache $cache, ReflectionMethod $method): void;
-
-    abstract public function finalizeCache(ActionCache $cache): void;
+    abstract public function buildCache(ActionClasses $classes): ActionCache;
 
     /**
      * @throws RuntimeException
      */
     public function saveCache(ActionCache $cache): void
     {
-        if (!FileHandler::putVar($this->cacheFile, $cache->data)) {
-            throw new RuntimeException(sprintf('Unable to write file %s', $this->cacheFile));
+        if (!FileHandler::putVar($this->cachePath, $cache->data)) {
+            throw new RuntimeException(sprintf('Unable to write file %s', $this->cachePath));
         }
     }
 }

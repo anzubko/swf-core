@@ -2,13 +2,13 @@
 
 namespace SWF;
 
-final class ActionCache
+final class ActionClasses
 {
     /**
-     * @param mixed[] $data
+     * @param mixed[] $list
      */
     public function __construct(
-        public array $data = [],
+        public array $list = [],
     ) {
     }
 }

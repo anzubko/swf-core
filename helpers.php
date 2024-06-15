@@ -2,6 +2,7 @@
 
 use SWF\AbstractShared;
 use SWF\ConfigGetter;
+use SWF\RelationProvider;
 
 /**
  * Accesses shared classes.
@@ -13,6 +14,20 @@ function shared(string $className): mixed
     static $shared = [];
 
     return $shared[$className] ??= (new ReflectionClass($className))->getMethod('getInstance')->invoke(null);
+}
+
+/**
+ * Accesses child classes of some class/interface.
+ *
+ * @template T
+ *
+ * @param class-string<T> $className
+ *
+ * @return array<class-string<T>>
+ */
+function childs(string $className): array
+{
+    return RelationProvider::getInstance()->getChilds($className);
 }
 
 /**

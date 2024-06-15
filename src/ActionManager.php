@@ -7,16 +7,15 @@ use LogicException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
-use ReflectionMethod;
 use RuntimeException;
 use function count;
 use function is_array;
 
 final class ActionManager
 {
-    private string $metricsFile = APP_DIR . '/var/cache/.swf/actions.metrics.php';
+    private string $metricsFile = APP_DIR . '/var/cache/.swf/action.manager.metrics.php';
 
-    private string $lockKey = '.swf.action.manager';
+    private string $lockKey = '.swf/action.manager';
 
     /**
      * @var AbstractActionProcessor[]
@@ -50,17 +49,23 @@ final class ActionManager
             new CommandProcessor(),
             new ControllerProcessor(),
             new ListenerProcessor(),
+            new RelationProcessor(),
         ];
 
         $this->namespaces = config('system')->get('namespaces');
 
-        if (!$this->isOutdated() && $this->readCaches()) {
+        if (config('system')->get('env') === 'prod' && $this->readCaches()) {
+            return;
+        }
+
+        $metrics = $this->getMetrics();
+        if (null !== $metrics && !$this->isOutdated($metrics) && $this->readCaches()) {
             return;
         }
 
         LocalLocker::getInstance()->acquire($this->lockKey);
 
-        if (!$this->readCaches()) {
+        if (null === $this->getMetrics($metrics) || !$this->readCaches()) {
             $this->rebuild();
         }
 
@@ -85,19 +90,27 @@ final class ActionManager
     }
 
     /**
+     * @param mixed[]|null $oldMetrics
+     *
+     * @return mixed[]|null
+     */
+    private function getMetrics(?array $oldMetrics = null): ?array
+    {
+        $metrics = @include $this->metricsFile;
+        if (!is_array($metrics) || $metrics === $oldMetrics) {
+            return null;
+        }
+
+        return $metrics;
+    }
+
+    /**
+     * @param mixed[] $metrics
+     *
      * @throws RuntimeException
      */
-    private function isOutdated(): bool
+    private function isOutdated(array $metrics): bool
     {
-        if (config('system')->get('env') === 'prod') {
-            return false;
-        }
-
-        $metrics = @include $this->metricsFile;
-        if (!is_array($metrics)) {
-            return true;
-        }
-
         $this->scanForClassesFiles();
 
         if (count($this->classesFiles) !== $metrics['count']) {
@@ -115,17 +128,17 @@ final class ActionManager
 
     private function readCaches(): bool
     {
-        $this->caches = [];
+        $caches = [];
         foreach ($this->processors as $processor) {
-            $cache = @include $processor->getCacheFile();
+            $cache = @include $processor->getCachePath();
             if (!is_array($cache)) {
-                $this->caches = [];
-
                 return false;
             }
 
-            $this->caches[$processor::class] = new ActionCache($cache);
+            $caches[$processor::class] = new ActionCache($cache);
         }
+
+        $this->caches = $caches;
 
         return true;
     }
@@ -141,29 +154,34 @@ final class ActionManager
             require_once $file;
         }
 
-        $this->caches = [];
-        foreach ($this->processors as $processor) {
-            $this->caches[$processor::class] = $processor->initializeCache();
-        }
-
+        $classes = new ActionClasses();
         foreach (get_declared_classes() as $className) {
             if (!$this->isNsAllowed($className)) {
                 continue;
             }
 
-            foreach ((new ReflectionClass($className))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-                foreach ($this->processors as $processor) {
-                    $processor->processMethod($this->caches[$processor::class], $method);
-                }
+            $class = new ReflectionClass($className);
+            if (!$class->isInstantiable()) {
+                continue;
             }
+
+            $classes->list[] = $class;
         }
 
+        $this->caches = [];
         foreach ($this->processors as $processor) {
-            $processor->finalizeCache($this->caches[$processor::class]);
+            $this->caches[$processor::class] = $processor->buildCache($classes);
+
             $processor->saveCache($this->caches[$processor::class]);
         }
 
-        if (!FileHandler::putVar($this->metricsFile, ['time' => time(), 'count' => count($this->classesFiles)])) {
+        $metrics = [
+            'time' => time(),
+            'count' => count($this->classesFiles),
+            'hash' => TextHandler::random(),
+        ];
+
+        if (!FileHandler::putVar($this->metricsFile, $metrics)) {
             throw new RuntimeException(sprintf('Unable to write file %s', $this->metricsFile));
         }
     }

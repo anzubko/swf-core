@@ -10,26 +10,17 @@ final class LocalLocker
 {
     private const DIR = APP_DIR . '/var/locks';
 
-    private static self $instance;
-
     /**
      * @var mixed[]
      */
     private array $files = [];
 
-    /**
-     * @throws RuntimeException
-     */
+    private static self $instance;
+
     private function __construct()
     {
-        if (!DirHandler::create(self::DIR)) {
-            throw new RuntimeException(sprintf('Unable to create directory %s', self::DIR));
-        }
     }
 
-    /**
-     * @throws RuntimeException
-     */
     public static function getInstance(): self
     {
         return self::$instance ??= new self();
@@ -49,9 +40,16 @@ final class LocalLocker
 
         $file = sprintf('%s/%s', self::DIR, $key);
 
-        $handle = fopen($file, 'cb+');
+        $handle = @fopen($file, 'cb+');
         if (false === $handle) {
-            throw new RuntimeException(sprintf('Unable to open file %s', $file));
+            if (!DirHandler::create(dirname($file))) {
+                throw new RuntimeException(sprintf('Unable to create directory %s', dirname($file)));
+            }
+
+            $handle = fopen($file, 'cb+');
+            if (false === $handle) {
+                throw new RuntimeException(sprintf('Unable to open file %s', $file));
+            }
         }
 
         if ($wait) {
