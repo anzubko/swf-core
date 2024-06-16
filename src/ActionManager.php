@@ -8,6 +8,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
 use RuntimeException;
+use Throwable;
 use function count;
 use function is_array;
 
@@ -23,14 +24,14 @@ final class ActionManager
     private array $processors;
 
     /**
-     * @var array<class-string<AbstractActionProcessor>, ActionCache>
-     */
-    private array $caches;
-
-    /**
      * @var string[]
      */
     private array $namespaces;
+
+    /**
+     * @var array<class-string<AbstractActionProcessor>, ActionCache>
+     */
+    private array $caches;
 
     /**
      * @var array<string, int>
@@ -39,10 +40,6 @@ final class ActionManager
 
     private static self $instance;
 
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
     private function __construct()
     {
         $this->processors = [
@@ -53,7 +50,36 @@ final class ActionManager
         ];
 
         $this->namespaces = config('system')->get('namespaces');
+    }
 
+    /**
+     * @throws LogicException
+     * @throws RuntimeException
+     */
+    public static function getInstance(): self
+    {
+        if (!isset(self::$instance)) {
+            self::$instance = new self();
+            self::$instance->checkMetricsAndReadCaches();
+        }
+
+        return self::$instance;
+    }
+
+    /**
+     * @param class-string<AbstractActionProcessor> $className
+     */
+    public function getCache(string $className): ?ActionCache
+    {
+        return isset($this->caches) ? ($this->caches[$className] ?? null) : null;
+    }
+
+    /**
+     * @throws LogicException
+     * @throws RuntimeException
+     */
+    private function checkMetricsAndReadCaches(): void
+    {
         if (config('system')->get('env') === 'prod' && $this->readCaches()) {
             return;
         }
@@ -70,23 +96,6 @@ final class ActionManager
         }
 
         FileLocker::getInstance()->release($this->lockKey);
-    }
-
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
-    public static function getInstance(): self
-    {
-        return self::$instance ??= new self();
-    }
-
-    /**
-     * @param class-string<AbstractActionProcessor> $className
-     */
-    public function getCache(string $className): ActionCache
-    {
-        return $this->caches[$className];
     }
 
     /**
@@ -168,11 +177,11 @@ final class ActionManager
             $classes->list[] = $class;
         }
 
-        $this->caches = [];
+        $caches = [];
         foreach ($this->processors as $processor) {
-            $this->caches[$processor::class] = $processor->buildCache($classes);
+            $caches[$processor::class] = $processor->buildCache($classes);
 
-            $processor->saveCache($this->caches[$processor::class]);
+            $processor->saveCache($caches[$processor::class]);
         }
 
         $metrics = [
@@ -184,6 +193,8 @@ final class ActionManager
         if (!FileHandler::putVar($this->metricsFile, $metrics)) {
             throw new RuntimeException(sprintf('Unable to write file %s', $this->metricsFile));
         }
+
+        $this->caches = $caches;
     }
 
     /**

@@ -7,7 +7,7 @@ use RuntimeException;
 
 final class CommandProvider
 {
-    private static ActionCache $cache;
+    private static ?ActionCache $cache;
 
     private static self $instance;
 
@@ -36,7 +36,7 @@ final class CommandProvider
      */
     public function getCurrentAction(): ?array
     {
-        if (!isset($_SERVER['argv'][1])) {
+        if (null === self::$cache || !isset($_SERVER['argv'][1])) {
             return null;
         }
 

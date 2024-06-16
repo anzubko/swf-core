@@ -9,7 +9,7 @@ use function is_string;
 
 final class ControllerProvider
 {
-    private static ActionCache $cache;
+    private static ?ActionCache $cache;
 
     private static self $instance;
 
@@ -38,6 +38,10 @@ final class ControllerProvider
      */
     public function getCurrentAction(): ?array
     {
+        if (null === self::$cache) {
+            return null;
+        }
+
         $path = explode('?', $_SERVER['REQUEST_URI'], 2)[0];
 
         $actions = self::$cache->data['static'][$path] ?? null;
@@ -70,6 +74,10 @@ final class ControllerProvider
      */
     public function genUrl(string $action, string|int|float|null ...$params): string
     {
+        if (null === self::$cache) {
+            return '/';
+        }
+
         $pCount = count($params);
 
         $index = self::$cache->data['actions']["$action:$pCount"] ?? null;

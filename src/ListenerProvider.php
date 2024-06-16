@@ -13,7 +13,7 @@ use function in_array;
 
 final class ListenerProvider implements ListenerProviderInterface
 {
-    private static ActionCache $cache;
+    private static ?ActionCache $cache;
 
     private static self $instance;
 
@@ -45,6 +45,10 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function addListener(callable $callback, bool $disposable = false, bool $persistent = false): void
     {
+        if (null === self::$cache) {
+            return;
+        }
+
         $params = (new ReflectionFunction($callback(...)))->getParameters();
         $type = count($params) === 0 ? null : $params[0]->getType();
         if (null === $type) {
@@ -66,6 +70,10 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function removeListenersByType(array|string $types, bool $force = false): void
     {
+        if (null === self::$cache) {
+            return;
+        }
+
         foreach (self::$cache->data['listeners'] as $i => $listener) {
             if (($force || !$listener['persistent']) && in_array($listener['type'], (array) $types, true)) {
                 unset(self::$cache->data['listeners'][$i]);
@@ -78,6 +86,10 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function removeAllListeners(bool $force = false): void
     {
+        if (null === self::$cache) {
+            return;
+        }
+
         if ($force) {
             self::$cache->data['listeners'] = [];
         } else {
@@ -98,6 +110,10 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function getListenersForEvent(object $event): iterable
     {
+        if (null === self::$cache) {
+            return [];
+        }
+
         foreach (self::$cache->data['listeners'] as $i => &$listener) {
             if (!$event instanceof $listener['type']) {
                 continue;
