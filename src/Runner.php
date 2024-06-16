@@ -149,7 +149,6 @@ final class Runner
                 'file' => $file,
                 'line' => $line,
             ]);
-
             return true;
         }
 
@@ -158,7 +157,6 @@ final class Runner
                 'file' => $file,
                 'line' => $line,
             ]);
-
             return true;
         }
 
