@@ -10,6 +10,7 @@ final class AsListener
     /**
      * Registers listener.
      *
+     * @param float $priority Listener with higher priority will be called earlier.
      * @param bool $disposable Listener can be called only once.
      * @param bool $persistent Listener can only be removed with the force parameter.
      */

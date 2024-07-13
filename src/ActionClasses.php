@@ -2,10 +2,12 @@
 
 namespace SWF;
 
+use ReflectionClass;
+
 final class ActionClasses
 {
     /**
-     * @param mixed[] $list
+     * @param array<ReflectionClass<object>> $list
      */
     public function __construct(
         public array $list = [],

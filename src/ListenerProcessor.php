@@ -47,7 +47,7 @@ final class ListenerProcessor extends AbstractActionProcessor
             }
         }
 
-        usort($cache->data['listeners'], fn($a, $b) => $a['priority'] <=> $b['priority']);
+        usort($cache->data['listeners'], fn($a, $b) => $b['priority'] <=> $a['priority']);
 
         foreach (array_keys($cache->data['listeners']) as $i) {
             unset($cache->data['listeners'][$i]['priority']);
