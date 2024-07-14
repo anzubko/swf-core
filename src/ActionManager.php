@@ -8,7 +8,6 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
 use RuntimeException;
-use Throwable;
 use function count;
 use function is_array;
 

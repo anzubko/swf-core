@@ -156,21 +156,12 @@ final class TextHandler
      */
     public static function random(int $size = 32, string $chars = '[alpha][digit]'): string
     {
-        $chars = str_replace(
-            [
-                '[alpha]',
-                '[upper]',
-                '[lower]',
-                '[digit]',
-            ],
-            [
-                'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-                'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-                'abcdefghijklmnopqrstuvwxyz',
-                '0123456789',
-            ],
-            $chars,
-        );
+        $chars = strtr($chars, [
+            '[alpha]' => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+            '[upper]' => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            '[lower]' => 'abcdefghijklmnopqrstuvwxyz',
+            '[digit]' => '0123456789',
+        ]);
 
         $string = str_repeat(' ', $size);
         for ($i = 0, $max = strlen($chars) - 1; $i < $size; $i++) {
