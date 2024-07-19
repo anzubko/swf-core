@@ -63,7 +63,7 @@ final class TextHandler
             return '';
         }
 
-        return trim($string, " \t\n\r\v\f\0");
+        return trim($string, " \t\n\r\v\f");
     }
 
     /**
@@ -75,7 +75,7 @@ final class TextHandler
             return '';
         }
 
-        return rtrim($string, " \t\n\r\v\f\0");
+        return rtrim($string, " \t\n\r\v\f");
     }
 
     /**
@@ -87,7 +87,7 @@ final class TextHandler
             return '';
         }
 
-        return ltrim($string, " \t\n\r\v\f\0");
+        return ltrim($string, " \t\n\r\v\f");
     }
 
     /**
@@ -99,7 +99,7 @@ final class TextHandler
             return '';
         }
 
-        $string = trim((string) preg_replace("/[ \t\n\r\v\f\0]+/", ' ', $string));
+        $string = trim((string) preg_replace("/[ \t\n\r\v\f]+/", ' ', $string));
         if ($limit <= 0) {
             return $string;
         }
@@ -116,7 +116,7 @@ final class TextHandler
             return '';
         }
 
-        $string = trim((string) preg_replace(['/\h+/', "/[ \t\n\r\v\f\0]*\\v[ \t\n\r\v\f\0]*/"], [' ', "\n"], $string));
+        $string = trim((string) preg_replace(['/\h+/', "/[ \t\n\r\v\f]*\\v[ \t\n\r\v\f]*/"], [' ', "\n"], $string));
         if ($limit <= 0) {
             return $string;
         }
@@ -133,7 +133,7 @@ final class TextHandler
             return '';
         }
 
-        $string = trim((string) preg_replace("/[ \t\n\r\v\f\0]+/", ' ', $string));
+        $string = trim((string) preg_replace("/[ \t\n\r\v\f]+/", ' ', $string));
         if (mb_strlen($string) <= $min) {
             return $string;
         }
