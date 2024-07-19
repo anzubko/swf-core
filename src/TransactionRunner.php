@@ -44,7 +44,7 @@ final class TransactionRunner
                 return;
             } catch (Throwable $e) {
                 try {
-                    $db->rollback();
+                    $db->rollback(true);
                 } catch (DatabaserException) {
                 }
 

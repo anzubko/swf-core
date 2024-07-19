@@ -168,7 +168,7 @@ final class Runner
         foreach ((new ReflectionFunction('shared'))->getStaticVariables()['shared'] as $class) {
             if ($class instanceof DatabaserInterface && $class->isInTrans()) {
                 try {
-                    $class->rollback();
+                    $class->rollback(true);
                 } catch (DatabaserException) {
                 }
             }
