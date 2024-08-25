@@ -2,8 +2,10 @@
 
 namespace SWF;
 
+use LogicException;
 use ReflectionMethod;
 use SWF\Attribute\AsController;
+use Throwable;
 use function count;
 use function is_string;
 
@@ -22,25 +24,31 @@ final class ControllerProcessor extends AbstractActionProcessor
 
         foreach ($classes->list as $class) {
             foreach ($class->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-                foreach ($method->getAttributes(AsController::class) as $attribute) {
-                    if ($method->isConstructor()) {
-                        CommonLogger::getInstance()->warning("Constructor can't be a controller", options: [
-                            'file' => $method->getFileName(),
-                            'line' => $method->getStartLine(),
-                        ]);
-                        continue;
-                    }
+                try {
+                    foreach ($method->getAttributes(AsController::class) as $attribute) {
+                        if ($method->isConstructor()) {
+                            throw new LogicException("Constructor can't be a controller");
+                        }
 
-                    $instance = $attribute->newInstance();
-                    foreach ($instance->url as $url) {
-                        foreach ($instance->method as $m) {
-                            if (null !== $instance->alias) {
-                                $cache->data['static'][$url][$m] = [sprintf('%s::%s', $class->name, $method->name), $instance->alias];
-                            } else {
-                                $cache->data['static'][$url][$m] = sprintf('%s::%s', $class->name, $method->name);
+                        $instance = $attribute->newInstance();
+                        foreach ((array) $instance->url as $url) {
+                            $httpMethods = (array) $instance->method;
+                            if (count($httpMethods) === 0) {
+                                $httpMethods[] = '';
+                            }
+
+                            foreach ($httpMethods as $httpMethod) {
+                                $fullMethodName = sprintf('%s::%s', $class->name, $method->name);
+                                if (null !== $instance->alias) {
+                                    $cache->data['static'][$url][strtoupper($httpMethod)] = [$fullMethodName, $instance->alias];
+                                } else {
+                                    $cache->data['static'][$url][strtoupper($httpMethod)] = $fullMethodName;
+                                }
                             }
                         }
                     }
+                } catch (Throwable $e) {
+                    throw ExceptionHandler::overrideFileAndLine($e, (string) $method->getFileName(), (int) $method->getStartLine());
                 }
             }
         }
@@ -56,11 +64,11 @@ final class ControllerProcessor extends AbstractActionProcessor
 
                 $cache->data['urls'][] = preg_split('/({[^}]+})/', $url, flags: PREG_SPLIT_DELIM_CAPTURE);
 
-                $pCount = count($M[1]);
+                $paramsCount = count($M[1]);
             } else {
                 $cache->data['urls'][] = $url;
 
-                $pCount = 0;
+                $paramsCount = 0;
             }
 
             foreach ($actions as $action) {
@@ -70,7 +78,7 @@ final class ControllerProcessor extends AbstractActionProcessor
 
                 foreach ($action as $name) {
                     if (null !== $name) {
-                        $cache->data['actions'][sprintf('%s:%s', $name, $pCount)] = count($cache->data['urls']) - 1;
+                        $cache->data['actions'][sprintf('%s:%s', $name, $paramsCount)] = count($cache->data['urls']) - 1;
                     }
                 }
             }

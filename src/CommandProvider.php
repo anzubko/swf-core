@@ -4,6 +4,8 @@ namespace SWF;
 
 use LogicException;
 use RuntimeException;
+use function count;
+use function strlen;
 
 final class CommandProvider
 {
@@ -36,15 +38,26 @@ final class CommandProvider
      */
     public function getCurrentAction(): ?array
     {
-        if (null === self::$cache || !isset($_SERVER['argv'][1])) {
+        if (!isset(self::$cache, $_SERVER['argv'][1], self::$cache->data['commands'][$_SERVER['argv'][1]])) {
             return null;
         }
 
-        $action = self::$cache->data['commands'][$_SERVER['argv'][1]] ?? null;
-        if (null === $action) {
-            return null;
+        $commandManager = new CommandManager($_SERVER['argv'][1], self::$cache->data['commands'][$_SERVER['argv'][1]]);
+
+        for ($i = 0, $chunks = array_slice($_SERVER['argv'], 2); $i < count($chunks); $i++) {
+            if (strlen($chunks[$i]) > 2 && '-' === $chunks[$i][0] && '-' === $chunks[$i][1]) {
+                $commandManager->processOption($chunks[$i]);
+            } elseif (
+                strlen($chunks[$i]) > 1 && '-' === $chunks[$i][0] && '-' !== $chunks[$i][1]
+            ) {
+                $i += $commandManager->processShortOption($chunks[$i], $chunks[$i + 1] ?? null);
+            } else {
+                $commandManager->processArgument($chunks[$i]);
+            }
         }
 
-        return [$action, null];
+        $commandManager->checkForRequiredParams();
+
+        return [$commandManager->getName(), null];
     }
 }

@@ -5,7 +5,7 @@ namespace SWF\Attribute;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
-final class Priority
+final readonly class Priority
 {
     /**
      * Sets class priority for children() function.

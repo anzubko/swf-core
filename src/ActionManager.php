@@ -152,6 +152,7 @@ final class ActionManager
     }
 
     /**
+     * @throws LogicException
      * @throws RuntimeException
      */
     private function rebuild(): void

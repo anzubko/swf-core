@@ -10,24 +10,24 @@ final class ExceptionHandler
     /**
      * @template T
      *
-     * @param T $e
+     * @param T $exception
      *
      * @return T
      */
-    public static function overrideFileAndLine($e, string $file, int $line)
+    public static function overrideFileAndLine($exception, string $file, int $line)
     {
-        if (!$e instanceof Throwable) {
-            return $e;
+        if (!$exception instanceof Throwable) {
+            return $exception;
         }
 
         try {
-            $eRef = new ReflectionClass($e);
+            $eRef = new ReflectionClass($exception);
 
-            $eRef->getProperty('file')->setValue($e, $file);
-            $eRef->getProperty('line')->setValue($e, $line);
+            $eRef->getProperty('file')->setValue($exception, $file);
+            $eRef->getProperty('line')->setValue($exception, $line);
         } catch (Throwable) {
         }
 
-        return $e;
+        return $exception;
     }
 }

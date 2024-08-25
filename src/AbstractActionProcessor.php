@@ -2,6 +2,7 @@
 
 namespace SWF;
 
+use LogicException;
 use RuntimeException;
 
 abstract class AbstractActionProcessor
@@ -13,6 +14,9 @@ abstract class AbstractActionProcessor
         return $this->cacheFile;
     }
 
+    /**
+     * @throws LogicException
+     */
     abstract public function buildCache(ActionClasses $classes): ActionCache;
 
     /**
