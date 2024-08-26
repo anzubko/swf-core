@@ -8,9 +8,14 @@ use SWF\Attribute\AsCommand;
 use SWF\Enum\CommandTypeEnum;
 use SWF\Enum\CommandValueEnum;
 use Throwable;
+use function in_array;
 
 final class CommandProcessor extends AbstractActionProcessor
 {
+    private const RESTRICTED_KEYS = ['help'];
+    private const RESTRICTED_OPTION_NAMES = ['help'];
+    private const RESTRICTED_OPTION_SHORTCUTS = ['h'];
+
     protected string $cacheFile = APP_DIR . '/var/cache/.swf/commands.php';
 
     public function buildCache(ActionClasses $classes): ActionCache
@@ -27,16 +32,16 @@ final class CommandProcessor extends AbstractActionProcessor
 
                         $instance = $attribute->newInstance();
 
-                        $command = [];
-
-                        $command['name'] = sprintf('%s::%s', $class->name, $method->name);
+                        $command = ['name' => sprintf('%s::%s', $class->name, $method->name)];
 
                         if (null !== $instance->description) {
                             $command['description'] = $instance->description;
                         }
 
                         foreach ($instance->params as $key => $param) {
-                            if ($param instanceof CommandArgument) {
+                            if (in_array($key, self::RESTRICTED_KEYS)) {
+                                throw new LogicException(sprintf('Key %s is restricted for use', $key));
+                            } elseif ($param instanceof CommandArgument) {
                                 $command = $this->decomposeArgument($command, $key, $param);
                             } elseif ($param instanceof CommandOption) {
                                 $command = $this->decomposeOption($command, $key, $param);
@@ -67,15 +72,12 @@ final class CommandProcessor extends AbstractActionProcessor
         if (null !== $param->description) {
             $argument['description'] = $param->description;
         }
-
         if ($param->isArray) {
             $argument['isArray'] = true;
         }
-
         if ($param->isRequired) {
             $argument['isRequired'] = true;
         }
-
         if (CommandTypeEnum::STRING !== $param->type) {
             $argument['type'] = $param->type;
         }
@@ -97,21 +99,27 @@ final class CommandProcessor extends AbstractActionProcessor
         $option = [];
 
         $name = $param->name ?? $key;
+        if (in_array($name, self::RESTRICTED_OPTION_NAMES)) {
+            throw new LogicException(sprintf('Option name --%s is restricted for use', $name));
+        }
         if (isset($command['optionNames'][$name])) {
-            throw new LogicException(sprintf('Duplicate name --%s in option %s', $name, $key));
+            throw new LogicException(sprintf('Option name --%s already exists', $name));
         }
 
         $command['optionNames'][$name] = $key;
 
         if (null !== $param->shortcut) {
-            for ($i = 0, $length = mb_strlen($param->shortcut); $i < $length; $i++) {
-                $shortcut = mb_substr($param->shortcut, $i, 1);
-                if (isset($command['optionShortcuts'][$shortcut])) {
-                    throw new LogicException(sprintf('Duplicate shortcut -%s in option %s', $shortcut, $key));
-                }
-
-                $command['optionShortcuts'][$shortcut] = $key;
+            if (mb_strlen($param->shortcut) !== 1) {
+                throw new LogicException(sprintf('Malformed shortcut in option with key %s', $key));
             }
+            if (in_array($param->shortcut, self::RESTRICTED_OPTION_SHORTCUTS)) {
+                throw new LogicException(sprintf('Option shortcut -%s is restricted for use', $param->shortcut));
+            }
+            if (isset($command['optionShortcuts'][$param->shortcut])) {
+                throw new LogicException(sprintf('Option shortcut -%s already exists', $param->shortcut));
+            }
+
+            $command['optionShortcuts'][$param->shortcut] = $key;
         }
 
         if (CommandValueEnum::NONE === $param->value && CommandTypeEnum::BOOL !== $param->type) {
@@ -121,19 +129,15 @@ final class CommandProcessor extends AbstractActionProcessor
         if (null !== $param->description) {
             $option['description'] = $param->description;
         }
-
         if ($param->isRequired) {
             $option['isRequired'] = true;
         }
-
         if ($param->isArray) {
             $option['isArray'] = true;
         }
-
         if (CommandTypeEnum::STRING !== $param->type) {
             $option['type'] = $param->type;
         }
-
         if (CommandValueEnum::OPTIONAL !== $param->value) {
             $option['value'] = $param->value;
         }

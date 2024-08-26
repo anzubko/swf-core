@@ -15,4 +15,11 @@ class CommandTypeEnum
         self::STRING,
         self::BOOL,
     ];
+
+    public const TO_PRINTABLE = [
+        self::INT => 'INT',
+        self::FLOAT => 'FLOAT',
+        self::STRING => 'STRING',
+        self::BOOL => 'BOOL',
+    ];
 }

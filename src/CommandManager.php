@@ -9,13 +9,6 @@ use function count;
 
 final readonly class CommandManager
 {
-    private const TYPE_TO_PRINTABLE = [
-        CommandTypeEnum::INT => 'INT',
-        CommandTypeEnum::FLOAT => 'FLOAT',
-        CommandTypeEnum::STRING => 'STRING',
-        CommandTypeEnum::BOOL => 'BOOL',
-    ];
-
     private CommandDefinition $command;
 
     /**
@@ -38,6 +31,9 @@ final readonly class CommandManager
         $name = $pair[0];
         if ('' === $name) {
             $this->error(sprintf('malformed option %s', $chunk));
+        }
+        if ('help' === $name) {
+            $this->showHelp();
         }
         if (!array_key_exists($name, $this->command->optionNames)) {
             $this->error(sprintf('unknown option --%s', $name));
@@ -65,6 +61,9 @@ final readonly class CommandManager
     {
         for ($i = 1, $length = mb_strlen($chunk); $i < $length; $i++) {
             $shortcut = mb_substr($chunk, $i, 1);
+            if ('h' === $shortcut) {
+                $this->showHelp();
+            }
             if (!array_key_exists($shortcut, $this->command->optionShortcuts)) {
                 $this->error(sprintf('unknown option -%s', $shortcut));
             }
@@ -146,7 +145,7 @@ final readonly class CommandManager
         }
 
         foreach ($command['optionShortcuts'] as $shortcut => $key) {
-            $command['options'][$key]['shortcut'] = ($command['options'][$key]['shortcut'] ?? '') . $shortcut;
+            $command['options'][$key]['shortcut'] = $shortcut;
         }
 
         foreach ($command['options'] as $key => $option) {
@@ -187,16 +186,32 @@ final readonly class CommandManager
         }
     }
 
-    private function genUsage(): string
+    private function genUsage(bool $withHelp = true): string
     {
-        $optionsUsage = [];
-        foreach ($this->command->options as $option) {
-            $chunk = sprintf('--%s', $option->name);
-            if (null !== $option->shortcut) {
-                $chunk = sprintf('-%s|%s', $option->shortcut, $chunk);
+        $argumentsUsage = $optionsUsage = [];
+
+        foreach ($this->command->arguments as $key => $argument) {
+            $chunk = sprintf('<%s:%s>', $key, CommandTypeEnum::TO_PRINTABLE[$argument->type]);
+            if ($argument->isArray) {
+                $chunk = sprintf('%s...', $chunk);
             }
-            if (CommandValueEnum::NONE !== $option->value) {
-                $chunk = sprintf(CommandValueEnum::REQUIRED === $option->value ? '%s=%s' : '%s[=%s]', $chunk, self::TYPE_TO_PRINTABLE[$option->type]);
+            if (!$argument->isRequired) {
+                $chunk = sprintf('[%s]', $chunk);
+            }
+
+            $argumentsUsage[] = $chunk;
+        }
+
+        foreach ($this->command->options as $option) {
+            if (null === $option->shortcut) {
+                $chunk = sprintf('--%s', $option->name);
+            } else {
+                $chunk = sprintf('-%s|--%s', $option->shortcut, $option->name);
+            }
+            if (CommandValueEnum::REQUIRED === $option->value) {
+                $chunk = sprintf('%s=%s', $chunk, CommandTypeEnum::TO_PRINTABLE[$option->type]);
+            } elseif (CommandValueEnum::OPTIONAL) {
+                $chunk = sprintf('%s[=%s]', $chunk, CommandTypeEnum::TO_PRINTABLE[$option->type]);
             }
             if ($option->isArray) {
                 $chunk = sprintf('%s...', $chunk);
@@ -208,20 +223,59 @@ final readonly class CommandManager
             $optionsUsage[] = $chunk;
         }
 
-        $argumentsUsage = [];
-        foreach ($this->command->arguments as $key => $argument) {
-            $chunk = sprintf('<%s:%s>', $key, self::TYPE_TO_PRINTABLE[$argument->type]);
-            if ($argument->isArray) {
-                $chunk = sprintf('%s...', $chunk);
-            }
-            if (!$argument->isRequired) {
-                $chunk = sprintf('[%s]', $chunk);
-            }
-
-            $argumentsUsage[] = $chunk;
+        if ($withHelp) {
+            $optionsUsage[] = '[-h|--help]';
         }
 
         return implode(' ', [$this->name, ...$optionsUsage, ...$argumentsUsage]);
+    }
+
+    private function showHelp(): never
+    {
+        $maxLength = 0;
+        $arguments = $options = [];
+
+        foreach ($this->command->arguments as $key => $argument) {
+            $arguments[$key] = $key;
+
+            $maxLength = max($maxLength, mb_strlen($key));
+        }
+
+        foreach ($this->command->options as $key => $option) {
+            if (null === $option->shortcut) {
+                $chunk = sprintf('    --%s', $option->name);
+            } else {
+                $chunk = sprintf('-%s, --%s', $option->shortcut, $option->name);
+            }
+
+            $options[$key] = $chunk;
+
+            $maxLength = max($maxLength, mb_strlen($chunk));
+        }
+
+        foreach ($arguments as $key => $argument) {
+            if (null !== $this->command->arguments[$key]->description) {
+                $arguments[$key] = mb_str_pad($argument, $maxLength + 2) . $this->command->arguments[$key]->description;
+            }
+        }
+
+        foreach ($options as $key => $option) {
+            if (null !== $this->command->options[$key]->description) {
+                $options[$key] = mb_str_pad($option, $maxLength + 2) . $this->command->options[$key]->description;
+            }
+        }
+
+        echo sprintf("Usage:\n  %s\n", $this->genUsage(false));
+
+        if (count($arguments) > 0) {
+            echo sprintf("\nArguments:\n  %s\n", implode("\n  ", $arguments));
+        }
+
+        if (count($options) > 0) {
+            echo sprintf("\nOptions:\n  %s\n", implode("\n  ", $options));
+        }
+
+        exit(0);
     }
 
     private function error(string $error): never

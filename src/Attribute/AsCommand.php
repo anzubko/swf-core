@@ -14,7 +14,7 @@ final readonly class AsCommand
      *
      * @param string $name Name of command.
      * @param string|null $description Optional command description.
-     * @param array<CommandOption|CommandArgument> $params Parameters of command line, what will be parsed to $_REQUEST array.
+     * @param array<CommandOption|CommandArgument> $params Parameters of command line, what will be parsed into $_REQUEST array.
      */
     public function __construct(
         public string $name,

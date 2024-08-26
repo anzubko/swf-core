@@ -145,18 +145,14 @@ final class Runner
         }
 
         if (in_array($code, [E_NOTICE, E_USER_NOTICE, E_DEPRECATED, E_USER_DEPRECATED], true)) {
-            CommonLogger::getInstance()->notice($message, options: [
-                'file' => $file,
-                'line' => $line,
-            ]);
+            CommonLogger::getInstance()->notice($message, options: ['file' => $file, 'line' => $line]);
+
             return true;
         }
 
         if (in_array($code, [E_WARNING, E_USER_WARNING, E_STRICT], true) && !config('system')->get('strict')) {
-            CommonLogger::getInstance()->warning($message, options: [
-                'file' => $file,
-                'line' => $line,
-            ]);
+            CommonLogger::getInstance()->warning($message, options: ['file' => $file, 'line' => $line]);
+
             return true;
         }
 
@@ -184,10 +180,7 @@ final class Runner
     private function terminate(Throwable $e): never
     {
         CommonLogger::getInstance()->error($e);
-        CommonLogger::getInstance()->emergency('Application terminated', options: [
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-        ]);
+        CommonLogger::getInstance()->emergency('Application terminated', options: ['file' => $e->getFile(), 'line' => $e->getLine()]);
 
         ListenerProvider::getInstance()->removeAllListeners(true);
 
