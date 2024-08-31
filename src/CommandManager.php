@@ -136,20 +136,28 @@ final readonly class CommandManager
      */
     private function arrayToCommandDefinition(array $command): CommandDefinition
     {
-        foreach ($command['arguments'] as $key => $argument) {
-            $command['arguments'][$key] = new CommandArgument(...$argument);
+        if (array_key_exists('arguments', $command)) {
+            foreach ($command['arguments'] as $key => $argument) {
+                $command['arguments'][$key] = new CommandArgument(...$argument);
+            }
         }
 
-        foreach ($command['optionNames'] as $name => $key) {
-            $command['options'][$key]['name'] = $name;
+        if (array_key_exists('optionNames', $command)) {
+            foreach ($command['optionNames'] as $name => $key) {
+                $command['options'][$key]['name'] = $name;
+            }
         }
 
-        foreach ($command['optionShortcuts'] as $shortcut => $key) {
-            $command['options'][$key]['shortcut'] = $shortcut;
+        if (array_key_exists('optionShortcuts', $command)) {
+            foreach ($command['optionShortcuts'] as $shortcut => $key) {
+                $command['options'][$key]['shortcut'] = $shortcut;
+            }
         }
 
-        foreach ($command['options'] as $key => $option) {
-            $command['options'][$key] = new CommandOption(...$option);
+        if (array_key_exists('options', $command)) {
+            foreach ($command['options'] as $key => $option) {
+                $command['options'][$key] = new CommandOption(...$option);
+            }
         }
 
         return new CommandDefinition(...$command);

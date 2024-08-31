@@ -13,6 +13,7 @@ use SWF\Event\ShutdownEvent;
 use SWF\Exception\DatabaserException;
 use SWF\Interface\DatabaserInterface;
 use Throwable;
+use function in_array;
 
 final class Runner
 {
@@ -146,12 +147,6 @@ final class Runner
 
         if (in_array($code, [E_NOTICE, E_USER_NOTICE, E_DEPRECATED, E_USER_DEPRECATED], true)) {
             CommonLogger::getInstance()->notice($message, options: ['file' => $file, 'line' => $line]);
-
-            return true;
-        }
-
-        if (in_array($code, [E_WARNING, E_USER_WARNING, E_STRICT], true) && !config('system')->get('strict')) {
-            CommonLogger::getInstance()->warning($message, options: ['file' => $file, 'line' => $line]);
 
             return true;
         }

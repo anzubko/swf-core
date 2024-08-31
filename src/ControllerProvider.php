@@ -71,6 +71,8 @@ final class ControllerProvider
 
     /**
      * Generates URL by action and optional parameters.
+     *
+     * @throws LogicException
      */
     public function genUrl(string $action, string|int|float|null ...$params): string
     {
@@ -82,14 +84,11 @@ final class ControllerProvider
 
         $index = self::$cache->data['actions']["$action:$pCount"] ?? null;
         if (null === $index) {
-            $message = sprintf('Unable to make URL by action %s', $action);
-            if ($pCount > 0) {
-                $message = sprintf('%s and %s parameter%s', $message, $pCount, 1 === $pCount ? '' : 's');
+            if (0 === $pCount) {
+                throw new LogicException(sprintf('Unable to make URL by action "%s"', $action));
             }
 
-            CommonLogger::getInstance()->warning($message, options: debug_backtrace(2)[1]);
-
-            return '/';
+            throw new LogicException(sprintf('Unable to make URL by action "%s" and %s parameter%s', $action, $pCount, 1 === $pCount ? '' : 's'));
         }
 
         $url = self::$cache->data['urls'][$index];

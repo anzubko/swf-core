@@ -164,7 +164,7 @@ final class CommonLogger implements LoggerInterface
             $datetime->setTimezone($this->timezone);
         }
 
-        FileHandler::put($file, sprintf('[%s] %s', $datetime->format('d-M-Y H:i:s e'), $message), FILE_APPEND);
+        FileHandler::put($file, sprintf('[%s] %s', $datetime->format('d-M-Y H:i:s.v e'), $message), FILE_APPEND);
     }
 
     /**
@@ -209,7 +209,7 @@ final class CommonLogger implements LoggerInterface
             ];
         }
 
-        $trace = debug_backtrace(3);
+        $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS);
         foreach ($trace as $i => $item) {
             if (isset($item['object']) && $item['object'] instanceof LoggerInterface) {
                 continue;

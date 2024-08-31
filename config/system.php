@@ -16,13 +16,6 @@ return [
     'debug' => false,
 
     /**
-     * Treats errors except deprecations and notices as fatal and sets Twig to strict mode.
-     *
-     * bool
-     */
-    'strict' => true,
-
-    /**
      * Basic url (autodetect if null).
      *
      * string|null
