@@ -45,14 +45,15 @@ final class CommandProvider
         $commandManager = new CommandManager($_SERVER['argv'][1], self::$cache->data['commands'][$_SERVER['argv'][1]]);
 
         for ($i = 0, $chunks = array_slice($_SERVER['argv'], 2); $i < count($chunks); $i++) {
-            if (strlen($chunks[$i]) > 2 && '-' === $chunks[$i][0] && '-' === $chunks[$i][1]) {
-                $commandManager->processOption($chunks[$i]);
+            $chunk = $chunks[$i];
+            if (strlen($chunk) > 2 && '-' === $chunk[0] && '-' === $chunk[1]) {
+                $commandManager->processOption($chunk);
             } elseif (
-                strlen($chunks[$i]) > 1 && '-' === $chunks[$i][0] && '-' !== $chunks[$i][1]
+                strlen($chunk) > 1 && '-' === $chunk[0] && '-' !== $chunk[1]
             ) {
-                $i += $commandManager->processShortOption($chunks[$i], $chunks[$i + 1] ?? null);
+                $i += $commandManager->processShortOption($chunk, $chunks[$i + 1] ?? null);
             } else {
-                $commandManager->processArgument($chunks[$i]);
+                $commandManager->processArgument($chunk);
             }
         }
 

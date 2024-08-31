@@ -7,10 +7,10 @@ use SWF\Enum\CommandTypeEnum;
 final readonly class CommandArgument
 {
     /**
-     * @param string|null $description
-     * @param bool $isRequired
-     * @param bool $isArray
-     * @param value-of<CommandTypeEnum::ALL> $type
+     * @param string|null $description Optional description
+     * @param bool $isRequired Argument will be required.
+     * @param bool $isArray If you need multiple arguments.
+     * @param value-of<CommandTypeEnum::ALL> $type You will get exactly that type.
      */
     public function __construct(
         public ?string $description = null,

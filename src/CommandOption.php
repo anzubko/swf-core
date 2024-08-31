@@ -8,13 +8,13 @@ use SWF\Enum\CommandValueEnum;
 final readonly class CommandOption
 {
     /**
-     * @param string|null $name
-     * @param string|null $shortcut
-     * @param string|null $description
-     * @param bool $isRequired
-     * @param bool $isArray
-     * @param int $type
-     * @param int $value
+     * @param string|null $name Name of option. If null, then key will be used.
+     * @param string|null $shortcut One character shortcut.
+     * @param string|null $description Optional description.
+     * @param bool $isRequired Option will be required.
+     * @param bool $isArray If you need multiple option.
+     * @param value-of<CommandTypeEnum::ALL> $type You will get exactly that type.
+     * @param value-of<CommandValueEnum::ALL> $value Value definition.
      */
     public function __construct(
         public ?string $name = null,

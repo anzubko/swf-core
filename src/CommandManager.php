@@ -265,6 +265,10 @@ final readonly class CommandManager
             }
         }
 
+        if (null !== $this->command->description) {
+            echo sprintf("Description:\n  %s\n\n", $this->command->description);
+        }
+
         echo sprintf("Usage:\n  %s\n", $this->genUsage(false));
 
         if (count($arguments) > 0) {
