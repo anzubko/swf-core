@@ -104,7 +104,7 @@ final class ListenerProvider implements ListenerProviderInterface
     /**
      * @inheritDoc
      *
-     * @return callable[]
+     * @return iterable<callable>
      *
      * @throws Throwable
      */

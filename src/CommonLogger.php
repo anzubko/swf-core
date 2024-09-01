@@ -17,15 +17,7 @@ final class CommonLogger implements LoggerInterface
 {
     private static self $instance;
 
-    private ?DateTimeZone $timezone = null;
-
-    private function __construct()
-    {
-        try {
-            $this->timezone = new DateTimeZone(config('system')->get('timezone'));
-        } catch (Exception) {
-        }
-    }
+    private ?DateTimeZone $timezone;
 
     public static function getInstance(): self
     {
@@ -140,6 +132,11 @@ final class CommonLogger implements LoggerInterface
 
         error_log($complexMessage);
 
+        $customLog = config('system')->get('customLog');
+        if (null !== $customLog) {
+            $this->customLog(strtr($customLog, ['{ENV}' => config('system')->get('env')]), $complexMessage);
+        }
+
         try {
             EventDispatcher::getInstance()->dispatch(
                 new LogEvent(
@@ -159,12 +156,15 @@ final class CommonLogger implements LoggerInterface
      */
     public function customLog(string $file, string $message): void
     {
-        $datetime = new DateTime();
-        if (null !== $this->timezone) {
-            $datetime->setTimezone($this->timezone);
+        if (!isset($this->timezone)) {
+            try {
+                $this->timezone = new DateTimeZone(config('system')->get('timezone'));
+            } catch (Exception) {
+                $this->timezone = new DateTimeZone('UTC');
+            }
         }
 
-        FileHandler::put($file, sprintf('[%s] %s', $datetime->format('d-M-Y H:i:s.v e'), $message), FILE_APPEND);
+        FileHandler::put($file, sprintf('[%s] %s', (new DateTime())->setTimezone($this->timezone)->format('d-M-Y H:i:s.v e'), $message), FILE_APPEND);
     }
 
     /**

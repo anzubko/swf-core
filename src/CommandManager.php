@@ -244,9 +244,9 @@ final readonly class CommandManager
         $arguments = $options = [];
 
         foreach ($this->command->arguments as $key => $argument) {
-            $arguments[$key] = $key;
+            $arguments[$key] = (string) $key;
 
-            $maxLength = max($maxLength, mb_strlen($key));
+            $maxLength = max($maxLength, mb_strlen((string) $key));
         }
 
         foreach ($this->command->options as $key => $option) {

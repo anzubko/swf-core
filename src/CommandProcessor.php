@@ -39,12 +39,12 @@ final class CommandProcessor extends AbstractActionProcessor
                         }
 
                         foreach ($instance->params as $key => $param) {
-                            if (in_array($key, self::RESTRICTED_KEYS)) {
+                            if (in_array($key, self::RESTRICTED_KEYS, true)) {
                                 throw new LogicException(sprintf('Key %s is restricted for use', $key));
                             } elseif ($param instanceof CommandArgument) {
-                                $command = $this->decomposeArgument($command, $key, $param);
+                                $command = $this->decomposeArgument($command, (string) $key, $param);
                             } elseif ($param instanceof CommandOption) {
-                                $command = $this->decomposeOption($command, $key, $param);
+                                $command = $this->decomposeOption($command, (string) $key, $param);
                             } else {
                                 throw new LogicException('Command parameter must be instance of CommandArgument or CommandOption');
                             }
