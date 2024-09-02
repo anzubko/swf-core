@@ -8,7 +8,7 @@ use SWF\RelationProvider;
  *
  * @param class-string $className
  */
-function instance(string $className): mixed
+function i(string $className): mixed
 {
     static $instances = [];
 

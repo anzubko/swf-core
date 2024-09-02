@@ -55,12 +55,20 @@ final class ListenerProvider implements ListenerProviderInterface
             throw new InvalidArgumentException('Listener must have first parameter with declared type');
         }
 
-        self::$cache->data['listeners'][] = [
+        $listener = [
             'callback' => $callback,
             'type' => (string) $type,
-            'disposable' => $disposable,
-            'persistent' => $persistent,
         ];
+
+        if ($disposable) {
+            $listener['disposable'] = true;
+        }
+
+        if ($persistent) {
+            $listener['persistent'] = true;
+        }
+
+        self::$cache->data['listeners'][] = $listener;
     }
 
     /**
@@ -75,7 +83,7 @@ final class ListenerProvider implements ListenerProviderInterface
         }
 
         foreach (self::$cache->data['listeners'] as $i => $listener) {
-            if (($force || !$listener['persistent']) && in_array($listener['type'], (array) $types, true)) {
+            if (($force || !($listener['persistent'] ?? false)) && in_array($listener['type'], (array) $types, true)) {
                 unset(self::$cache->data['listeners'][$i]);
             }
         }
@@ -94,7 +102,7 @@ final class ListenerProvider implements ListenerProviderInterface
             self::$cache->data['listeners'] = [];
         } else {
             foreach (self::$cache->data['listeners'] as $i => $listener) {
-                if (!$listener['persistent']) {
+                if (!($listener['persistent'] ?? false)) {
                     unset(self::$cache->data['listeners'][$i]);
                 }
             }
@@ -121,7 +129,7 @@ final class ListenerProvider implements ListenerProviderInterface
 
             $listener['callback'] = CallbackHandler::normalize($listener['callback']);
 
-            if ($listener['disposable']) {
+            if ($listener['disposable'] ?? false) {
                 unset(self::$cache->data['listeners'][$i]);
             }
 

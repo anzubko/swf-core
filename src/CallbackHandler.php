@@ -25,7 +25,7 @@ final class CallbackHandler
         }
 
         if (is_string($callback[0]) && class_exists($callback[0])) {
-            $callback[0] = instance($callback[0]);
+            $callback[0] = i($callback[0]);
             if (is_callable($callback)) {
                 return $callback;
             }

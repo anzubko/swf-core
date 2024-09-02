@@ -13,7 +13,7 @@ use function is_array;
 
 final class ActionManager
 {
-    private string $metricsFile = APP_DIR . '/var/cache/.swf/action.manager.metrics.php';
+    private string $metricsFile = APP_DIR . '/var/cache/.swf/metrics.php';
 
     private string $lockKey = '.swf/action.manager';
 

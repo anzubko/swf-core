@@ -156,7 +156,7 @@ final class Runner
 
     private function cleanupAndDispatchAtShutdown(): void
     {
-        foreach ((new ReflectionFunction('instance'))->getStaticVariables()['instances'] as $class) {
+        foreach ((new ReflectionFunction('i'))->getStaticVariables()['instances'] as $class) {
             if ($class instanceof DatabaserInterface && $class->isInTrans()) {
                 try {
                     $class->rollback(true);

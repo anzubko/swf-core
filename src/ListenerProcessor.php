@@ -31,13 +31,24 @@ final class ListenerProcessor extends AbstractActionProcessor
                         }
 
                         $instance = $attribute->newInstance();
-                        $cache->data['listeners'][] = [
-                            'callback' => sprintf('%s::%s', $class->name, $method->name),
-                            'type' => (string) $type,
-                            'disposable' => $instance->disposable,
-                            'persistent' => $instance->persistent,
-                            'priority' => $instance->priority,
-                        ];
+
+                        $listener = [];
+
+                        $listener['callback'] = sprintf('%s::%s', $class->name, $method->name);
+
+                        $listener['type'] = (string) $type;
+
+                        if ($instance->disposable) {
+                            $listener['disposable'] = true;
+                        }
+
+                        if ($instance->persistent) {
+                            $listener['persistent'] = true;
+                        }
+
+                        $listener['priority'] = $instance->priority;
+
+                        $cache->data['listeners'][] = $listener;
                     }
                 } catch (Throwable $e) {
                     throw ExceptionHandler::overrideFileAndLine($e, (string) $method->getFileName(), (int) $method->getStartLine());
