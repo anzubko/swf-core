@@ -1,19 +1,18 @@
 <?php declare(strict_types=1);
 
-use SWF\AbstractShared;
 use SWF\ConfigGetter;
 use SWF\RelationProvider;
 
 /**
- * Accesses shared classes.
+ * Instantiates some class only once.
  *
- * @param class-string<AbstractShared> $className
+ * @param class-string $className
  */
-function shared(string $className): mixed
+function instance(string $className): mixed
 {
-    static $shared = [];
+    static $instances = [];
 
-    return $shared[$className] ??= (new ReflectionClass($className))->getMethod('getInstance')->invoke(null);
+    return $instances[$className] ??= method_exists($className, 'getInstance') ? $className::getInstance() : new $className;
 }
 
 /**

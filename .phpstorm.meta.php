@@ -1,5 +1,5 @@
 <?php
 
 namespace PHPSTORM_META {
-    override(\shared(0), map(['' => '@']));
+    override(\instance(0), map(['' => '@']));
 }

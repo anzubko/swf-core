@@ -39,7 +39,7 @@ final class DelayedNotifier
      */
     public function add(AbstractNotify $notify): void
     {
-        foreach ((new ReflectionFunction('shared'))->getStaticVariables()['shared'] as $class) {
+        foreach ((new ReflectionFunction('instance'))->getStaticVariables()['instances'] as $class) {
             if ($class instanceof DatabaserInterface && $class->isInTrans()) {
                 ListenerProvider::getInstance()->addListener(
                     callback: function (TransactionCommitEvent $event) use ($notify) {
