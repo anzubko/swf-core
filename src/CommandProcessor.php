@@ -7,7 +7,6 @@ use ReflectionMethod;
 use SWF\Attribute\AsCommand;
 use SWF\Enum\CommandTypeEnum;
 use SWF\Enum\CommandValueEnum;
-use Throwable;
 use function in_array;
 
 final class CommandProcessor extends AbstractActionProcessor
@@ -52,7 +51,7 @@ final class CommandProcessor extends AbstractActionProcessor
 
                         $cache->data['commands'][$instance->name] = $command;
                     }
-                } catch (Throwable $e) {
+                } catch (LogicException $e) {
                     throw ExceptionHandler::overrideFileAndLine($e, (string) $method->getFileName(), (int) $method->getStartLine());
                 }
             }
@@ -93,6 +92,8 @@ final class CommandProcessor extends AbstractActionProcessor
      * @param mixed[] $command
      *
      * @return mixed[]
+     *
+     * @throws LogicException
      */
     private function decomposeOption(array $command, string $key, CommandOption $param): array
     {

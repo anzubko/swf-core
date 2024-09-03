@@ -7,7 +7,6 @@ use LogicException;
 use Psr\EventDispatcher\ListenerProviderInterface;
 use ReflectionFunction;
 use RuntimeException;
-use Throwable;
 use function count;
 use function in_array;
 
@@ -114,7 +113,7 @@ final class ListenerProvider implements ListenerProviderInterface
      *
      * @return iterable<callable>
      *
-     * @throws Throwable
+     * @throws LogicException
      */
     public function getListenersForEvent(object $event): iterable
     {

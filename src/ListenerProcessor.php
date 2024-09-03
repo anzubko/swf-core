@@ -5,7 +5,6 @@ namespace SWF;
 use LogicException;
 use ReflectionMethod;
 use SWF\Attribute\AsListener;
-use Throwable;
 use function count;
 
 final class ListenerProcessor extends AbstractActionProcessor
@@ -50,7 +49,7 @@ final class ListenerProcessor extends AbstractActionProcessor
 
                         $cache->data['listeners'][] = $listener;
                     }
-                } catch (Throwable $e) {
+                } catch (LogicException $e) {
                     throw ExceptionHandler::overrideFileAndLine($e, (string) $method->getFileName(), (int) $method->getStartLine());
                 }
             }

@@ -5,7 +5,6 @@ namespace SWF;
 use LogicException;
 use ReflectionMethod;
 use SWF\Attribute\AsController;
-use Throwable;
 use function count;
 use function is_string;
 
@@ -47,7 +46,7 @@ final class ControllerProcessor extends AbstractActionProcessor
                             }
                         }
                     }
-                } catch (Throwable $e) {
+                } catch (LogicException $e) {
                     throw ExceptionHandler::overrideFileAndLine($e, (string) $method->getFileName(), (int) $method->getStartLine());
                 }
             }

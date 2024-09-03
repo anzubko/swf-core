@@ -89,7 +89,7 @@ final class Runner
     }
 
     /**
-     * @throws Throwable
+     * @throws Exception
      */
     private function setTimezone(): void
     {
