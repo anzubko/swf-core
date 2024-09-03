@@ -5,7 +5,7 @@ namespace SWF;
 final class FileHandler
 {
     /**
-     * Getting file contents into string.
+     * Gets file contents as string.
      */
     public static function get(string $file): ?string
     {
@@ -15,7 +15,7 @@ final class FileHandler
     }
 
     /**
-     * Putting contents to file.
+     * Puts contents to file.
      */
     public static function put(string $file, mixed $contents, int $flags = 0, bool $createDir = true): bool
     {
@@ -29,7 +29,7 @@ final class FileHandler
     }
 
     /**
-     * Putting variable to some PHP file.
+     * Puts variable to some PHP file.
      */
     public static function putVar(string $file, mixed $variable, int $flags = 0, bool $createDir = true): bool
     {
@@ -45,7 +45,7 @@ final class FileHandler
     }
 
     /**
-     * File removing.
+     * Removes file.
      */
     public static function remove(string $file): bool
     {
@@ -57,7 +57,7 @@ final class FileHandler
     }
 
     /**
-     * File coping.
+     * Copies file.
      */
     public static function copy(string $source, string $target, bool $createDir = true): bool
     {
@@ -71,7 +71,7 @@ final class FileHandler
     }
 
     /**
-     * File moving.
+     * Moves file.
      */
     public static function move(string $source, string $target, bool $createDir = true): bool
     {
@@ -83,7 +83,7 @@ final class FileHandler
     }
 
     /**
-     * Getting some file statistics.
+     * Gets some file statistics.
      *
      * @return array{name:string, size:int, modified:int, created:int, w:int, h:int, type:string|null}|null
      */

@@ -7,7 +7,7 @@ use GdImage;
 final class ImageHandler
 {
     /**
-     * Reading image from string.
+     * Reads image from string.
      */
     public static function fromString(string|false|null $string): ?GdImage
     {
@@ -24,7 +24,7 @@ final class ImageHandler
     }
 
     /**
-     * Reading image from file.
+     * Reads image from file.
      */
     public static function fromFile(string $file): ?GdImage
     {
@@ -32,7 +32,7 @@ final class ImageHandler
     }
 
     /**
-     * Saving as PNG to file or returning as string.
+     * Saves as PNG to file or returns as string.
      */
     public static function savePng(GdImage $image, ?string $file = null, int $quality = 0): string|bool
     {
@@ -54,7 +54,7 @@ final class ImageHandler
     }
 
     /**
-     * Saving as JPEG to file or returning as string.
+     * Saves as JPEG to file or returns as string.
      */
     public static function saveJpeg(GdImage $image, ?string $file = null, int $quality = 80): string|bool
     {
@@ -83,7 +83,7 @@ final class ImageHandler
     }
 
     /**
-     * Resizing image.
+     * Resizes image.
      */
     public static function resize(GdImage $image, int $nW, int $nH, bool $crop = false, bool $fit = false): GdImage
     {
@@ -103,9 +103,6 @@ final class ImageHandler
         return $resized;
     }
 
-    /**
-     * Resizing image with cropping.
-     */
     protected static function resizeWithCrop(GdImage $image, int $nW, int $nH, int $oW, int $oH): GdImage
     {
         $ratio = $oW / $oH;
@@ -129,9 +126,6 @@ final class ImageHandler
         return $resized;
     }
 
-    /**
-     * Resizing image with no cropping.
-     */
     protected static function resizeNoCrop(GdImage $image, int $nW, int $nH, int $oW, int $oH): GdImage
     {
         $ratio = $oW / $oH;

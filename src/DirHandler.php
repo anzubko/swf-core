@@ -14,7 +14,7 @@ final class DirHandler
     private static array $tempSubDirs = [];
 
     /**
-     * Directory scanning.
+     * Scans directory.
      *
      * @return string[]
      */
@@ -56,7 +56,7 @@ final class DirHandler
     }
 
     /**
-     * Directory creation.
+     * Creates directory.
      */
     public static function create(string $dir): bool
     {
@@ -73,7 +73,7 @@ final class DirHandler
     }
 
     /**
-     * Directory removing.
+     * Removes directory.
      */
     public static function remove(string $dir, bool $recursive = true): bool
     {
@@ -111,7 +111,7 @@ final class DirHandler
     }
 
     /**
-     * Directory clearing.
+     * Clears directory.
      */
     public static function clear(string $dir, bool $recursive = true): bool
     {
@@ -143,7 +143,7 @@ final class DirHandler
     }
 
     /**
-     * Directory coping.
+     * Copies directory.
      */
     public static function copy(string $source, string $target): bool
     {
@@ -175,7 +175,7 @@ final class DirHandler
     }
 
     /**
-     * Directory moving.
+     * Moves directory.
      */
     public static function move(string $source, string $target): bool
     {
