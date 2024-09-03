@@ -7,9 +7,11 @@ final class FileHandler
     /**
      * Getting file contents into string.
      */
-    public static function get(string $file): string|false
+    public static function get(string $file): ?string
     {
-        return file_get_contents($file);
+        $contents = file_get_contents($file);
+
+        return false === $contents ? null : $contents;
     }
 
     /**

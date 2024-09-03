@@ -9,15 +9,15 @@ final class ImageHandler
     /**
      * Reading image from string.
      */
-    public static function fromString(string|false|null $string): GdImage|false
+    public static function fromString(string|false|null $string): ?GdImage
     {
         if (empty($string)) {
-            return false;
+            return null;
         }
 
         $image = imagecreatefromstring($string);
         if (false === $image) {
-            return false;
+            return null;
         }
 
         return $image;
@@ -26,7 +26,7 @@ final class ImageHandler
     /**
      * Reading image from file.
      */
-    public static function fromFile(string $file): GdImage|false
+    public static function fromFile(string $file): ?GdImage
     {
         return self::fromString(FileHandler::get($file));
     }

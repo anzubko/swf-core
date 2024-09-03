@@ -230,7 +230,7 @@ final class AssetsMerger
 
         return (string) preg_replace_callback('/url\(\s*(.+?)\s*\)/u',
             function (array $M) {
-                $data = $type = false;
+                $data = $type = null;
 
                 if (
                     preg_match('/\.(gif|png|jpg|jpeg|svg|woff|woff2)$/ui', $M[1], $N)
@@ -252,7 +252,7 @@ final class AssetsMerger
                     }
                 }
 
-                if (false !== $data) {
+                if (null !== $data) {
                     return sprintf('url(data:image/%s;base64,%s)', $type, base64_encode($data));
                 } else {
                     return sprintf('url(%s)', $M[1]);
@@ -272,7 +272,7 @@ final class AssetsMerger
         $merged = [];
         foreach ($files as $file) {
             $contents = FileHandler::get($file);
-            if (false === $contents) {
+            if (null === $contents) {
                 throw new RuntimeException(sprintf('Unable to read file %s', $file));
             }
 
