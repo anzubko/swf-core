@@ -1,6 +1,6 @@
 {
     "name": "anzubko/swf-core",
-    "description": "SWF core",
+    "description": "Simplest framework core",
     "type": "library",
     "license": "GPL-3.0-or-later",
     "autoload": {
@@ -18,7 +18,7 @@
         }
     ],
     "require": {
-        "php": "^8.2",
+        "php": ">=8.2",
         "ext-curl": "*",
         "ext-gd": "*",
         "ext-intl": "*",
