@@ -13,8 +13,8 @@ final readonly class CommandOption
      * @param string|null $description Optional description.
      * @param bool $isRequired Option will be required.
      * @param bool $isArray If you need multiple option.
-     * @param value-of<CommandTypeEnum::ALL> $type You will get exactly that type.
-     * @param value-of<CommandValueEnum::ALL> $value Value definition.
+     * @param CommandTypeEnum $type You will get exactly that type.
+     * @param CommandValueEnum $value Value definition.
      */
     public function __construct(
         public ?string $name = null,
@@ -22,8 +22,8 @@ final readonly class CommandOption
         public ?string $description = null,
         public bool $isRequired = false,
         public bool $isArray = false,
-        public int $type = CommandTypeEnum::STRING,
-        public int $value = CommandValueEnum::OPTIONAL,
+        public CommandTypeEnum $type = CommandTypeEnum::STRING,
+        public CommandValueEnum $value = CommandValueEnum::OPTIONAL,
     ) {
     }
 }

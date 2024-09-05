@@ -78,7 +78,7 @@ final class CommandProcessor extends AbstractActionProcessor
             $argument['isRequired'] = true;
         }
         if (CommandTypeEnum::STRING !== $param->type) {
-            $argument['type'] = $param->type;
+            $argument['type'] = $param->type->value;
         }
 
         $command['arguments'][$key] = $argument;
@@ -137,10 +137,10 @@ final class CommandProcessor extends AbstractActionProcessor
             $option['isArray'] = true;
         }
         if (CommandTypeEnum::STRING !== $param->type) {
-            $option['type'] = $param->type;
+            $option['type'] = $param->type->value;
         }
         if (CommandValueEnum::OPTIONAL !== $param->value) {
-            $option['value'] = $param->value;
+            $option['value'] = $param->value->value;
         }
 
         $command['options'][$key] = $option;

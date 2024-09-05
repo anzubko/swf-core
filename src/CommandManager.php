@@ -138,6 +138,10 @@ final readonly class CommandManager
     {
         if (array_key_exists('arguments', $command)) {
             foreach ($command['arguments'] as $key => $argument) {
+                if (array_key_exists('type', $argument)) {
+                    $argument['type'] = CommandTypeEnum::from($argument['type']);
+                }
+
                 $command['arguments'][$key] = new CommandArgument(...$argument);
             }
         }
@@ -156,6 +160,13 @@ final readonly class CommandManager
 
         if (array_key_exists('options', $command)) {
             foreach ($command['options'] as $key => $option) {
+                if (array_key_exists('type', $option)) {
+                    $option['type'] = CommandTypeEnum::from($option['type']);
+                }
+                if (array_key_exists('value', $option)) {
+                    $option['value'] = CommandValueEnum::from($option['value']);
+                }
+
                 $command['options'][$key] = new CommandOption(...$option);
             }
         }
@@ -163,7 +174,7 @@ final readonly class CommandManager
         return new CommandDefinition(...$command);
     }
 
-    private function typify(int $type, string $value): string|int|bool|float
+    private function typify(CommandTypeEnum $type, string $value): string|int|bool|float
     {
         switch ($type) {
             case CommandTypeEnum::INT:
@@ -199,7 +210,7 @@ final readonly class CommandManager
         $argumentsUsage = $optionsUsage = [];
 
         foreach ($this->command->arguments as $key => $argument) {
-            $chunk = sprintf('<%s:%s>', $key, CommandTypeEnum::TO_PRINTABLE[$argument->type]);
+            $chunk = sprintf('<%s:%s>', $key, $argument->type->name);
             if ($argument->isArray) {
                 $chunk = sprintf('%s...', $chunk);
             }
@@ -217,9 +228,9 @@ final readonly class CommandManager
                 $chunk = sprintf('-%s|--%s', $option->shortcut, $option->name);
             }
             if (CommandValueEnum::REQUIRED === $option->value) {
-                $chunk = sprintf('%s=%s', $chunk, CommandTypeEnum::TO_PRINTABLE[$option->type]);
-            } elseif (CommandValueEnum::OPTIONAL) {
-                $chunk = sprintf('%s[=%s]', $chunk, CommandTypeEnum::TO_PRINTABLE[$option->type]);
+                $chunk = sprintf('%s=%s', $chunk, $option->type->name);
+            } elseif (CommandValueEnum::OPTIONAL === $option->value) {
+                $chunk = sprintf('%s[=%s]', $chunk, $option->type->name);
             }
             if ($option->isArray) {
                 $chunk = sprintf('%s...', $chunk);

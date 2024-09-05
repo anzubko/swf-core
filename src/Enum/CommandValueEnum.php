@@ -2,15 +2,9 @@
 
 namespace SWF\Enum;
 
-class CommandValueEnum
+enum CommandValueEnum: int
 {
-    public const REQUIRED = 1;
-    public const OPTIONAL = 2;
-    public const NONE = 3;
-
-    public const ALL = [
-        self::REQUIRED,
-        self::OPTIONAL,
-        self::NONE,
-    ];
+    case REQUIRED = 1;
+    case OPTIONAL = 2;
+    case NONE = 3;
 }

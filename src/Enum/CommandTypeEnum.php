@@ -2,24 +2,10 @@
 
 namespace SWF\Enum;
 
-class CommandTypeEnum
+enum CommandTypeEnum: int
 {
-    public const INT = 1;
-    public const FLOAT = 2;
-    public const STRING = 3;
-    public const BOOL = 4;
-
-    public const ALL = [
-        self::INT,
-        self::FLOAT,
-        self::STRING,
-        self::BOOL,
-    ];
-
-    public const TO_PRINTABLE = [
-        self::INT => 'INT',
-        self::FLOAT => 'FLOAT',
-        self::STRING => 'STRING',
-        self::BOOL => 'BOOL',
-    ];
+    case INT = 1;
+    case FLOAT = 2;
+    case STRING = 3;
+    case BOOL = 4;
 }
