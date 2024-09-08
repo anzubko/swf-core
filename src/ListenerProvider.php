@@ -125,7 +125,7 @@ final class ListenerProvider implements ListenerProviderInterface
         }
     }
 
-    public function showAll(): void
+    public function showAll(): never
     {
         $listeners = [];
         foreach (self::$cache->data['listeners'] as $listener) {
@@ -134,7 +134,7 @@ final class ListenerProvider implements ListenerProviderInterface
 
         if (count($listeners) === 0) {
             echo "No listeners found.\n";
-            exit;
+            exit(0);
         }
 
         echo "Registered listeners:\n";
@@ -150,5 +150,6 @@ final class ListenerProvider implements ListenerProviderInterface
         }
 
         echo "\n";
+        exit(0);
     }
 }

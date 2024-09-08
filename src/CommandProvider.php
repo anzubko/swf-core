@@ -40,7 +40,6 @@ final class CommandProvider
     {
         if (!isset($_SERVER['argv'][1])) {
             $this->showAll();
-            exit;
         }
 
         $name = $_SERVER['argv'][1];
@@ -68,12 +67,12 @@ final class CommandProvider
         return [$commandManager->getAction(), null];
     }
 
-    public function showAll(): void
+    public function showAll(): never
     {
         $commands = self::$cache->data['commands'];
         if (count($commands) === 0) {
             echo "No commands found.\n";
-            exit;
+            exit(0);
         }
 
         echo "Available commands:\n";
@@ -88,5 +87,6 @@ final class CommandProvider
         }
 
         echo "\n";
+        exit(0);
     }
 }

@@ -97,7 +97,7 @@ final class ControllerProvider
         return implode($url);
     }
 
-    public function showAll(): void
+    public function showAll(): never
     {
         $controllers = [];
         foreach (self::$cache->data['static'] as $path => $actions) {
@@ -120,7 +120,7 @@ final class ControllerProvider
 
         if (count($controllers) === 0) {
             echo "No controllers found.\n";
-            exit;
+            exit(0);
         }
 
         echo "Available controllers:\n";
@@ -135,5 +135,6 @@ final class ControllerProvider
         }
 
         echo "\n";
+        exit(0);
     }
 }
