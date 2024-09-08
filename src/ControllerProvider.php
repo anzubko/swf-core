@@ -9,18 +9,9 @@ use function is_string;
 
 final class ControllerProvider
 {
-    private static ?ActionCache $cache;
+    private static ActionCache $cache;
 
     private static self $instance;
-
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
-    private function __construct()
-    {
-        self::$cache = ActionManager::getInstance()->getCache(ControllerProcessor::class);
-    }
 
     /**
      * @throws LogicException
@@ -32,16 +23,21 @@ final class ControllerProvider
     }
 
     /**
+     * @throws LogicException
+     * @throws RuntimeException
+     */
+    private function __construct()
+    {
+        self::$cache = ActionManager::getInstance()->getCache(ControllerProcessor::class);
+    }
+
+    /**
      * Gets current action.
      *
      * @return array{string, string|null}|null
      */
     public function getCurrentAction(): ?array
     {
-        if (null === self::$cache) {
-            return null;
-        }
-
         $path = explode('?', $_SERVER['REQUEST_URI'], 2)[0];
 
         $actions = self::$cache->data['static'][$path] ?? null;
@@ -57,7 +53,7 @@ final class ControllerProvider
             return null;
         }
 
-        $action = $actions[$_SERVER['REQUEST_METHOD']] ?? $actions[''] ?? null;
+        $action = $actions[$_SERVER['REQUEST_METHOD']] ?? $actions['ANY'] ?? null;
         if (null === $action) {
             return null;
         }
@@ -76,10 +72,6 @@ final class ControllerProvider
      */
     public function genUrl(string $action, string|int|float|null ...$params): string
     {
-        if (null === self::$cache) {
-            return '/';
-        }
-
         $pCount = count($params);
 
         $index = self::$cache->data['actions']["$action:$pCount"] ?? null;
@@ -103,5 +95,45 @@ final class ControllerProvider
         }
 
         return implode($url);
+    }
+
+    public function showAll(): void
+    {
+        $controllers = [];
+        foreach (self::$cache->data['static'] as $path => $actions) {
+            foreach ($actions as $method => $action) {
+                $action = (array) $action;
+                $controllers[$path]['methods'][] = $method;
+                $controllers[$path]['action'] = $action;
+            }
+        }
+
+        foreach (self::$cache->data['dynamic'] as $actions) {
+            foreach ($actions[0] as $method => $action) {
+                $action = (array) $action;
+                $i = self::$cache->data['actions'][sprintf('%s:%d', $action[0], $actions[1])];
+                $path = implode(self::$cache->data['urls'][$i]);
+                $controllers[$path]['methods'][] = $method;
+                $controllers[$path]['action'] = $action;
+            }
+        }
+
+        if (count($controllers) === 0) {
+            echo "No controllers found.\n";
+            exit;
+        }
+
+        echo "Available controllers:\n";
+
+        ksort($controllers);
+        foreach ($controllers as $path => $controller) {
+            echo sprintf("\n%s %s --> %s\n", implode('|', $controller['methods']), $path, $controller['action'][0]);
+
+            if (isset($controller['action'][1])) {
+                echo sprintf("  alias: %s\n", $controller['action'][1]);
+            }
+        }
+
+        echo "\n";
     }
 }

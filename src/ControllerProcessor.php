@@ -33,7 +33,7 @@ final class ControllerProcessor extends AbstractActionProcessor
                         foreach ((array) $instance->url as $url) {
                             $httpMethods = (array) $instance->method;
                             if (count($httpMethods) === 0) {
-                                $httpMethods[] = '';
+                                $httpMethods[] = 'ANY';
                             }
 
                             foreach ($httpMethods as $httpMethod) {

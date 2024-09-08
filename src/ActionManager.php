@@ -13,7 +13,7 @@ use function is_array;
 
 final class ActionManager
 {
-    private string $metricsFile = APP_DIR . '/var/cache/.swf/metrics.php';
+    private string $metricsFile = APP_DIR . '/var/cache/.swf/action.manager.metrics.php';
 
     private string $lockKey = '.swf/action.manager';
 
@@ -39,38 +39,30 @@ final class ActionManager
 
     private static self $instance;
 
-    private function __construct()
-    {
-        $this->processors = [
-            new CommandProcessor(),
-            new ControllerProcessor(),
-            new ListenerProcessor(),
-            new RelationProcessor(),
-        ];
-
-        $this->namespaces = config('system')->get('namespaces');
-    }
-
     /**
      * @throws LogicException
      * @throws RuntimeException
      */
     public static function getInstance(): self
     {
-        if (!isset(self::$instance)) {
-            self::$instance = new self();
-            self::$instance->checkMetricsAndReadCaches();
-        }
+        return self::$instance ??= new self();
+    }
 
-        return self::$instance;
+    /**
+     * @throws LogicException
+     * @throws RuntimeException
+     */
+    private function __construct()
+    {
+        $this->checkMetricsAndReadCaches();
     }
 
     /**
      * @param class-string<AbstractActionProcessor> $className
      */
-    public function getCache(string $className): ?ActionCache
+    public function getCache(string $className): ActionCache
     {
-        return isset($this->caches) ? ($this->caches[$className] ?? null) : null;
+        return $this->caches[$className];
     }
 
     /**
@@ -79,9 +71,18 @@ final class ActionManager
      */
     private function checkMetricsAndReadCaches(): void
     {
+        $this->processors = [
+            new CommandProcessor(),
+            new ControllerProcessor(),
+            new ListenerProcessor(),
+            new RelationProcessor(),
+        ];
+
         if (config('system')->get('env') === 'prod' && $this->readCaches()) {
             return;
         }
+
+        $this->namespaces = config('system')->get('namespaces');
 
         $metrics = $this->getMetrics();
         if (null !== $metrics && !$this->isOutdated($metrics) && $this->readCaches()) {

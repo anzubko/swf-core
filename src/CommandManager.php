@@ -19,9 +19,9 @@ final readonly class CommandManager
         $this->command = $this->arrayToCommandDefinition($command);
     }
 
-    public function getName(): string
+    public function getAction(): string
     {
-        return $this->command->name;
+        return $this->command->action;
     }
 
     public function processOption(string $chunk): void

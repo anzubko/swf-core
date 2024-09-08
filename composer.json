@@ -8,7 +8,9 @@
             "SWF\\": "src/"
         },
         "files": [
-            "helpers.php"
+            "functions/instance.php",
+            "functions/config.php",
+            "functions/env.php"
         ]
     },
     "authors": [
@@ -28,9 +30,9 @@
         "psr/event-dispatcher": "^1.0",
         "mrclay/jsmin-php": "^2.4",
         "phpmailer/phpmailer": "^v6.8",
-        "anzubko/swf-cacher": "^0",
-        "anzubko/swf-databaser": "^0",
-        "anzubko/swf-paginator": "^0",
-        "anzubko/swf-templater": "^0"
+        "anzubko/swf-cacher": "*",
+        "anzubko/swf-databaser": "*",
+        "anzubko/swf-paginator": "*",
+        "anzubko/swf-templater": "*"
     }
 }

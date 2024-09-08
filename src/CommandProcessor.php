@@ -31,7 +31,7 @@ final class CommandProcessor extends AbstractActionProcessor
 
                         $instance = $attribute->newInstance();
 
-                        $command = ['name' => sprintf('%s::%s', $class->name, $method->name)];
+                        $command = ['action' => sprintf('%s::%s', $class->name, $method->name)];
 
                         if (null !== $instance->description) {
                             $command['description'] = $instance->description;

@@ -12,7 +12,7 @@ final readonly class CommandDefinition
      * @param string[] $optionShortcuts
      */
     public function __construct(
-        public string $name,
+        public string $action,
         public ?string $description = null,
         public array $arguments = [],
         public array $argumentsIndex = [],

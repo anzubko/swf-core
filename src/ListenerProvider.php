@@ -12,18 +12,9 @@ use function in_array;
 
 final class ListenerProvider implements ListenerProviderInterface
 {
-    private static ?ActionCache $cache;
+    private static ActionCache $cache;
 
     private static self $instance;
-
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
-    private function __construct()
-    {
-        self::$cache = ActionManager::getInstance()->getCache(ListenerProcessor::class);
-    }
 
     /**
      * @throws LogicException
@@ -32,6 +23,15 @@ final class ListenerProvider implements ListenerProviderInterface
     public static function getInstance(): self
     {
         return self::$instance ??= new self();
+    }
+
+    /**
+     * @throws LogicException
+     * @throws RuntimeException
+     */
+    private function __construct()
+    {
+        self::$cache = ActionManager::getInstance()->getCache(ListenerProcessor::class);
     }
 
     /**
@@ -44,10 +44,6 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function addListener(callable $callback, bool $disposable = false, bool $persistent = false): void
     {
-        if (null === self::$cache) {
-            return;
-        }
-
         $params = (new ReflectionFunction($callback(...)))->getParameters();
         $type = count($params) === 0 ? null : $params[0]->getType();
         if (null === $type) {
@@ -77,14 +73,12 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function removeListenersByType(array|string $types, bool $force = false): void
     {
-        if (null === self::$cache) {
-            return;
-        }
-
         foreach (self::$cache->data['listeners'] as $i => $listener) {
-            if (($force || !($listener['persistent'] ?? false)) && in_array($listener['type'], (array) $types, true)) {
-                unset(self::$cache->data['listeners'][$i]);
+            if (!$force && ($listener['persistent'] ?? false) || !in_array($listener['type'], (array) $types, true)) {
+                continue;
             }
+
+            unset(self::$cache->data['listeners'][$i]);
         }
     }
 
@@ -93,18 +87,17 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function removeAllListeners(bool $force = false): void
     {
-        if (null === self::$cache) {
+        if ($force) {
+            self::$cache->data['listeners'] = [];
             return;
         }
 
-        if ($force) {
-            self::$cache->data['listeners'] = [];
-        } else {
-            foreach (self::$cache->data['listeners'] as $i => $listener) {
-                if (!($listener['persistent'] ?? false)) {
-                    unset(self::$cache->data['listeners'][$i]);
-                }
+        foreach (self::$cache->data['listeners'] as $i => $listener) {
+            if ($listener['persistent'] ?? false) {
+                continue;
             }
+
+            unset(self::$cache->data['listeners'][$i]);
         }
     }
 
@@ -117,10 +110,6 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function getListenersForEvent(object $event): iterable
     {
-        if (null === self::$cache) {
-            return [];
-        }
-
         foreach (self::$cache->data['listeners'] as $i => &$listener) {
             if (!$event instanceof $listener['type']) {
                 continue;
@@ -134,5 +123,32 @@ final class ListenerProvider implements ListenerProviderInterface
 
             yield $listener['callback'];
         }
+    }
+
+    public function showAll(): void
+    {
+        $listeners = [];
+        foreach (self::$cache->data['listeners'] as $listener) {
+            $listeners[$listener['type']][] = $listener['callback'];
+        }
+
+        if (count($listeners) === 0) {
+            echo "No listeners found.\n";
+            exit;
+        }
+
+        echo "Registered listeners:\n";
+
+        ksort($listeners);
+        foreach ($listeners as $type => $actions) {
+            echo sprintf("\n%s -->\n", $type);
+
+            sort($actions);
+            foreach ($actions as $action) {
+                echo sprintf("  %s\n", $action);
+            }
+        }
+
+        echo "\n";
     }
 }
