@@ -86,10 +86,8 @@ final class FileHandler
 
     /**
      * Gets some file statistics.
-     *
-     * @return array{name:string, size:int, modified:int, created:int, w:int, h:int, type:string|null}|null
      */
-    public static function stats(string $file): ?array
+    public static function stats(string $file): ?FileStats
     {
         $fileStats = @stat($file);
         if (false === $fileStats) {
@@ -101,14 +99,14 @@ final class FileHandler
             $imageSize = [];
         }
 
-        return [
-            'name' => basename($file),
-            'size' => $fileStats['size'],
-            'modified' => $fileStats['mtime'],
-            'created' => $fileStats['ctime'],
-            'w' => $imageSize[0] ?? 0,
-            'h' => $imageSize[1] ?? 0,
-            'type' => $imageSize['mime'] ?? null,
-        ];
+        return new FileStats(
+            name: basename($file),
+            size: $fileStats['size'],
+            created: $fileStats['ctime'],
+            modified: $fileStats['mtime'],
+            width: $imageSize[0] ?? 0,
+            height: $imageSize[1] ?? 0,
+            type: $imageSize['mime'] ?? null,
+        );
     }
 }

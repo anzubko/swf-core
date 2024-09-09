@@ -85,6 +85,6 @@ final class ControllerProcessor extends AbstractActionProcessor
 
         $cache->data['regex'] = sprintf('{^(?|%s)$}', implode('|', $regex));
 
-        return  $cache;
+        return $cache;
     }
 }
