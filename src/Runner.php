@@ -2,6 +2,7 @@
 
 namespace SWF;
 
+use App\Config\SystemConfig;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
@@ -93,7 +94,7 @@ final class Runner
      */
     private function setTimezone(): void
     {
-        ini_set('date.timezone', config('system')->get('timezone'));
+        ini_set('date.timezone', i(SystemConfig::class)->timezone);
     }
 
     /**
@@ -119,11 +120,11 @@ final class Runner
      */
     private function getUserUrl(): ?string
     {
-        if (null === config('system')->get('url')) {
+        if (null === i(SystemConfig::class)->url) {
             return null;
         }
 
-        $parsedUrl = parse_url(config('system')->get('url'));
+        $parsedUrl = parse_url(i(SystemConfig::class)->url);
         if (empty($parsedUrl) || !isset($parsedUrl['host'])) {
             throw new InvalidArgumentException('Incorrect URL in configuration');
         }

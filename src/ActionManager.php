@@ -2,6 +2,7 @@
 
 namespace SWF;
 
+use App\Config\SystemConfig;
 use Composer\Autoload\ClassLoader;
 use LogicException;
 use RecursiveDirectoryIterator;
@@ -21,11 +22,6 @@ final class ActionManager
      * @var AbstractActionProcessor[]
      */
     private array $processors;
-
-    /**
-     * @var string[]
-     */
-    private array $namespaces;
 
     /**
      * @var array<class-string<AbstractActionProcessor>, ActionCache>
@@ -78,11 +74,9 @@ final class ActionManager
             new RelationProcessor(),
         ];
 
-        if (config('system')->get('env') === 'prod' && $this->readCaches()) {
+        if ('prod' === i(SystemConfig::class)->env && $this->readCaches()) {
             return;
         }
-
-        $this->namespaces = config('system')->get('namespaces');
 
         $metrics = $this->getMetrics();
         if (null !== $metrics && !$this->isOutdated($metrics) && $this->readCaches()) {
@@ -249,7 +243,7 @@ final class ActionManager
 
     private function isNsAllowed(string $ns): bool
     {
-        foreach ($this->namespaces as $namespace) {
+        foreach (i(SystemConfig::class)->namespaces as $namespace) {
             if (str_starts_with($ns, $namespace)) {
                 return true;
             }

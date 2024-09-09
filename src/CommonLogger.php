@@ -2,6 +2,7 @@
 
 namespace SWF;
 
+use App\Config\SystemConfig;
 use DateTime;
 use DateTimeZone;
 use Exception;
@@ -132,9 +133,8 @@ final class CommonLogger implements LoggerInterface
 
         error_log($complexMessage);
 
-        $customLog = config('system')->get('customLog');
-        if (null !== $customLog) {
-            $this->customLog(strtr($customLog, ['{ENV}' => config('system')->get('env')]), $complexMessage);
+        if (null !== i(SystemConfig::class)->customLog) {
+            $this->customLog(strtr(i(SystemConfig::class)->customLog, ['{ENV}' => i(SystemConfig::class)->env]), $complexMessage);
         }
 
         try {
@@ -158,7 +158,7 @@ final class CommonLogger implements LoggerInterface
     {
         if (!isset($this->timezone)) {
             try {
-                $this->timezone = new DateTimeZone(config('system')->get('timezone'));
+                $this->timezone = new DateTimeZone(i(SystemConfig::class)->timezone);
             } catch (Exception) {
                 $this->timezone = new DateTimeZone('UTC');
             }

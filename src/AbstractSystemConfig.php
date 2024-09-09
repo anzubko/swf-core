@@ -1,59 +1,48 @@
-<?php
+<?php declare(strict_types=1);
 
-return [
+namespace SWF;
+
+abstract class AbstractSystemConfig extends AbstractConfig
+{
     /**
      * Environment mode ('dev', 'test', 'prod', etc..).
-     *
-     * string
      */
-    'env' => 'dev',
+    public string $env = 'dev';
 
     /**
      * Debug mode (not minify HTML/CSS/JS if true).
-     *
-     * bool
      */
-    'debug' => false,
+    public bool $debug = false;
 
     /**
      * Basic url (autodetect if null).
-     *
-     * string|null
      */
-    'url' => null,
+    public ?string $url = null;
 
     /**
      * Default timezone.
-     *
-     * string
      */
-    'timezone' => 'UTC',
+    public string $timezone = 'UTC';
 
     /**
      * Namespaces where can be classes with controllers, commands, listeners, etc...
      *
-     * array
+     * @var string[]
      */
-    'namespaces' => ['App\\'],
+    public array $namespaces = [];
 
     /**
      * Default mode for created directories.
-     *
-     * int
      */
-    'dirMode' => 0777,
+    public int $dirMode = 0777;
 
     /**
      * Default mode for created/updated files.
-     *
-     * int
      */
-    'fileMode' => 0666,
+    public int $fileMode = 0666;
 
     /**
      * Custom log file.
-     *
-     * string|null
      */
-    'customLog' => null,
-];
+    public ?string $customLog = null;
+}

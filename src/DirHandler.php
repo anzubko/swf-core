@@ -2,6 +2,7 @@
 
 namespace SWF;
 
+use App\Config\SystemConfig;
 use RuntimeException;
 
 final class DirHandler
@@ -66,7 +67,7 @@ final class DirHandler
 
         $success = mkdir($dir, recursive: true);
         if ($success) {
-            @chmod($dir, config('system')->get('dirMode'));
+            @chmod($dir, i(SystemConfig::class)->dirMode);
         }
 
         return $success;

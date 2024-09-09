@@ -8,9 +8,7 @@
             "SWF\\": "src/"
         },
         "files": [
-            "functions/instance.php",
-            "functions/config.php",
-            "functions/env.php"
+            "functions/instance.php"
         ]
     },
     "authors": [

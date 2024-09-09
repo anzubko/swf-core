@@ -2,6 +2,7 @@
 
 namespace SWF;
 
+use App\Config\SystemConfig;
 use Exception;
 use JSMin\JSMin;
 use LogicException;
@@ -92,11 +93,11 @@ final class AssetsMerger
      */
     private function isOutdated(array $metrics): bool
     {
-        if (config('system')->get('debug') !== $metrics['debug']) {
+        if ($metrics['debug'] !== i(SystemConfig::class)->debug) {
             return true;
         }
 
-        if (config('system')->get('env') === 'prod') {
+        if ('prod' === i(SystemConfig::class)->env) {
             return false;
         }
 
@@ -145,7 +146,7 @@ final class AssetsMerger
 
         $metrics = [
             'time' => time(),
-            'debug' => config('system')->get('debug'),
+            'debug' => i(SystemConfig::class)->debug,
             'hash' => TextHandler::random(),
         ];
 
@@ -205,7 +206,7 @@ final class AssetsMerger
     {
         $merged = $this->mergeFiles($files);
 
-        if (config('system')->get('debug')) {
+        if (i(SystemConfig::class)->debug) {
             return $merged;
         }
 
@@ -224,7 +225,7 @@ final class AssetsMerger
     private function mergeCss(array $files): string
     {
         $merged = $this->mergeFiles($files);
-        if (!config('system')->get('debug')) {
+        if (!i(SystemConfig::class)->debug) {
             $merged = TextHandler::fTrim(preg_replace('~/\*(.*?)\*/~us', '', $merged));
         }
 

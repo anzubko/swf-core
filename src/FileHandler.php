@@ -2,6 +2,8 @@
 
 namespace SWF;
 
+use App\Config\SystemConfig;
+
 final class FileHandler
 {
     /**
@@ -23,7 +25,7 @@ final class FileHandler
             return false;
         }
 
-        @chmod($file, config('system')->get('fileMode'));
+        @chmod($file, i(SystemConfig::class)->fileMode);
 
         return true;
     }
@@ -65,7 +67,7 @@ final class FileHandler
             return false;
         }
 
-        @chmod($target, config('system')->get('fileMode'));
+        @chmod($target, i(SystemConfig::class)->fileMode);
 
         return true;
     }
