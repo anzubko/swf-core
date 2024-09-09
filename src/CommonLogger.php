@@ -16,13 +16,17 @@ use function is_string;
 
 final class CommonLogger implements LoggerInterface
 {
-    private static self $instance;
+    private DateTimeZone $timezone;
 
-    private ?DateTimeZone $timezone;
+    private static self $instance;
 
     public static function getInstance(): self
     {
         return self::$instance ??= new self();
+    }
+
+    private function __construct()
+    {
     }
 
     /**

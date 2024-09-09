@@ -124,17 +124,17 @@ final class Runner
             return null;
         }
 
-        $parsedUrl = parse_url(i(SystemConfig::class)->url);
-        if (empty($parsedUrl) || !isset($parsedUrl['host'])) {
+        $url = parse_url(i(SystemConfig::class)->url);
+        if (empty($url) || !isset($url['host'])) {
             throw new InvalidArgumentException('Incorrect URL in configuration');
         }
 
-        $parsedUrl['scheme'] ??= 'http';
-        if (isset($parsedUrl['port'])) {
-            return sprintf('%s://%s:%s', $parsedUrl['scheme'], $parsedUrl['host'], $parsedUrl['port']);
+        $url['scheme'] ??= 'http';
+        if (isset($url['port'])) {
+            return sprintf('%s://%s:%s', $url['scheme'], $url['host'], $url['port']);
         }
 
-        return sprintf('%s://%s', $parsedUrl['scheme'], $parsedUrl['host']);
+        return sprintf('%s://%s', $url['scheme'], $url['host']);
     }
 
     /**
@@ -148,7 +148,6 @@ final class Runner
 
         if (in_array($code, [E_NOTICE, E_USER_NOTICE, E_DEPRECATED, E_USER_DEPRECATED], true)) {
             CommonLogger::getInstance()->notice($message, options: ['file' => $file, 'line' => $line]);
-
             return true;
         }
 

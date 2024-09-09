@@ -50,23 +50,6 @@ final class ActionManager
      */
     private function __construct()
     {
-        $this->checkMetricsAndReadCaches();
-    }
-
-    /**
-     * @param class-string<AbstractActionProcessor> $className
-     */
-    public function getCache(string $className): ActionCache
-    {
-        return $this->caches[$className];
-    }
-
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
-    private function checkMetricsAndReadCaches(): void
-    {
         $this->processors = [
             new CommandProcessor(),
             new ControllerProcessor(),
@@ -90,6 +73,14 @@ final class ActionManager
         }
 
         FileLocker::getInstance()->release($this->lockKey);
+    }
+
+    /**
+     * @param class-string<AbstractActionProcessor> $className
+     */
+    public function getCache(string $className): ActionCache
+    {
+        return $this->caches[$className];
     }
 
     /**
