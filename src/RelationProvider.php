@@ -7,7 +7,7 @@ use RuntimeException;
 
 final class RelationProvider
 {
-    private static ActionCache $cache;
+    private static ?ActionCache $cache;
 
     private static self $instance;
 
@@ -40,6 +40,6 @@ final class RelationProvider
      */
     public function getChildren(string $className): array
     {
-        return self::$cache->data['relations'][$className] ?? [];
+        return self::$cache?->data['relations'][$className] ?? [];
     }
 }

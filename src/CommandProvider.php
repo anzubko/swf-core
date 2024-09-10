@@ -9,7 +9,7 @@ use function strlen;
 
 final class CommandProvider
 {
-    private static ActionCache $cache;
+    private static ?ActionCache $cache;
 
     private static self $instance;
 
@@ -38,6 +38,10 @@ final class CommandProvider
      */
     public function getCurrentAction(): ?array
     {
+        if (!isset(self::$cache)) {
+            return null;
+        }
+
         if (!isset($_SERVER['argv'][1])) {
             $this->showAll();
         }
@@ -69,6 +73,10 @@ final class CommandProvider
 
     public function showAll(): never
     {
+        if (!isset(self::$cache)) {
+            exit(1);
+        }
+
         $commands = self::$cache->data['commands'];
         if (count($commands) === 0) {
             echo "No commands found.\n";

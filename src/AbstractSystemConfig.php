@@ -25,13 +25,6 @@ abstract class AbstractSystemConfig extends AbstractConfig
     public string $timezone = 'UTC';
 
     /**
-     * Namespaces where can be classes with controllers, commands, listeners, etc...
-     *
-     * @var string[]
-     */
-    public array $namespaces = [];
-
-    /**
      * Default mode for created directories.
      */
     public int $dirMode = 0777;
@@ -40,6 +33,13 @@ abstract class AbstractSystemConfig extends AbstractConfig
      * Default mode for created/updated files.
      */
     public int $fileMode = 0666;
+
+    /**
+     * Namespaces where can be classes with controllers, commands, listeners or child classes for iterations.
+     *
+     * @var string[]
+     */
+    public array $namespaces = [];
 
     /**
      * Custom log file.

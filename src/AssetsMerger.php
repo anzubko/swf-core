@@ -82,7 +82,7 @@ final class AssetsMerger
     {
         $targetFiles = [];
         foreach ($this->assets as $target => $files) {
-            $targetFiles[$target] = sprintf('%s/%s.%s', $this->location, $metrics['time'], $target);
+            $targetFiles[$target] = sprintf('%s/%s.%s', $this->location, $metrics['modified'], $target);
         }
 
         return $targetFiles;
@@ -103,7 +103,7 @@ final class AssetsMerger
 
         $oldTargets = [];
         foreach (DirHandler::scan($this->dir, false, true) as $item) {
-            if (!is_file($item) || !preg_match('~/(\d+)\.(.+)$~', $item, $M) || (int) $M[1] !== $metrics['time']) {
+            if (!is_file($item) || !preg_match('~/(\d+)\.(.+)$~', $item, $M) || (int) $M[1] !== $metrics['modified']) {
                 return true;
             }
 
@@ -116,7 +116,7 @@ final class AssetsMerger
         foreach (array_keys($this->files) as $type) {
             foreach ($this->files[$type] as $target => $files) {
                 foreach ($files as $file) {
-                    if ((int) filemtime($file) > $metrics['time']) {
+                    if ((int) filemtime($file) > $metrics['modified']) {
                         return true;
                     }
                 }
@@ -145,14 +145,14 @@ final class AssetsMerger
         $this->scanForFiles();
 
         $metrics = [
-            'time' => time(),
+            'modified' => time(),
             'debug' => i(SystemConfig::class)->debug,
             'hash' => TextHandler::random(),
         ];
 
         foreach (array_keys($this->files) as $type) {
             foreach ($this->files[$type] as $target => $files) {
-                $file = sprintf('%s/%s.%s', $this->dir, $metrics['time'], $target);
+                $file = sprintf('%s/%s.%s', $this->dir, $metrics['modified'], $target);
 
                 if ('js' === $type) {
                     $contents = $this->mergeJs($files);

@@ -11,12 +11,13 @@ use ReflectionClass;
 use RuntimeException;
 use function count;
 use function is_array;
+use function strlen;
 
 final class ActionManager
 {
-    private string $metricsFile = APP_DIR . '/var/cache/.swf/action.manager.metrics.php';
+    private const METRICS_FILE = APP_DIR . '/var/cache/.swf/actions.metrics.php';
 
-    private string $lockKey = '.swf/action.manager';
+    private const LOCK_KEY = '.swf/action.manager';
 
     /**
      * @var AbstractActionProcessor[]
@@ -29,9 +30,9 @@ final class ActionManager
     private array $caches;
 
     /**
-     * @var array<string, int>
+     * @var array<array{class:string, file:string, modified:int}>
      */
-    private array $classesFiles;
+    private array $classesInfo;
 
     private static self $instance;
 
@@ -41,13 +42,14 @@ final class ActionManager
      */
     public static function getInstance(): self
     {
-        return self::$instance ??= new self();
+        if (!isset(self::$instance)) {
+            self::$instance = new self();
+            self::$instance->checkMetricsAndReadCaches();
+        }
+
+        return self::$instance;
     }
 
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
     private function __construct()
     {
         $this->processors = [
@@ -56,31 +58,46 @@ final class ActionManager
             new ListenerProcessor(),
             new RelationProcessor(),
         ];
-
-        if ('prod' === i(SystemConfig::class)->env && $this->readCaches()) {
-            return;
-        }
-
-        $metrics = $this->getMetrics();
-        if (null !== $metrics && !$this->isOutdated($metrics) && $this->readCaches()) {
-            return;
-        }
-
-        FileLocker::getInstance()->acquire($this->lockKey);
-
-        if (null === $this->getMetrics($metrics) || !$this->readCaches()) {
-            $this->rebuild();
-        }
-
-        FileLocker::getInstance()->release($this->lockKey);
     }
 
     /**
      * @param class-string<AbstractActionProcessor> $className
      */
-    public function getCache(string $className): ActionCache
+    public function getCache(string $className): ?ActionCache
     {
-        return $this->caches[$className];
+        if (!isset($this->caches)) {
+            return null;
+        }
+
+        return $this->caches[$className] ?? null;
+    }
+
+    /**
+     * @throws LogicException
+     * @throws RuntimeException
+     */
+    private function checkMetricsAndReadCaches(): void
+    {
+        if ($this->readCaches()) {
+            if ('prod' === i(SystemConfig::class)->env) {
+                return;
+            }
+
+            $metrics = $this->getMetrics();
+            if (null !== $metrics && !$this->isOutdated($metrics)) {
+                return;
+            }
+        } else {
+            $metrics = null;
+        }
+
+        FileLocker::getInstance()->acquire(self::LOCK_KEY);
+
+        if (null === $this->getMetrics($metrics) || !$this->readCaches()) {
+            $this->rebuild();
+        }
+
+        FileLocker::getInstance()->release(self::LOCK_KEY);
     }
 
     /**
@@ -90,7 +107,7 @@ final class ActionManager
      */
     private function getMetrics(?array $oldMetrics = null): ?array
     {
-        $metrics = @include $this->metricsFile;
+        $metrics = @include self::METRICS_FILE;
         if (!is_array($metrics) || $metrics === $oldMetrics) {
             return null;
         }
@@ -105,14 +122,13 @@ final class ActionManager
      */
     private function isOutdated(array $metrics): bool
     {
-        $this->scanForClassesFiles();
-
-        if (count($this->classesFiles) !== $metrics['count']) {
+        $this->classesInfo ??= $this->getClassesInfo();
+        if (count($this->classesInfo) !== $metrics['count']) {
             return true;
         }
 
-        foreach ($this->classesFiles as $mTime) {
-            if ($mTime > $metrics['time']) {
+        foreach ($this->classesInfo as $classInfo) {
+            if ($classInfo['modified'] > $metrics['modified']) {
                 return true;
             }
         }
@@ -143,15 +159,14 @@ final class ActionManager
      */
     private function rebuild(): void
     {
-        $this->scanForClassesFiles();
-
-        foreach ($this->classesFiles as $file => $mTime) {
-            require_once $file;
+        $this->classesInfo ??= $this->getClassesInfo();
+        foreach ($this->classesInfo as $info) {
+            class_exists($info['class']);
         }
 
         $classes = new ActionClasses();
         foreach (get_declared_classes() as $className) {
-            if (!$this->isNsAllowed($className)) {
+            if (!$this->isNamespaceAllowed($className)) {
                 continue;
             }
 
@@ -170,47 +185,49 @@ final class ActionManager
             $processor->saveCache($caches[$processor::class]);
         }
 
-        $metrics = [
-            'time' => time(),
-            'count' => count($this->classesFiles),
-            'hash' => TextHandler::random(),
-        ];
-
-        if (!FileHandler::putVar($this->metricsFile, $metrics)) {
-            throw new RuntimeException(sprintf('Unable to write file %s', $this->metricsFile));
+        if (
+            !FileHandler::putVar(self::METRICS_FILE, [
+                'modified' => time(),
+                'count' => count($this->classesInfo),
+                'hash' => TextHandler::random(),
+            ])
+        ) {
+            throw new RuntimeException(sprintf('Unable to write file %s', self::METRICS_FILE));
         }
 
         $this->caches = $caches;
     }
 
     /**
+     * @return array<array{class:string, file:string, modified:int}>
+     *
      * @throws RuntimeException
      */
-    private function scanForClassesFiles(): void
+    private function getClassesInfo(): array
     {
-        if (isset($this->classesFiles)) {
-            return;
-        }
-
-        $loader = $this->getLoader();
-
-        $this->classesFiles = [];
-        foreach ($loader->getPrefixesPsr4() + $loader->getPrefixes() as $ns => $dirs) {
-            if (!$this->isNsAllowed($ns)) {
+        $classes = [];
+        foreach ($this->getLoader()->getPrefixesPsr4() as $namespace => $dirs) {
+            if (!$this->isNamespaceAllowed($namespace)) {
                 continue;
             }
 
             foreach ($dirs as $dir) {
                 /** @var RecursiveDirectoryIterator $info */
                 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir)) as $info) {
-                    if (!$info->isFile() || false === $info->getMTime() || 'php' !== $info->getExtension()) {
+                    if (!$info->isFile() || false === $info->getMTime() || !preg_match('/^[A-Z][A-Za-z\d]*\.php$/', $info->getFilename())) {
                         continue;
                     }
 
-                    $this->classesFiles[$info->getPathname()] = $info->getMTime();
+                    $classes[] = [
+                        'class' => $namespace . strtr(substr($info->getPathname(), strlen($dir) + 1, -4), DIRECTORY_SEPARATOR, '\\'),
+                        'file' => $info->getPathname(),
+                        'modified' => $info->getMTime(),
+                    ];
                 }
             }
         }
+
+        return $classes;
     }
 
     /**
@@ -232,10 +249,10 @@ final class ActionManager
         throw new RuntimeException('Unable to find composer loader');
     }
 
-    private function isNsAllowed(string $ns): bool
+    private function isNamespaceAllowed(string $namespace): bool
     {
-        foreach (i(SystemConfig::class)->namespaces as $namespace) {
-            if (str_starts_with($ns, $namespace)) {
+        foreach (i(SystemConfig::class)->namespaces as $allowedNamespace) {
+            if (str_starts_with($namespace, $allowedNamespace)) {
                 return true;
             }
         }
