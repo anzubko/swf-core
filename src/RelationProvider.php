@@ -7,26 +7,15 @@ use RuntimeException;
 
 final class RelationProvider
 {
-    private static ?ActionCache $cache;
-
-    private static self $instance;
+    private ?ActionCache $cache;
 
     /**
      * @throws LogicException
      * @throws RuntimeException
      */
-    public static function getInstance(): self
+    public function __construct()
     {
-        return self::$instance ??= new self();
-    }
-
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
-    private function __construct()
-    {
-        self::$cache = ActionManager::getInstance()->getCache(RelationProcessor::class);
+        $this->cache = i(ActionManager::class)->getCache(RelationProcessor::class);
     }
 
     /**
@@ -40,6 +29,6 @@ final class RelationProvider
      */
     public function getChildren(string $className): array
     {
-        return self::$cache?->data['relations'][$className] ?? [];
+        return $this->cache?->data['relations'][$className] ?? [];
     }
 }

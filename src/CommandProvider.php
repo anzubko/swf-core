@@ -2,33 +2,37 @@
 
 namespace SWF;
 
+use InvalidArgumentException;
 use LogicException;
 use RuntimeException;
+use SWF\Enum\CommandValueEnum;
 use function count;
 use function strlen;
 
 final class CommandProvider
 {
-    private static ?ActionCache $cache;
+    private ?ActionCache $cache;
 
-    private static self $instance;
+    private ?string $alias = null;
 
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
-    public static function getInstance(): self
-    {
-        return self::$instance ??= new self();
-    }
+    private ?CommandDefinition $command = null;
 
     /**
      * @throws LogicException
      * @throws RuntimeException
      */
-    private function __construct()
+    public function __construct()
     {
-        self::$cache = ActionManager::getInstance()->getCache(CommandProcessor::class);
+        $this->cache = i(ActionManager::class)->getCache(CommandProcessor::class);
+        if (null == $this->cache) {
+            return;
+        }
+
+        $this->alias = $_SERVER['argv'][1] ?? null;
+
+        if (isset($this->cache->data['commands'][$this->alias])) {
+            $this->command = i(CommandHelper::class)->arrayToCommandDefinition($this->cache->data['commands'][$this->alias]);
+        }
     }
 
     /**
@@ -38,49 +42,61 @@ final class CommandProvider
      */
     public function getCurrentAction(): ?array
     {
-        if (!isset(self::$cache)) {
+        if (null === $this->cache) {
             return null;
         }
 
-        if (!isset($_SERVER['argv'][1])) {
-            $this->showAll();
+        if (null === $this->alias) {
+            return [implode('::', [self::class, 'showAll']), $this->alias];
         }
 
-        $name = $_SERVER['argv'][1];
-        if (!isset(self::$cache->data['commands'][$name])) {
+        if (null === $this->command) {
             return null;
         }
 
-        $commandManager = new CommandManager($name, self::$cache->data['commands'][$name]);
+        $paramsParser = new CommandParamsParser($this->command);
 
-        for ($i = 0, $chunks = array_slice($_SERVER['argv'], 2); $i < count($chunks); $i++) {
-            $chunk = $chunks[$i];
-            if (strlen($chunk) > 2 && '-' === $chunk[0] && '-' === $chunk[1]) {
-                $commandManager->processOption($chunk);
-            } elseif (
-                strlen($chunk) > 1 && '-' === $chunk[0] && '-' !== $chunk[1]
-            ) {
-                $i += $commandManager->processShortOption($chunk, $chunks[$i + 1] ?? null);
-            } else {
-                $commandManager->processArgument($chunk);
+        try {
+            for ($i = 0, $chunks = array_slice($_SERVER['argv'], 2); $i < count($chunks); $i++) {
+                $chunk = $chunks[$i];
+                if (strlen($chunk) > 2 && '-' === $chunk[0] && '-' === $chunk[1]) {
+                    $needHelp = $paramsParser->processOption($chunk);
+                } elseif (strlen($chunk) > 1 && '-' === $chunk[0] && '-' !== $chunk[1]) {
+                    $needHelp = $paramsParser->processShortOption($i, $chunks);
+                } else {
+                    $needHelp = $paramsParser->processArgument($chunk);
+                }
+
+                if ($needHelp) {
+                    return [implode('::', [self::class, 'showHelp']), $this->alias];
+                }
             }
-        }
 
-        $commandManager->checkForRequiredParams();
+            $paramsParser->checkForRequires();
+        } catch (InvalidArgumentException $e) {
+            $usage = $this->genUsage();
+            if (null === $usage) {
+                echo sprintf("Error: %s\n", $e->getMessage());
+            } else {
+                echo sprintf("Usage:\n  %s\n\nError: %s\n", $this->genUsage(), $e->getMessage());
+            }
 
-        return [$commandManager->getAction(), null];
-    }
-
-    public function showAll(): never
-    {
-        if (!isset(self::$cache)) {
             exit(1);
         }
 
-        $commands = self::$cache->data['commands'];
+        return [$this->command->action, $this->alias];
+    }
+
+    public function showAll(): void
+    {
+        if (null === $this->cache) {
+            return;
+        }
+
+        $commands = $this->cache->data['commands'];
         if (count($commands) === 0) {
             echo "No commands found.\n";
-            exit(0);
+            return;
         }
 
         echo "Available commands:\n";
@@ -95,6 +111,107 @@ final class CommandProvider
         }
 
         echo "\n";
-        exit(0);
+    }
+
+    public function showHelp(): void
+    {
+        if (null === $this->command) {
+            return;
+        }
+
+        $maxLength = 0;
+        $arguments = $options = [];
+
+        foreach ($this->command->arguments as $key => $argument) {
+            $arguments[$key] = (string) $key;
+
+            $maxLength = max($maxLength, mb_strlen((string) $key));
+        }
+
+        foreach ($this->command->options as $key => $option) {
+            if (null === $option->shortcut) {
+                $chunk = sprintf('    --%s', $option->name);
+            } else {
+                $chunk = sprintf('-%s, --%s', $option->shortcut, $option->name);
+            }
+
+            $options[$key] = $chunk;
+
+            $maxLength = max($maxLength, mb_strlen($chunk));
+        }
+
+        foreach ($arguments as $key => $argument) {
+            if (null !== $this->command->arguments[$key]->description) {
+                $arguments[$key] = mb_str_pad($argument, $maxLength + 2) . $this->command->arguments[$key]->description;
+            }
+        }
+
+        foreach ($options as $key => $option) {
+            if (null !== $this->command->options[$key]->description) {
+                $options[$key] = mb_str_pad($option, $maxLength + 2) . $this->command->options[$key]->description;
+            }
+        }
+
+        if (null !== $this->command->description) {
+            echo sprintf("Description:\n  %s\n\n", $this->command->description);
+        }
+
+        echo sprintf("Usage:\n  %s\n", $this->genUsage(false));
+
+        if (count($arguments) > 0) {
+            echo sprintf("\nArguments:\n  %s\n", implode("\n  ", $arguments));
+        }
+
+        if (count($options) > 0) {
+            echo sprintf("\nOptions:\n  %s\n", implode("\n  ", $options));
+        }
+    }
+
+    private function genUsage(bool $withHelp = true): ?string
+    {
+        if (null === $this->command) {
+            return null;
+        }
+
+        $argumentsUsage = $optionsUsage = [];
+
+        foreach ($this->command->arguments as $key => $argument) {
+            $chunk = sprintf('<%s:%s>', $key, $argument->type->name);
+            if ($argument->isArray) {
+                $chunk = sprintf('%s...', $chunk);
+            }
+            if (!$argument->isRequired) {
+                $chunk = sprintf('[%s]', $chunk);
+            }
+
+            $argumentsUsage[] = $chunk;
+        }
+
+        foreach ($this->command->options as $option) {
+            if (null === $option->shortcut) {
+                $chunk = sprintf('--%s', $option->name);
+            } else {
+                $chunk = sprintf('-%s|--%s', $option->shortcut, $option->name);
+            }
+            if (CommandValueEnum::REQUIRED === $option->value) {
+                $chunk = sprintf('%s=%s', $chunk, $option->type->name);
+            } elseif (CommandValueEnum::OPTIONAL === $option->value) {
+                $chunk = sprintf('%s[=%s]', $chunk, $option->type->name);
+            }
+            if ($option->isArray) {
+                $chunk = sprintf('%s...', $chunk);
+            }
+            if (!$option->isRequired) {
+                $chunk = sprintf('[%s]', $chunk);
+            }
+
+            $optionsUsage[] = $chunk;
+        }
+
+        if ($withHelp) {
+            $optionsUsage[] = '[-h|--help]';
+        }
+
+        return implode(' ', [$this->alias, ...$optionsUsage, ...$argumentsUsage]);
     }
 }

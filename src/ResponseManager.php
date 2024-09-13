@@ -29,7 +29,7 @@ final class ResponseManager
      */
     public static function send(mixed $body, int $code = 200, bool $exit = true): void
     {
-        $body = EventDispatcher::getInstance()->dispatch(new ResponseEvent(self::$headers, $body))->getBody();
+        $body = i(EventDispatcher::class)->dispatch(new ResponseEvent(self::$headers, $body))->getBody();
 
         http_response_code($code);
 
@@ -80,9 +80,9 @@ final class ResponseManager
         http_response_code($code);
 
         try {
-            EventDispatcher::getInstance()->dispatch(new HttpErrorEvent($code));
+            i(EventDispatcher::class)->dispatch(new HttpErrorEvent($code));
         } catch (Throwable $e) {
-            CommonLogger::getInstance()->error($e);
+            i(CommonLogger::class)->error($e);
         }
 
         exit(1);

@@ -9,26 +9,15 @@ use function is_string;
 
 final class ControllerProvider
 {
-    private static ?ActionCache $cache;
-
-    private static self $instance;
+    private ?ActionCache $cache;
 
     /**
      * @throws LogicException
      * @throws RuntimeException
      */
-    public static function getInstance(): self
+    public function __construct()
     {
-        return self::$instance ??= new self();
-    }
-
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
-    private function __construct()
-    {
-        self::$cache = ActionManager::getInstance()->getCache(ControllerProcessor::class);
+        $this->cache = i(ActionManager::class)->getCache(ControllerProcessor::class);
     }
 
     /**
@@ -38,15 +27,15 @@ final class ControllerProvider
      */
     public function getCurrentAction(): ?array
     {
-        if (!isset(self::$cache)) {
+        if (null === $this->cache) {
             return null;
         }
 
         $path = explode('?', $_SERVER['REQUEST_URI'], 2)[0];
 
-        $actions = self::$cache->data['static'][$path] ?? null;
-        if (null === $actions && preg_match(self::$cache->data['regex'], $path, $M)) {
-            [$actions, $keys] = self::$cache->data['dynamic'][$M['MARK']];
+        $actions = $this->cache->data['static'][$path] ?? null;
+        if (null === $actions && preg_match($this->cache->data['regex'], $path, $M)) {
+            [$actions, $keys] = $this->cache->data['dynamic'][$M['MARK']];
 
             foreach ($keys as $i => $key) {
                 $_GET[$key] = $_REQUEST[$key] = $M[$i + 1];
@@ -76,13 +65,13 @@ final class ControllerProvider
      */
     public function genUrl(string $action, string|int|float|null ...$params): string
     {
-        if (!isset(self::$cache)) {
+        if (null === $this->cache) {
             return '/';
         }
 
         $pCount = count($params);
 
-        $index = self::$cache->data['actions']["$action:$pCount"] ?? null;
+        $index = $this->cache->data['actions']["$action:$pCount"] ?? null;
         if (null === $index) {
             if (0 === $pCount) {
                 throw new LogicException(sprintf('Unable to make URL by action "%s"', $action));
@@ -91,7 +80,7 @@ final class ControllerProvider
             throw new LogicException(sprintf('Unable to make URL by action "%s" and %s parameter%s', $action, $pCount, 1 === $pCount ? '' : 's'));
         }
 
-        $url = self::$cache->data['urls'][$index];
+        $url = $this->cache->data['urls'][$index];
         if (0 === $pCount) {
             return $url;
         }
@@ -105,14 +94,14 @@ final class ControllerProvider
         return implode($url);
     }
 
-    public function showAll(): never
+    public function showAll(): void
     {
-        if (!isset(self::$cache)) {
-            exit(1);
+        if (null === $this->cache) {
+            return;
         }
 
         $controllers = [];
-        foreach (self::$cache->data['static'] as $path => $actions) {
+        foreach ($this->cache->data['static'] as $path => $actions) {
             foreach ($actions as $method => $action) {
                 $action = (array) $action;
                 $controllers[$path]['methods'][] = $method;
@@ -120,11 +109,11 @@ final class ControllerProvider
             }
         }
 
-        foreach (self::$cache->data['dynamic'] as $actions) {
+        foreach ($this->cache->data['dynamic'] as $actions) {
             foreach ($actions[0] as $method => $action) {
                 $action = (array) $action;
-                $i = self::$cache->data['actions'][sprintf('%s:%d', $action[0], $actions[1])];
-                $path = implode(self::$cache->data['urls'][$i]);
+                $i = $this->cache->data['actions'][sprintf('%s:%d', $action[0], $actions[1])];
+                $path = implode($this->cache->data['urls'][$i]);
                 $controllers[$path]['methods'][] = $method;
                 $controllers[$path]['action'] = $action;
             }
@@ -132,7 +121,7 @@ final class ControllerProvider
 
         if (count($controllers) === 0) {
             echo "No controllers found.\n";
-            exit(0);
+            return;
         }
 
         echo "Available controllers:\n";
@@ -147,6 +136,5 @@ final class ControllerProvider
         }
 
         echo "\n";
-        exit(0);
     }
 }

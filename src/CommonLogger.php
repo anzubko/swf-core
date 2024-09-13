@@ -18,17 +18,6 @@ final class CommonLogger implements LoggerInterface
 {
     private DateTimeZone $timezone;
 
-    private static self $instance;
-
-    public static function getInstance(): self
-    {
-        return self::$instance ??= new self();
-    }
-
-    private function __construct()
-    {
-    }
-
     /**
      * @inheritDoc
      *
@@ -142,7 +131,7 @@ final class CommonLogger implements LoggerInterface
         }
 
         try {
-            EventDispatcher::getInstance()->dispatch(
+            i(EventDispatcher::class)->dispatch(
                 new LogEvent(
                     level: $level,
                     complexMessage: $complexMessage,

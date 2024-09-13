@@ -5,8 +5,8 @@ namespace SWF;
 use App\Config\SystemConfig;
 use Exception;
 use InvalidArgumentException;
-use LogicException;
 use ReflectionFunction;
+use SWF\Enum\ActionTypeEnum;
 use SWF\Event\BeforeAllEvent;
 use SWF\Event\BeforeCommandEvent;
 use SWF\Event\BeforeControllerEvent;
@@ -22,15 +22,11 @@ final class Runner
 
     public static function getInstance(): self
     {
-        return self::$instance;
+        return self::$instance ??= new self();
     }
 
-    public function __construct()
+    private function __construct()
     {
-        if (isset(self::$instance)) {
-            throw new LogicException('Runner already initialized');
-        }
-
         set_error_handler($this->errorHandler(...));
 
         try {
@@ -46,21 +42,21 @@ final class Runner
     public function runController(): void
     {
         try {
-            $action = ControllerProvider::getInstance()->getCurrentAction();
+            $action = i(ControllerProvider::class)->getCurrentAction();
             if (null === $action) {
                 ResponseManager::error(404);
             }
 
-            $_SERVER['ROUTER_TYPE'] = 'controller';
-            $_SERVER['ROUTER_ACTION'] = $action[0];
-            $_SERVER['ROUTER_ALIAS'] = $action[1];
+            $_SERVER['ACTION_TYPE'] = ActionTypeEnum::CONTROLLER->value;
+            $_SERVER['ACTION_METHOD'] = $action[0];
+            $_SERVER['ACTION_ALIAS'] = $action[1];
 
             register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
 
-            EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
-            EventDispatcher::getInstance()->dispatch(new BeforeControllerEvent());
+            i(EventDispatcher::class)->dispatch(new BeforeAllEvent());
+            i(EventDispatcher::class)->dispatch(new BeforeControllerEvent());
 
-            CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();
+            CallbackHandler::normalize($_SERVER['ACTION_METHOD'])();
         } catch (Throwable $e) {
             $this->terminate($e);
         }
@@ -69,21 +65,21 @@ final class Runner
     public function runCommand(): void
     {
         try {
-            $action = CommandProvider::getInstance()->getCurrentAction();
+            $action = i(CommandProvider::class)->getCurrentAction();
             if (null === $action) {
                 throw new InvalidArgumentException('Command not found');
             }
 
-            $_SERVER['ROUTER_TYPE'] = 'command';
-            $_SERVER['ROUTER_ACTION'] = $action[0];
-            $_SERVER['ROUTER_ALIAS'] = $action[1];
+            $_SERVER['ACTION_TYPE'] = ActionTypeEnum::COMMAND->value;
+            $_SERVER['ACTION_METHOD'] = $action[0];
+            $_SERVER['ACTION_ALIAS'] = $action[1];
 
             register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
 
-            EventDispatcher::getInstance()->dispatch(new BeforeAllEvent());
-            EventDispatcher::getInstance()->dispatch(new BeforeCommandEvent());
+            i(EventDispatcher::class)->dispatch(new BeforeAllEvent());
+            i(EventDispatcher::class)->dispatch(new BeforeCommandEvent());
 
-            CallbackHandler::normalize($_SERVER['ROUTER_ACTION'])();
+            CallbackHandler::normalize($_SERVER['ACTION_METHOD'])();
         } catch (Throwable $e) {
             $this->terminate($e);
         }
@@ -147,7 +143,7 @@ final class Runner
         }
 
         if (in_array($code, [E_NOTICE, E_USER_NOTICE, E_DEPRECATED, E_USER_DEPRECATED], true)) {
-            CommonLogger::getInstance()->notice($message, options: ['file' => $file, 'line' => $line]);
+            i(CommonLogger::class)->notice($message, options: ['file' => $file, 'line' => $line]);
             return true;
         }
 
@@ -166,18 +162,17 @@ final class Runner
         }
 
         try {
-            EventDispatcher::getInstance()->dispatch(new ShutdownEvent());
+            i(EventDispatcher::class)->dispatch(new ShutdownEvent());
         } catch (Throwable $e) {
-            CommonLogger::getInstance()->error($e);
+            i(CommonLogger::class)->error($e);
         }
     }
 
     private function terminate(Throwable $e): never
     {
-        CommonLogger::getInstance()->error($e);
-        CommonLogger::getInstance()->emergency('Application terminated', options: ['file' => $e->getFile(), 'line' => $e->getLine()]);
+        i(CommonLogger::class)->error($e);
 
-        ListenerProvider::getInstance()->removeAllListeners(true);
+        i(ListenerProvider::class)->removeAllListeners(true);
 
         if ('cli' === PHP_SAPI) {
             exit(1);

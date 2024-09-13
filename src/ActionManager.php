@@ -34,23 +34,11 @@ final class ActionManager
      */
     private array $classesInfo;
 
-    private static self $instance;
-
     /**
      * @throws LogicException
      * @throws RuntimeException
      */
-    public static function getInstance(): self
-    {
-        if (!isset(self::$instance)) {
-            self::$instance = new self();
-            self::$instance->checkMetricsAndReadCaches();
-        }
-
-        return self::$instance;
-    }
-
-    private function __construct()
+    public function __construct()
     {
         $this->processors = [
             new CommandProcessor(),
@@ -58,26 +46,7 @@ final class ActionManager
             new ListenerProcessor(),
             new RelationProcessor(),
         ];
-    }
 
-    /**
-     * @param class-string<AbstractActionProcessor> $className
-     */
-    public function getCache(string $className): ?ActionCache
-    {
-        if (!isset($this->caches)) {
-            return null;
-        }
-
-        return $this->caches[$className] ?? null;
-    }
-
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
-    private function checkMetricsAndReadCaches(): void
-    {
         if ($this->readCaches()) {
             if ('prod' === i(SystemConfig::class)->env) {
                 return;
@@ -91,13 +60,21 @@ final class ActionManager
             $metrics = null;
         }
 
-        FileLocker::getInstance()->acquire(self::LOCK_KEY);
+        i(FileLocker::class)->acquire(self::LOCK_KEY);
 
         if (null === $this->getMetrics($metrics) || !$this->readCaches()) {
             $this->rebuild();
         }
 
-        FileLocker::getInstance()->release(self::LOCK_KEY);
+        i(FileLocker::class)->release(self::LOCK_KEY);
+    }
+
+    /**
+     * @param class-string<AbstractActionProcessor> $className
+     */
+    public function getCache(string $className): ?ActionCache
+    {
+        return $this->caches[$className] ?? null;
     }
 
     /**
@@ -159,6 +136,8 @@ final class ActionManager
      */
     private function rebuild(): void
     {
+        $this->caches = [];
+
         $this->classesInfo ??= $this->getClassesInfo();
         foreach ($this->classesInfo as $info) {
             class_exists($info['class']);

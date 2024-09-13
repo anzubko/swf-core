@@ -49,11 +49,11 @@ final class AssetsMerger
             return $this->getTargetFiles($metrics);
         }
 
-        FileLocker::getInstance()->acquire($this->lockKey);
+        i(FileLocker::class)->acquire($this->lockKey);
 
         $metrics = $this->getMetrics($metrics) ?? $this->rebuild();
 
-        FileLocker::getInstance()->release($this->lockKey);
+        i(FileLocker::class)->release($this->lockKey);
 
         return $this->getTargetFiles($metrics);
     }

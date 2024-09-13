@@ -49,7 +49,7 @@ final class CommandProcessor extends AbstractActionProcessor
                             }
                         }
 
-                        $cache->data['commands'][$instance->name] = $command;
+                        $cache->data['commands'][$instance->alias] = $command;
                     }
                 } catch (LogicException $e) {
                     throw ExceptionHandler::overrideFileAndLine($e, (string) $method->getFileName(), (int) $method->getStartLine());

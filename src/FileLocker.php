@@ -15,17 +15,6 @@ final class FileLocker
      */
     private array $files = [];
 
-    private static self $instance;
-
-    public static function getInstance(): self
-    {
-        return self::$instance ??= new self();
-    }
-
-    private function __construct()
-    {
-    }
-
     /**
      * Acquires lock.
      *
