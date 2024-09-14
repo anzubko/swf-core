@@ -5,7 +5,6 @@ namespace SWF;
 use App\Config\SystemConfig;
 use Exception;
 use InvalidArgumentException;
-use ReflectionFunction;
 use SWF\Enum\ActionTypeEnum;
 use SWF\Event\BeforeAllEvent;
 use SWF\Event\BeforeCommandEvent;
@@ -35,8 +34,6 @@ final class Runner
         } catch (Throwable $e) {
             $this->terminate($e);
         }
-
-        self::$instance = $this;
     }
 
     public function runController(): void
@@ -44,7 +41,7 @@ final class Runner
         try {
             $action = i(ControllerProvider::class)->getCurrentAction();
             if (null === $action) {
-                ResponseManager::error(404);
+                i(ResponseManager::class)->error(404);
             }
 
             $_SERVER['ACTION_TYPE'] = ActionTypeEnum::CONTROLLER->value;
@@ -152,10 +149,10 @@ final class Runner
 
     private function cleanupAndDispatchAtShutdown(): void
     {
-        foreach ((new ReflectionFunction('i'))->getStaticVariables()['instances'] as $class) {
-            if ($class instanceof DatabaserInterface && $class->isInTrans()) {
+        foreach (InstanceStorage::$instances as $instance) {
+            if ($instance instanceof DatabaserInterface && $instance->isInTrans()) {
                 try {
-                    $class->rollback(true);
+                    $instance->rollback(true);
                 } catch (DatabaserException) {
                 }
             }
@@ -178,6 +175,6 @@ final class Runner
             exit(1);
         }
 
-        ResponseManager::error(500);
+        i(ResponseManager::class)->error(500);
     }
 }

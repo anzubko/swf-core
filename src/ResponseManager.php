@@ -10,14 +10,14 @@ use function is_string;
 
 final class ResponseManager
 {
-    private static HeaderRegistry $headers;
+    private HeaderRegistry $headers;
 
     /**
      * Returns headers registry.
      */
-    public static function headers(): HeaderRegistry
+    public function headers(): HeaderRegistry
     {
-        return self::$headers ??= new HeaderRegistry();
+        return $this->headers ??= new HeaderRegistry();
     }
 
     /**
@@ -27,9 +27,9 @@ final class ResponseManager
      *
      * @throws Throwable
      */
-    public static function send(mixed $body, int $code = 200, bool $exit = true): void
+    public function send(mixed $body, int $code = 200, bool $exit = true): void
     {
-        $body = i(EventDispatcher::class)->dispatch(new ResponseEvent(self::$headers, $body))->getBody();
+        $body = i(EventDispatcher::class)->dispatch(new ResponseEvent($this->headers, $body))->getBody();
 
         http_response_code($code);
 
@@ -55,7 +55,7 @@ final class ResponseManager
     /**
      * Redirects to specified url.
      */
-    public static function redirect(string $url, int $code = 302, bool $exit = true): void
+    public function redirect(string $url, int $code = 302, bool $exit = true): void
     {
         header(sprintf('Location: %s', $url), true, $code);
 
@@ -67,7 +67,7 @@ final class ResponseManager
     /**
      * Shows error page and exit.
      */
-    public static function error(int $code): never
+    public function error(int $code): never
     {
         if (headers_sent()) {
             exit(1);

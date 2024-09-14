@@ -3,7 +3,6 @@
 namespace SWF;
 
 use LogicException;
-use ReflectionFunction;
 use RuntimeException;
 use SWF\Event\ShutdownEvent;
 use SWF\Event\TransactionCommitEvent;
@@ -39,8 +38,8 @@ final class DelayedNotifier
      */
     public function add(AbstractNotify $notify): void
     {
-        foreach ((new ReflectionFunction('i'))->getStaticVariables()['instances'] as $class) {
-            if ($class instanceof DatabaserInterface && $class->isInTrans()) {
+        foreach (InstanceStorage::$instances as $instance) {
+            if ($instance instanceof DatabaserInterface && $instance->isInTrans()) {
                 i(ListenerProvider::class)->addListener(
                     callback: function (TransactionCommitEvent $event) use ($notify): void {
                         $this->add($notify);

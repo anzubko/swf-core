@@ -35,11 +35,11 @@ abstract class AbstractSystemConfig extends AbstractConfig
     public int $fileMode = 0666;
 
     /**
-     * Namespaces where can be classes with controllers, commands, listeners or child classes for iterations.
+     * Namespaces prefixes where can be classes with controllers, commands, listeners or child classes for iterations.
      *
      * @var string[]
      */
-    public array $namespaces = [];
+    public array $allowedNsPrefixes = ['SWF\\'];
 
     /**
      * Custom log file.

@@ -10,6 +10,7 @@ use RecursiveIteratorIterator;
 use ReflectionClass;
 use RuntimeException;
 use function count;
+use function in_array;
 use function is_array;
 use function strlen;
 
@@ -18,6 +19,8 @@ final class ActionManager
     private const METRICS_FILE = APP_DIR . '/var/cache/.swf/actions.metrics.php';
 
     private const LOCK_KEY = '.swf/action.manager';
+
+    private const NAMESPACE_SEPARATOR = '\\';
 
     /**
      * @var AbstractActionProcessor[]
@@ -145,16 +148,14 @@ final class ActionManager
 
         $classes = new ActionClasses();
         foreach (get_declared_classes() as $className) {
-            if (!$this->isNamespaceAllowed($className)) {
+            if (!TextHandler::startsWith($className, i(SystemConfig::class)->allowedNsPrefixes)) {
                 continue;
             }
 
             $class = new ReflectionClass($className);
-            if (!$class->isInstantiable()) {
-                continue;
+            if ($class->isInstantiable()) {
+                $classes->list[] = $class;
             }
-
-            $classes->list[] = $class;
         }
 
         $caches = [];
@@ -184,9 +185,19 @@ final class ActionManager
      */
     private function getClassesInfo(): array
     {
+        $allowedNsRoots = [];
+        foreach (i(SystemConfig::class)->allowedNsPrefixes as $nsPrefix) {
+            $chunks = explode(self::NAMESPACE_SEPARATOR, $nsPrefix, 2);
+            if (count($chunks) > 1) {
+                $allowedNsRoots[] = $chunks[0] . self::NAMESPACE_SEPARATOR;
+            } else {
+                $allowedNsRoots[] = $nsPrefix;
+            }
+        }
+
         $classes = [];
         foreach ($this->getLoader()->getPrefixesPsr4() as $namespace => $dirs) {
-            if (!$this->isNamespaceAllowed($namespace)) {
+            if (!TextHandler::startsWith($namespace, $allowedNsRoots)) {
                 continue;
             }
 
@@ -197,8 +208,13 @@ final class ActionManager
                         continue;
                     }
 
+                    $className = $namespace . strtr(substr($info->getPathname(), strlen($dir) + 1, -4), DIRECTORY_SEPARATOR, self::NAMESPACE_SEPARATOR);
+                    if (!TextHandler::startsWith($className, i(SystemConfig::class)->allowedNsPrefixes)) {
+                        continue;
+                    }
+
                     $classes[] = [
-                        'class' => $namespace . strtr(substr($info->getPathname(), strlen($dir) + 1, -4), DIRECTORY_SEPARATOR, '\\'),
+                        'class' => $className,
                         'file' => $info->getPathname(),
                         'modified' => $info->getMTime(),
                     ];
@@ -219,23 +235,12 @@ final class ActionManager
                 continue;
             }
 
-            $loaderGetter = sprintf('%s::getLoader', $className);
+            $loaderGetter = [$className, 'getLoader'];
             if (is_callable($loaderGetter)) {
                 return $loaderGetter();
             }
         }
 
         throw new RuntimeException('Unable to find composer loader');
-    }
-
-    private function isNamespaceAllowed(string $namespace): bool
-    {
-        foreach (i(SystemConfig::class)->namespaces as $allowedNamespace) {
-            if (str_starts_with($namespace, $allowedNamespace)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

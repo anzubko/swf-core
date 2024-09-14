@@ -1,13 +1,17 @@
 <?php declare(strict_types=1);
 
+use SWF\InstanceStorage;
+
 /**
  * Instantiates some class only once.
  *
- * @param class-string $className
+ * @template T
+ *
+ * @param class-string<T> $className
+ *
+ * @return T
  */
-function i(string $className): mixed
+function i(string $className)
 {
-    static $instances = [];
-
-    return $instances[$className] ??= method_exists($className, 'getInstance') ? $className::getInstance() : new $className;
+    return InstanceStorage::$instances[$className] ??= method_exists($className, 'getInstance') ? $className::getInstance() : new $className();
 }

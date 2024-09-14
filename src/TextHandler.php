@@ -152,6 +152,54 @@ final class TextHandler
     }
 
     /**
+     * Returns true if string starts from one of the needle strings or false otherwise.
+     *
+     * @param string[] $needles
+     */
+    public static function startsWith(string $string, array $needles): bool
+    {
+        foreach ($needles as $needle) {
+            if (str_starts_with($string, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns true if string ends with one of the needle strings or false otherwise.
+     *
+     * @param string[] $needles
+     */
+    public static function endsWith(string $string, array $needles): bool
+    {
+        foreach ($needles as $needle) {
+            if (str_ends_with($string, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns true if string contains one of the needle strings or false otherwise.
+     *
+     * @param string[] $needles
+     */
+    public static function contains(string $string, array $needles): bool
+    {
+        foreach ($needles as $needle) {
+            if (str_contains($string, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Generates random string.
      */
     public static function random(int $size = 32, string $chars = '[alpha][digit]'): string
