@@ -5,13 +5,9 @@ use SWF\InstanceStorage;
 /**
  * Instantiates some class only once.
  *
- * @template T
- *
- * @param class-string<T> $className
- *
- * @return T
+ * @param class-string $class
  */
-function i(string $className)
+function i(string $class): mixed
 {
-    return InstanceStorage::$instances[$className] ??= method_exists($className, 'getInstance') ? $className::getInstance() : new $className();
+    return InstanceStorage::$instances[$class] ??= method_exists($class, 'getInstance') ? $class::getInstance() : new $class();
 }

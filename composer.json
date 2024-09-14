@@ -26,12 +26,11 @@
         "ext-mbstring": "*",
         "psr/log": "^3.0",
         "psr/event-dispatcher": "^1.0",
-        "mrclay/jsmin-php": "^2.4",
-        "phpmailer/phpmailer": "^v6.8",
+        "mrclay/jsmin-php": "^2",
+        "phpmailer/phpmailer": "^6",
         "anzubko/swf-cacher": "*",
         "anzubko/swf-databaser": "*",
         "anzubko/swf-paginator": "*",
-        "anzubko/swf-stan": "*",
         "anzubko/swf-templater": "*"
     }
 }
