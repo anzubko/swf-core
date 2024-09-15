@@ -21,7 +21,7 @@ final class EventDispatcher implements EventDispatcherInterface
      */
     public function dispatch(object $event)
     {
-        foreach (i(ListenerProvider::class)->getListenersForEvent($event) as $listener) {
+        foreach (i(ListenerProvider::class)->getListenersForEvent($event, true) as $listener) {
             if ($event instanceof StoppableEventInterface && $event->isPropagationStopped()) {
                 return $event;
             }

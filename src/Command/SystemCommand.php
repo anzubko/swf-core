@@ -22,18 +22,18 @@ class SystemCommand
     #[AsCommand('system:commands', 'List all commands')]
     public function listAllCommands(): void
     {
-        i(CommandProvider::class)->showAll();
+        i(CommandProvider::class)->listAll();
     }
 
     #[AsCommand('system:controllers', 'List all controllers')]
     public function listAllControllers(): void
     {
-        i(ControllerProvider::class)->showAll();
+        i(ControllerProvider::class)->listAll();
     }
 
     #[AsCommand('system:listeners', 'List all listeners')]
     public function listAllListeners(): void
     {
-        i(ListenerProvider::class)->showAll();
+        i(ListenerProvider::class)->listAll();
     }
 }

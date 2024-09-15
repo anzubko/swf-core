@@ -3,7 +3,6 @@
 namespace SWF;
 
 use LogicException;
-use ReflectionMethod;
 use SWF\Attribute\AsController;
 use function count;
 use function is_string;
@@ -17,7 +16,7 @@ final class ControllerProcessor extends AbstractActionProcessor
         $cache = new ActionCache(['static' => [], 'dynamic' => [], 'urls' => [], 'actions' => []]);
 
         foreach ($classes->list as $class) {
-            foreach ($class->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            foreach ($class->getMethods() as $method) {
                 try {
                     foreach ($method->getAttributes(AsController::class) as $attribute) {
                         if ($method->isConstructor()) {

@@ -3,7 +3,6 @@
 namespace SWF;
 
 use LogicException;
-use ReflectionMethod;
 use SWF\Attribute\AsListener;
 use function count;
 
@@ -16,7 +15,7 @@ final class ListenerProcessor extends AbstractActionProcessor
         $cache = new ActionCache(['listeners' => []]);
 
         foreach ($classes->list as $class) {
-            foreach ($class->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            foreach ($class->getMethods() as $method) {
                 try {
                     foreach ($method->getAttributes(AsListener::class) as $attribute) {
                         if ($method->isConstructor()) {

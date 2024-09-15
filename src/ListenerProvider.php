@@ -5,6 +5,7 @@ namespace SWF;
 use InvalidArgumentException;
 use LogicException;
 use Psr\EventDispatcher\ListenerProviderInterface;
+use ReflectionException;
 use ReflectionFunction;
 use RuntimeException;
 use function count;
@@ -43,15 +44,11 @@ final class ListenerProvider implements ListenerProviderInterface
             throw new InvalidArgumentException('Listener must have first parameter with declared type');
         }
 
-        $listener = [
-            'callback' => $callback,
-            'type' => (string) $type,
-        ];
+        $listener = ['callback' => $callback, 'type' => (string) $type];
 
         if ($disposable) {
             $listener['disposable'] = true;
         }
-
         if ($persistent) {
             $listener['persistent'] = true;
         }
@@ -90,15 +87,14 @@ final class ListenerProvider implements ListenerProviderInterface
 
         if ($force) {
             $this->cache->data['listeners'] = [];
-            return;
-        }
+        } else {
+            foreach ($this->cache->data['listeners'] as $i => $listener) {
+                if ($listener['persistent'] ?? false) {
+                    continue;
+                }
 
-        foreach ($this->cache->data['listeners'] as $i => $listener) {
-            if ($listener['persistent'] ?? false) {
-                continue;
+                unset($this->cache->data['listeners'][$i]);
             }
-
-            unset($this->cache->data['listeners'][$i]);
         }
     }
 
@@ -107,9 +103,9 @@ final class ListenerProvider implements ListenerProviderInterface
      *
      * @return iterable<callable>
      *
-     * @throws LogicException
+     * @throws ReflectionException
      */
-    public function getListenersForEvent(object $event): iterable
+    public function getListenersForEvent(object $event, bool $removeDisposables = false): iterable
     {
         if (null === $this->cache) {
             return;
@@ -122,7 +118,7 @@ final class ListenerProvider implements ListenerProviderInterface
 
             $listener['callback'] = CallbackHandler::normalize($listener['callback']);
 
-            if ($listener['disposable'] ?? false) {
+            if ($removeDisposables && ($listener['disposable'] ?? false)) {
                 unset($this->cache->data['listeners'][$i]);
             }
 
@@ -130,7 +126,7 @@ final class ListenerProvider implements ListenerProviderInterface
         }
     }
 
-    public function showAll(): void
+    public function listAll(): void
     {
         if (null === $this->cache) {
             return;

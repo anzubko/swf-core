@@ -47,7 +47,7 @@ final class CommandProvider
         }
 
         if (null === $this->alias) {
-            return [implode('::', [self::class, 'showAll']), $this->alias];
+            return [implode('::', [self::class, 'listAll']), $this->alias];
         }
 
         if (null === $this->command) {
@@ -87,7 +87,7 @@ final class CommandProvider
         return [$this->command->action, $this->alias];
     }
 
-    public function showAll(): void
+    public function listAll(): void
     {
         if (null === $this->cache) {
             return;
@@ -113,7 +113,7 @@ final class CommandProvider
         echo "\n";
     }
 
-    public function showHelp(): void
+    private function showHelp(): void
     {
         if (null === $this->command) {
             return;
@@ -124,7 +124,6 @@ final class CommandProvider
 
         foreach ($this->command->arguments as $key => $argument) {
             $arguments[$key] = (string) $key;
-
             $maxLength = max($maxLength, mb_strlen((string) $key));
         }
 
@@ -136,7 +135,6 @@ final class CommandProvider
             }
 
             $options[$key] = $chunk;
-
             $maxLength = max($maxLength, mb_strlen($chunk));
         }
 

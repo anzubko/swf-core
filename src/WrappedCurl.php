@@ -2,22 +2,20 @@
 
 namespace SWF;
 
+use CurlHandle;
 use ValueError;
 use function count;
 
-final class ImprovedCurl
+final class WrappedCurl
 {
+    private CurlHandle $curl;
+
     private ?string $body = null;
 
     /**
      * @var string[]
      */
     private array $headers = [];
-
-    /**
-     * @var mixed[]
-     */
-    private array $info;
 
     /**
      * Do Curl request with optional conversion to utf-8.
@@ -31,23 +29,20 @@ final class ImprovedCurl
         $options[CURLOPT_SSL_VERIFYPEER] ??= false;
         $options[CURLOPT_FOLLOWLOCATION] ??= true;
 
-        $curl = curl_init();
+        $this->curl = curl_init();
 
-        curl_setopt_array($curl, $options);
+        curl_setopt_array($this->curl, $options);
 
-        $response = curl_exec($curl);
-
-        $this->info = (array) curl_getinfo($curl);
-
-        curl_close($curl);
-
+        $response = curl_exec($this->curl);
         if (false === $response) {
             return;
         }
 
-        $this->body = substr((string) $response, $this->info['header_size']);
+        $headerSize = (int) $this->getInfo(CURLINFO_HEADER_SIZE);
 
-        $rawHeaders = explode("\r\n\r\n", rtrim(substr((string) $response, 0, $this->info['header_size'])));
+        $this->body = substr((string) $response, $headerSize);
+
+        $rawHeaders = explode("\r\n\r\n", rtrim(substr((string) $response, 0, $headerSize)));
 
         unset($response);
 
@@ -58,7 +53,7 @@ final class ImprovedCurl
         unset($rawHeaders);
 
         if ($toUtf8 && !mb_check_encoding($this->body)) {
-            if (preg_match('/charset\s*=\s*([a-z\d\-#]+)/i', $this->info['content_type'], $M)) {
+            if (preg_match('/charset\s*=\s*([a-z\d\-#]+)/i', (string) $this->getInfo(CURLINFO_CONTENT_TYPE), $M)) {
                 try {
                     $this->body = mb_convert_encoding($this->body, 'utf-8', $M[1]);
                 } catch (ValueError) {
@@ -90,11 +85,9 @@ final class ImprovedCurl
 
     /**
      * Gets response info.
-     *
-     * @return mixed[]
      */
-    public function getInfo(): array
+    public function getInfo(int $option): mixed
     {
-        return $this->info;
+        return curl_getinfo($this->curl, $option);
     }
 }

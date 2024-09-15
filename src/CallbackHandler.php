@@ -2,7 +2,8 @@
 
 namespace SWF;
 
-use LogicException;
+use ReflectionException;
+use ReflectionMethod;
 use function is_string;
 
 final class CallbackHandler
@@ -12,7 +13,7 @@ final class CallbackHandler
      *
      * @param callable|mixed[]|string $callback
      *
-     * @throws LogicException
+     * @throws ReflectionException
      */
     public static function normalize(callable|array|string $callback): callable
     {
@@ -22,15 +23,16 @@ final class CallbackHandler
 
         if (is_string($callback)) {
             $callback = explode('::', $callback);
-        }
-
-        if (is_string($callback[0]) && class_exists($callback[0])) {
-            $callback[0] = i($callback[0]);
             if (is_callable($callback)) {
                 return $callback;
             }
         }
 
-        throw new LogicException('Unable to normalize callback');
+        $method = new ReflectionMethod(...$callback);
+        if ($method->isStatic()) {
+            return $method->getClosure();
+        }
+
+        return $method->getClosure(i($method->class));
     }
 }

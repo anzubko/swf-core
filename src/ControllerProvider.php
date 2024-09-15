@@ -77,7 +77,7 @@ final class ControllerProvider
                 throw new LogicException(sprintf('Unable to make URL by action "%s"', $action));
             }
 
-            throw new LogicException(sprintf('Unable to make URL by action "%s" and %s parameter%s', $action, $pCount, 1 === $pCount ? '' : 's'));
+            throw new LogicException(sprintf('Unable to make URL by action "%s" and %s parameter%s', $action, $pCount, $pCount > 1 ? 's' : ''));
         }
 
         $url = $this->cache->data['urls'][$index];
@@ -94,7 +94,7 @@ final class ControllerProvider
         return implode($url);
     }
 
-    public function showAll(): void
+    public function listAll(): void
     {
         if (null === $this->cache) {
             return;

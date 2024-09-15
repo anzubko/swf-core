@@ -3,7 +3,6 @@
 namespace SWF;
 
 use LogicException;
-use ReflectionMethod;
 use SWF\Attribute\AsCommand;
 use SWF\Enum\CommandTypeEnum;
 use SWF\Enum\CommandValueEnum;
@@ -22,7 +21,7 @@ final class CommandProcessor extends AbstractActionProcessor
         $cache = new ActionCache(['commands' => []]);
 
         foreach ($classes->list as $class) {
-            foreach ($class->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            foreach ($class->getMethods() as $method) {
                 try {
                     foreach ($method->getAttributes(AsCommand::class) as $attribute) {
                         if ($method->isConstructor()) {
