@@ -2,16 +2,17 @@
 
 namespace SWF;
 
+use App\Config\SystemConfig;
 use LogicException;
 use RuntimeException;
 
 abstract class AbstractActionProcessor
 {
-    protected string $cacheFile;
+    protected string $relativeCacheFile;
 
     public function getCacheFile(): string
     {
-        return $this->cacheFile;
+        return i(SystemConfig::class)->cacheDir . $this->relativeCacheFile;
     }
 
     /**
@@ -24,8 +25,8 @@ abstract class AbstractActionProcessor
      */
     public function saveCache(ActionCache $cache): void
     {
-        if (!FileHandler::putVar($this->cacheFile, $cache->data)) {
-            throw new RuntimeException(sprintf('Unable to write file %s', $this->cacheFile));
+        if (!FileHandler::putVar($this->getCacheFile(), $cache->data)) {
+            throw new RuntimeException(sprintf('Unable to write file %s', $this->getCacheFile()));
         }
     }
 }

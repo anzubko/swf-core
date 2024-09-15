@@ -42,7 +42,17 @@ abstract class AbstractSystemConfig extends AbstractConfig
     public array $allowedNsPrefixes = ['SWF\\'];
 
     /**
+     * Directory for cache.
+     */
+    public string $cacheDir = APP_DIR . '/var/cache';
+
+    /**
+     * Directory for file based locks.
+     */
+    public string $locksDir = APP_DIR . '/var/locks';
+
+    /**
      * Custom log file.
      */
-    public ?string $customLog = null;
+    public ?string $customLog = APP_DIR . '/var/log/{ENV}.log';
 }

@@ -6,7 +6,7 @@ use SWF\Attribute\Priority;
 
 final class RelationProcessor extends AbstractActionProcessor
 {
-    protected string $cacheFile = APP_DIR . '/var/cache/.swf/relations.php';
+    protected string $relativeCacheFile = '/.swf/relations.php';
 
     public function buildCache(ActionClasses $classes): ActionCache
     {

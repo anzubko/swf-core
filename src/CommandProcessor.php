@@ -15,7 +15,7 @@ final class CommandProcessor extends AbstractActionProcessor
     private const RESTRICTED_OPTION_NAMES = ['help'];
     private const RESTRICTED_OPTION_SHORTCUTS = ['h'];
 
-    protected string $cacheFile = APP_DIR . '/var/cache/.swf/commands.php';
+    protected string $relativeCacheFile = '/.swf/commands.php';
 
     public function buildCache(ActionClasses $classes): ActionCache
     {
