@@ -14,7 +14,7 @@ final class AssetsMerger
     /**
      * @var string[][][]
      */
-    private array $files;
+    private array $scannedFiles;
 
     /**
      * @param string $location Target URL location for merged assets.
@@ -51,9 +51,11 @@ final class AssetsMerger
 
         i(FileLocker::class)->acquire($this->lockKey);
 
-        $metrics = $this->getMetrics($metrics) ?? $this->rebuild();
-
-        i(FileLocker::class)->release($this->lockKey);
+        try {
+            $metrics = $this->getMetrics($metrics) ?? $this->rebuild();
+        } finally {
+            i(FileLocker::class)->release($this->lockKey);
+        }
 
         return $this->getTargetFiles($metrics);
     }
@@ -110,11 +112,11 @@ final class AssetsMerger
             $oldTargets[] = $M[2];
         }
 
-        $this->scanForFiles();
+        $this->scannedFiles ??= $this->scanForFiles();
 
         $newTargets = [];
-        foreach (array_keys($this->files) as $type) {
-            foreach ($this->files[$type] as $target => $files) {
+        foreach (array_keys($this->scannedFiles) as $type) {
+            foreach ($this->scannedFiles[$type] as $target => $files) {
                 foreach ($files as $file) {
                     if ((int) filemtime($file) > $metrics['modified']) {
                         return true;
@@ -142,7 +144,7 @@ final class AssetsMerger
     {
         DirHandler::clear($this->dir);
 
-        $this->scanForFiles();
+        $this->scannedFiles ??= $this->scanForFiles();
 
         $metrics = [
             'modified' => time(),
@@ -150,15 +152,15 @@ final class AssetsMerger
             'hash' => TextHandler::random(),
         ];
 
-        foreach (array_keys($this->files) as $type) {
-            foreach ($this->files[$type] as $target => $files) {
+        foreach (array_keys($this->scannedFiles) as $type) {
+            foreach ($this->scannedFiles[$type] as $target => $files) {
                 $file = sprintf('%s/%s.%s', $this->dir, $metrics['modified'], $target);
 
-                if ('js' === $type) {
-                    $contents = $this->mergeJs($files);
-                } else {
-                    $contents = $this->mergeCss($files);
-                }
+                $contents = match ($type) {
+                    'js' => $this->mergeJs($files),
+                    'css' => $this->mergeCss($files),
+                    default => '',
+                };
 
                 if (!FileHandler::put($file, $contents)) {
                     throw new RuntimeException(sprintf('Unable to write file %s', $file));
@@ -173,27 +175,31 @@ final class AssetsMerger
         return $metrics;
     }
 
-    private function scanForFiles(): void
+    /**
+     * @return string[][][]
+     */
+    private function scanForFiles(): array
     {
-        if (isset($this->files)) {
-            return;
-        }
-
-        $this->files = [];
+        $scannedFiles = [];
         foreach ($this->assets as $target => $files) {
             foreach ((array) $files as $file) {
                 if (!preg_match('/\.(css|js)$/', $file, $M)) {
                     continue;
                 }
 
-                $this->files[$M[1]][$target] ??= [];
-                foreach (glob($file) ?: [] as $item) {
-                    if (is_file($item)) {
-                        $this->files[$M[1]][$target][] = $item;
+                $scannedFiles[$M[1]][$target] ??= [];
+                $items = glob($file);
+                if (false !== $items) {
+                    foreach ($items as $item) {
+                        if (is_file($item)) {
+                            $scannedFiles[$M[1]][$target][] = $item;
+                        }
                     }
                 }
             }
         }
+
+        return $scannedFiles;
     }
 
     /**
@@ -205,7 +211,6 @@ final class AssetsMerger
     private function mergeJs(array $files): string
     {
         $merged = $this->mergeFiles($files);
-
         if (i(SystemConfig::class)->debug) {
             return $merged;
         }
@@ -229,38 +234,37 @@ final class AssetsMerger
             $merged = TextHandler::fTrim(preg_replace('~/\*(.*?)\*/~us', '', $merged));
         }
 
-        return (string) preg_replace_callback('/url\(\s*(.+?)\s*\)/u',
-            function (array $M) {
-                $data = $type = null;
+        $callback = function (array $M): string {
+            $data = $type = null;
 
-                if (
-                    preg_match('/\.(gif|png|jpg|jpeg|svg|woff|woff2)$/ui', $M[1], $N)
-                    && str_starts_with($M[1], '/')
-                    && !str_starts_with($M[1], '//')
-                    && !str_contains($M[1], '..')
-                ) {
-                    $type = strtolower($N[1]);
-                    if ('jpg' === $type) {
-                        $type = 'jpeg';
-                    } elseif ('svg' === $type) {
-                        $type = 'svg+xml';
-                    }
-
-                    $file = sprintf('%s/%s', $this->docRoot, $M[1]);
-                    $size = @filesize($file);
-                    if (false !== $size && $size <= 32 * 1024) {
-                        $data = FileHandler::get($file);
-                    }
+            if (
+                preg_match('/\.(gif|png|jpg|jpeg|svg|woff|woff2)$/ui', $M[1], $N)
+                && str_starts_with($M[1], '/')
+                && !str_starts_with($M[1], '//')
+                && !str_contains($M[1], '..')
+            ) {
+                $type = strtolower($N[1]);
+                if ('jpg' === $type) {
+                    $type = 'jpeg';
+                } elseif ('svg' === $type) {
+                    $type = 'svg+xml';
                 }
 
-                if (null !== $data) {
-                    return sprintf('url(data:image/%s;base64,%s)', $type, base64_encode($data));
-                } else {
-                    return sprintf('url(%s)', $M[1]);
+                $file = sprintf('%s/%s', $this->docRoot, $M[1]);
+                $size = @filesize($file);
+                if (false !== $size && $size <= 32 * 1024) {
+                    $data = FileHandler::get($file);
                 }
-            },
-            $merged,
-        );
+            }
+
+            if (null !== $data) {
+                return sprintf('url(data:image/%s;base64,%s)', $type, base64_encode($data));
+            } else {
+                return sprintf('url(%s)', $M[1]);
+            }
+        };
+
+        return (string) preg_replace_callback('/url\(\s*(.+?)\s*\)/u', $callback, $merged);
     }
 
     /**

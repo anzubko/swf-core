@@ -14,12 +14,7 @@ final class ControllerProcessor extends AbstractActionProcessor
 
     public function buildCache(ActionClasses $classes): ActionCache
     {
-        $cache = new ActionCache([
-            'static' => [],
-            'dynamic' => [],
-            'urls' => [],
-            'actions' => [],
-        ]);
+        $cache = new ActionCache(['static' => [], 'dynamic' => [], 'urls' => [], 'actions' => []]);
 
         foreach ($classes->list as $class) {
             foreach ($class->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
