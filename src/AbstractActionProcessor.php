@@ -2,7 +2,6 @@
 
 namespace SWF;
 
-use App\Config\SystemConfig;
 use LogicException;
 use RuntimeException;
 
@@ -12,7 +11,7 @@ abstract class AbstractActionProcessor
 
     public function getCacheFile(): string
     {
-        return i(SystemConfig::class)->cacheDir . $this->relativeCacheFile;
+        return ConfigStorage::$system->cacheDir . $this->relativeCacheFile;
     }
 
     /**

@@ -2,7 +2,6 @@
 
 namespace SWF;
 
-use App\Config\SystemConfig;
 use Composer\Autoload\ClassLoader;
 use LogicException;
 use RecursiveDirectoryIterator;
@@ -15,11 +14,13 @@ use function strlen;
 
 final class ActionManager
 {
-    private const METRICS_FILE = APP_DIR . '/var/cache/.swf/actions.metrics.php';
+    private const RELATIVE_METRICS_FILE = '/.system/actions.metrics.php';
 
-    private const LOCK_KEY = '.swf/action.manager';
+    private const LOCK_KEY = '.system/action.manager';
 
     private const NAMESPACE_SEPARATOR = '\\';
+
+    private string $metricsFile;
 
     /**
      * @var AbstractActionProcessor[]
@@ -38,12 +39,9 @@ final class ActionManager
 
     public function __construct()
     {
-        $this->processors = [
-            new CommandProcessor(),
-            new ControllerProcessor(),
-            new ListenerProcessor(),
-            new RelationProcessor(),
-        ];
+        $this->metricsFile = ConfigStorage::$system->cacheDir . self::RELATIVE_METRICS_FILE;
+
+        $this->processors = [new CommandProcessor(), new ControllerProcessor(), new ListenerProcessor(), new RelationProcessor()];
     }
 
     /**
@@ -72,7 +70,7 @@ final class ActionManager
     {
         $caches = $this->readSavedCaches();
         if (null !== $caches) {
-            if ('prod' === i(SystemConfig::class)->env) {
+            if ('prod' === ConfigStorage::$system->env) {
                 return $caches;
             }
 
@@ -123,7 +121,7 @@ final class ActionManager
      */
     private function getMetrics(?array $oldMetrics = null): ?array
     {
-        $metrics = @include self::METRICS_FILE;
+        $metrics = @include $this->metricsFile;
         if (!is_array($metrics) || $metrics === $oldMetrics) {
             return null;
         }
@@ -169,7 +167,7 @@ final class ActionManager
 
         $classes = new ActionClasses();
         foreach (get_declared_classes() as $className) {
-            if (!TextHandler::startsWith($className, i(SystemConfig::class)->allowedNsPrefixes)) {
+            if (!TextHandler::startsWith($className, ConfigStorage::$system->allowedNsPrefixes)) {
                 continue;
             }
 
@@ -186,14 +184,8 @@ final class ActionManager
             $processor->saveCache($caches[$processor::class]);
         }
 
-        if (
-            !FileHandler::putVar(self::METRICS_FILE, [
-                'modified' => time(),
-                'count' => count($this->classesInfo),
-                'hash' => TextHandler::random(),
-            ])
-        ) {
-            throw new RuntimeException(sprintf('Unable to write file %s', self::METRICS_FILE));
+        if (!FileHandler::putVar($this->metricsFile, ['modified' => time(), 'count' => count($this->classesInfo), 'hash' => TextHandler::random()])) {
+            throw new RuntimeException(sprintf('Unable to write file %s', $this->metricsFile));
         }
 
         return $caches;
@@ -207,7 +199,7 @@ final class ActionManager
     private function getClassesInfo(): array
     {
         $allowedNsRoots = [];
-        foreach (i(SystemConfig::class)->allowedNsPrefixes as $nsPrefix) {
+        foreach (ConfigStorage::$system->allowedNsPrefixes as $nsPrefix) {
             $chunks = explode(self::NAMESPACE_SEPARATOR, $nsPrefix, 2);
             $allowedNsRoots[] = match (true) {
                 count($chunks) > 1 => $chunks[0] . self::NAMESPACE_SEPARATOR,
@@ -230,15 +222,11 @@ final class ActionManager
 
                     $croppedFile = substr($info->getPathname(), strlen($dir) + 1, -4);
                     $className = $namespace . strtr($croppedFile, DIRECTORY_SEPARATOR, self::NAMESPACE_SEPARATOR);
-                    if (!TextHandler::startsWith($className, i(SystemConfig::class)->allowedNsPrefixes)) {
+                    if (!TextHandler::startsWith($className, ConfigStorage::$system->allowedNsPrefixes)) {
                         continue;
                     }
 
-                    $classesInfo[] = [
-                        'class' => $className,
-                        'file' => $info->getPathname(),
-                        'modified' => $info->getMTime(),
-                    ];
+                    $classesInfo[] = ['class' => $className, 'file' => $info->getPathname(), 'modified' => $info->getMTime()];
                 }
             }
         }

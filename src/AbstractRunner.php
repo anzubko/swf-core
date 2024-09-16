@@ -2,10 +2,8 @@
 
 namespace SWF;
 
-use App\Config\SystemConfig;
 use Exception;
 use InvalidArgumentException;
-use SWF\Enum\ActionTypeEnum;
 use SWF\Event\BeforeAllEvent;
 use SWF\Event\BeforeCommandEvent;
 use SWF\Event\BeforeControllerEvent;
@@ -15,17 +13,24 @@ use SWF\Interface\DatabaserInterface;
 use Throwable;
 use function in_array;
 
-final class Runner
+abstract class AbstractRunner
 {
+    /**
+     * @var class-string<AbstractSystemConfig>
+     */
+    protected string $systemConfig;
+
     private static self $instance;
 
-    public static function getInstance(): self
+    final public static function getInstance(): self
     {
-        return self::$instance ??= new self();
+        return self::$instance ??= new static();
     }
 
-    private function __construct()
+    final protected function __construct()
     {
+        ConfigStorage::$system = i($this->systemConfig);
+
         set_error_handler($this->errorHandler(...));
 
         try {
@@ -36,7 +41,7 @@ final class Runner
         }
     }
 
-    public function runController(): void
+    final public function runController(): void
     {
         try {
             $action = i(ControllerProvider::class)->getCurrentAction();
@@ -44,22 +49,24 @@ final class Runner
                 i(ResponseManager::class)->error(404);
             }
 
-            $_SERVER['ACTION_TYPE'] = ActionTypeEnum::CONTROLLER->value;
-            $_SERVER['ACTION_METHOD'] = $action[0];
-            $_SERVER['ACTION_ALIAS'] = $action[1];
+            $_SERVER['ACTION_TYPE'] = $action->type->value;
+
+            $_SERVER['ACTION_METHOD'] = $action->method;
+
+            $_SERVER['ACTION_ALIAS'] = $action->alias;
 
             register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
 
             i(EventDispatcher::class)->dispatch(new BeforeAllEvent());
             i(EventDispatcher::class)->dispatch(new BeforeControllerEvent());
 
-            CallbackHandler::normalize($_SERVER['ACTION_METHOD'])();
+            CallbackHandler::normalize($action->method)();
         } catch (Throwable $e) {
             $this->terminate($e);
         }
     }
 
-    public function runCommand(): void
+    final public function runCommand(): void
     {
         try {
             $action = i(CommandProvider::class)->getCurrentAction();
@@ -67,16 +74,18 @@ final class Runner
                 throw new InvalidArgumentException('Command not found');
             }
 
-            $_SERVER['ACTION_TYPE'] = ActionTypeEnum::COMMAND->value;
-            $_SERVER['ACTION_METHOD'] = $action[0];
-            $_SERVER['ACTION_ALIAS'] = $action[1];
+            $_SERVER['ACTION_TYPE'] = $action->type->value;
+
+            $_SERVER['ACTION_METHOD'] = $action->method;
+
+            $_SERVER['ACTION_ALIAS'] = $action->alias;
 
             register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
 
             i(EventDispatcher::class)->dispatch(new BeforeAllEvent());
             i(EventDispatcher::class)->dispatch(new BeforeCommandEvent());
 
-            CallbackHandler::normalize($_SERVER['ACTION_METHOD'])();
+            CallbackHandler::normalize($action->method)();
         } catch (Throwable $e) {
             $this->terminate($e);
         }
@@ -87,7 +96,7 @@ final class Runner
      */
     private function setTimezone(): void
     {
-        ini_set('date.timezone', i(SystemConfig::class)->timezone);
+        ini_set('date.timezone', ConfigStorage::$system->timezone);
     }
 
     /**
@@ -95,39 +104,27 @@ final class Runner
      */
     private function setStartupParameters(): void
     {
+        try {
+            $userUrl = new UrlNormalizer(ConfigStorage::$system->url);
+        } catch (InvalidArgumentException) {
+            throw new InvalidArgumentException('Incorrect URL in configuration');
+        }
+
+        $_SERVER['USER_SCHEME'] = $userUrl->getScheme();
+
+        $_SERVER['USER_HOST'] = $userUrl->getHost();
+
+        $_SERVER['USER_URL'] = $userUrl->getUrl();
+
         $_SERVER['HTTP_SCHEME'] = empty($_SERVER['HTTPS']) || 'off' === $_SERVER['HTTPS'] ? 'http' : 'https';
 
         $_SERVER['HTTP_HOST'] ??= 'localhost';
 
         $_SERVER['HTTP_URL'] = sprintf('%s://%s', $_SERVER['HTTP_SCHEME'], $_SERVER['HTTP_HOST']);
 
-        $_SERVER['USER_URL'] = $this->getUserUrl() ?? $_SERVER['HTTP_URL'];
-
         $_SERVER['REQUEST_URI'] = $_SERVER['REDIRECT_REQUEST_URI'] ?? $_SERVER['REQUEST_URI'] ?? '/';
 
         $_SERVER['QUERY_STRING'] = explode('?', $_SERVER['REQUEST_URI'], 2)[1] ?? '';
-    }
-
-    /**
-     * @throws InvalidArgumentException
-     */
-    private function getUserUrl(): ?string
-    {
-        if (null === i(SystemConfig::class)->url) {
-            return null;
-        }
-
-        $url = parse_url(i(SystemConfig::class)->url);
-        if (empty($url) || !isset($url['host'])) {
-            throw new InvalidArgumentException('Incorrect URL in configuration');
-        }
-
-        $url['scheme'] ??= 'http';
-        if (isset($url['port'])) {
-            return sprintf('%s://%s:%s', $url['scheme'], $url['host'], $url['port']);
-        }
-
-        return sprintf('%s://%s', $url['scheme'], $url['host']);
     }
 
     /**

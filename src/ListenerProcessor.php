@@ -8,7 +8,7 @@ use function count;
 
 final class ListenerProcessor extends AbstractActionProcessor
 {
-    protected string $relativeCacheFile = '/.swf/listeners.php';
+    protected string $relativeCacheFile = '/.system/listeners.php';
 
     public function buildCache(ActionClasses $classes): ActionCache
     {

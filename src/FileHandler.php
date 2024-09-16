@@ -2,8 +2,6 @@
 
 namespace SWF;
 
-use App\Config\SystemConfig;
-
 final class FileHandler
 {
     /**
@@ -25,7 +23,7 @@ final class FileHandler
             return false;
         }
 
-        @chmod($file, i(SystemConfig::class)->fileMode);
+        @chmod($file, ConfigStorage::$system->fileMode);
 
         return true;
     }
@@ -35,7 +33,8 @@ final class FileHandler
      */
     public static function putVar(string $file, mixed $variable, int $flags = 0, bool $createDir = true): bool
     {
-        if (!self::put($file, sprintf("<?php\n\nreturn %s;\n", var_export($variable, true)), $flags, $createDir)) {
+        $contents = sprintf("<?php\n\nreturn %s;\n", var_export($variable, true));
+        if (!self::put($file, $contents, $flags, $createDir)) {
             return false;
         }
 
@@ -67,7 +66,7 @@ final class FileHandler
             return false;
         }
 
-        @chmod($target, i(SystemConfig::class)->fileMode);
+        @chmod($target, ConfigStorage::$system->fileMode);
 
         return true;
     }

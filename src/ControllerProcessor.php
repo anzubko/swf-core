@@ -9,7 +9,7 @@ use function is_string;
 
 final class ControllerProcessor extends AbstractActionProcessor
 {
-    protected string $relativeCacheFile = '/.swf/controllers.php';
+    protected string $relativeCacheFile = '/.system/controllers.php';
 
     public function buildCache(ActionClasses $classes): ActionCache
     {

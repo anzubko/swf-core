@@ -4,6 +4,7 @@ namespace SWF;
 
 use LogicException;
 use RuntimeException;
+use SWF\Enum\ActionTypeEnum;
 use function count;
 use function is_string;
 
@@ -22,10 +23,8 @@ final class ControllerProvider
 
     /**
      * Gets current action.
-     *
-     * @return array{string, string|null}|null
      */
-    public function getCurrentAction(): ?array
+    public function getCurrentAction(): ?CurrentActionInfo
     {
         if (null === $this->cache) {
             return null;
@@ -55,7 +54,7 @@ final class ControllerProvider
             $action = [$action, null];
         }
 
-        return $action;
+        return new CurrentActionInfo(ActionTypeEnum::CONTROLLER, ...$action);
     }
 
     /**

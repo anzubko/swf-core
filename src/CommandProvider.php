@@ -5,6 +5,7 @@ namespace SWF;
 use InvalidArgumentException;
 use LogicException;
 use RuntimeException;
+use SWF\Enum\ActionTypeEnum;
 use SWF\Enum\CommandValueEnum;
 use function count;
 use function strlen;
@@ -37,17 +38,15 @@ final class CommandProvider
 
     /**
      * Gets current action.
-     *
-     * @return array{string, string|null}|null
      */
-    public function getCurrentAction(): ?array
+    public function getCurrentAction(): ?CurrentActionInfo
     {
         if (null === $this->cache) {
             return null;
         }
 
         if (null === $this->alias) {
-            return [implode('::', [self::class, 'listAll']), $this->alias];
+            return new CurrentActionInfo(ActionTypeEnum::COMMAND, implode('::', [self::class, 'listAll']), $this->alias);
         }
 
         if (null === $this->command) {
@@ -68,7 +67,7 @@ final class CommandProvider
                 }
 
                 if ($needHelp) {
-                    return [implode('::', [self::class, 'showHelp']), $this->alias];
+                    return new CurrentActionInfo(ActionTypeEnum::COMMAND, implode('::', [self::class, 'showHelp']), $this->alias);
                 }
             }
 
@@ -84,7 +83,7 @@ final class CommandProvider
             exit(1);
         }
 
-        return [$this->command->action, $this->alias];
+        return new CurrentActionInfo(ActionTypeEnum::COMMAND, $this->command->action, $this->alias);
     }
 
     public function listAll(): void

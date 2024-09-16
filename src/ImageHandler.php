@@ -2,7 +2,6 @@
 
 namespace SWF;
 
-use App\Config\SystemConfig;
 use GdImage;
 
 final class ImageHandler
@@ -42,7 +41,7 @@ final class ImageHandler
         if (null !== $file) {
             $success = imagepng($image, $file, $quality);
             if ($success) {
-                @chmod($file, i(SystemConfig::class)->fileMode);
+                @chmod($file, ConfigStorage::$system->fileMode);
             }
 
             return $success;
@@ -71,7 +70,7 @@ final class ImageHandler
         if (null !== $file) {
             $success = imagejpeg($fixed, $file, $quality);
             if ($success) {
-                @chmod($file, i(SystemConfig::class)->fileMode);
+                @chmod($file, ConfigStorage::$system->fileMode);
             }
 
             return $success;

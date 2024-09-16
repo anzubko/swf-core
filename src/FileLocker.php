@@ -2,7 +2,6 @@
 
 namespace SWF;
 
-use App\Config\SystemConfig;
 use LogicException;
 use RuntimeException;
 use function array_key_exists;
@@ -26,7 +25,7 @@ final class FileLocker
             throw new LogicException(sprintf('You already have lock with key: %s', $key));
         }
 
-        $file = sprintf('%s/%s', i(SystemConfig::class)->locksDir, $key);
+        $file = sprintf('%s/%s', ConfigStorage::$system->locksDir, $key);
 
         $handle = @fopen($file, 'cb+');
         if (false === $handle) {

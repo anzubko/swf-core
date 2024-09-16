@@ -2,7 +2,6 @@
 
 namespace SWF;
 
-use App\Config\SystemConfig;
 use RuntimeException;
 
 final class DirHandler
@@ -36,18 +35,19 @@ final class DirHandler
                 continue;
             }
 
-            if (!$recursive || is_file("$dir/$item")) {
+            $dirWItem = sprintf('%s/%s', $dir, $item);
+            if (!$recursive || is_file($dirWItem)) {
                 if ($withDir) {
-                    $scanned[] = "$dir/$item";
+                    $scanned[] = $dirWItem;
                 } else {
                     $scanned[] = $item;
                 }
             } else {
-                foreach (self::scan("$dir/$item", true, false, $order) as $subItem) {
+                foreach (self::scan($dirWItem, true, false, $order) as $subItem) {
                     if ($withDir) {
-                        $scanned[] = "$dir/$item/$subItem";
+                        $scanned[] = sprintf('%s/%s', $dirWItem, $subItem);
                     } else {
-                        $scanned[] = "$item/$subItem";
+                        $scanned[] = sprintf('%s/%s', $item, $subItem);
                     }
                 }
             }
@@ -67,7 +67,7 @@ final class DirHandler
 
         $success = mkdir($dir, recursive: true);
         if ($success) {
-            @chmod($dir, i(SystemConfig::class)->dirMode);
+            @chmod($dir, ConfigStorage::$system->dirMode);
         }
 
         return $success;
@@ -94,11 +94,12 @@ final class DirHandler
                     continue;
                 }
 
-                if (is_dir("$dir/$item")) {
-                    if (!self::remove("$dir/$item")) {
+                $dirWItem = sprintf('%s/%s', $dir, $item);
+                if (is_dir($dirWItem)) {
+                    if (!self::remove($dirWItem)) {
                         $success = false;
                     }
-                } elseif (!unlink("$dir/$item")) {
+                } elseif (!unlink($dirWItem)) {
                     $success = false;
                 }
             }
@@ -131,11 +132,12 @@ final class DirHandler
                 continue;
             }
 
-            if (is_dir("$dir/$item")) {
-                if (!self::remove("$dir/$item", $recursive)) {
+            $dirWItem = sprintf('%s/%s', $dir, $item);
+            if (is_dir($dirWItem)) {
+                if (!self::remove($dirWItem, $recursive)) {
                     $success = false;
                 }
-            } elseif (!unlink("$dir/$item")) {
+            } elseif (!unlink($dirWItem)) {
                 $success = false;
             }
         }
@@ -163,11 +165,14 @@ final class DirHandler
                 continue;
             }
 
-            if (is_dir("$source/$item")) {
-                if (!self::copy("$source/$item", "$target/$item")) {
+            $sourceWItem = sprintf('%s/%s', $source, $item);
+            $targetWItem = sprintf('%s/%s', $target, $item);
+
+            if (is_dir($sourceWItem)) {
+                if (!self::copy($sourceWItem, $targetWItem)) {
                     $success = false;
                 }
-            } elseif (!FileHandler::copy("$source/$item", "$target/$item", false)) {
+            } elseif (!FileHandler::copy($sourceWItem, $targetWItem, false)) {
                 $success = false;
             }
         }
