@@ -86,6 +86,9 @@ final class CommandProvider
         return new CurrentActionInfo(ActionTypeEnum::COMMAND, $this->command->action, $this->alias);
     }
 
+    /**
+     * @internal
+     */
     public function listAll(): void
     {
         if (null === $this->cache) {

@@ -126,6 +126,9 @@ final class ListenerProvider implements ListenerProviderInterface
         }
     }
 
+    /**
+     * @internal
+     */
     public function listAll(): void
     {
         if (null === $this->cache) {

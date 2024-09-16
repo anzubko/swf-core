@@ -93,6 +93,9 @@ final class ControllerProvider
         return implode($url);
     }
 
+    /**
+     * @internal
+     */
     public function listAll(): void
     {
         if (null === $this->cache) {

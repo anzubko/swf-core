@@ -2,6 +2,9 @@
 
 namespace SWF;
 
+/**
+ * @internal
+ */
 final class InstanceStorage
 {
     /**
