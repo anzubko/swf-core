@@ -46,7 +46,7 @@ final class CommandProvider
         }
 
         if (null === $this->alias) {
-            return new CurrentActionInfo(ActionTypeEnum::COMMAND, implode('::', [self::class, 'listAll']), $this->alias);
+            return new CurrentActionInfo(ActionTypeEnum::COMMAND, implode('::', [self::class, 'listAll']));
         }
 
         if (null === $this->command) {
@@ -73,14 +73,7 @@ final class CommandProvider
 
             $paramsParser->checkForRequires();
         } catch (InvalidArgumentException $e) {
-            $usage = $this->genUsage();
-            if (null === $usage) {
-                echo sprintf("Error: %s\n", $e->getMessage());
-            } else {
-                echo sprintf("Usage:\n  %s\n\nError: %s\n", $this->genUsage(), $e->getMessage());
-            }
-
-            exit(1);
+            $this->error($e->getMessage());
         }
 
         return new CurrentActionInfo(ActionTypeEnum::COMMAND, $this->command->action, $this->alias);
@@ -213,5 +206,17 @@ final class CommandProvider
         }
 
         return implode(' ', [$this->alias, ...$optionsUsage, ...$argumentsUsage]);
+    }
+
+    private function error(string $message): never
+    {
+        $usage = $this->genUsage();
+        if (null === $usage) {
+            echo sprintf("Error: %s\n", $message);
+        } else {
+            echo sprintf("Usage:\n  %s\n\nError: %s\n", $this->genUsage(), $message);
+        }
+
+        exit(1);
     }
 }

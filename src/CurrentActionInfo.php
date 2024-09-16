@@ -9,7 +9,7 @@ final readonly class CurrentActionInfo
     public function __construct(
         public ActionTypeEnum $type,
         public string $method,
-        public ?string $alias,
+        public ?string $alias = null,
     ) {
     }
 }
