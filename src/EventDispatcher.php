@@ -4,7 +4,7 @@ namespace SWF;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\EventDispatcher\StoppableEventInterface;
-use Throwable;
+use ReflectionException;
 
 final class EventDispatcher implements EventDispatcherInterface
 {
@@ -17,7 +17,7 @@ final class EventDispatcher implements EventDispatcherInterface
      *
      * @return T
      *
-     * @throws Throwable
+     * @throws ReflectionException
      */
     public function dispatch(object $event)
     {

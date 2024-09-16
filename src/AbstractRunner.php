@@ -27,7 +27,7 @@ abstract class AbstractRunner
         return self::$instance ??= new static();
     }
 
-    final protected function __construct()
+    final private function __construct()
     {
         ConfigStorage::$system = i($this->systemConfig);
 
@@ -138,6 +138,7 @@ abstract class AbstractRunner
 
         if (in_array($code, [E_NOTICE, E_USER_NOTICE, E_DEPRECATED, E_USER_DEPRECATED], true)) {
             i(CommonLogger::class)->notice($message, options: ['file' => $file, 'line' => $line]);
+
             return true;
         }
 

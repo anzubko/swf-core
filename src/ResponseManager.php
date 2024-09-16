@@ -2,6 +2,7 @@
 
 namespace SWF;
 
+use ReflectionException;
 use SWF\Event\ResponseEvent;
 use SWF\Event\HttpErrorEvent;
 use Throwable;
@@ -25,9 +26,9 @@ final class ResponseManager
      *
      * @param string|resource $body
      *
-     * @throws Throwable
+     * @throws ReflectionException
      */
-    public function send(mixed $body, int $code = 200, bool $exit = true): void
+    public function send(mixed $body, int $code = 200): void
     {
         $body = i(EventDispatcher::class)->dispatch(new ResponseEvent($this->headers, $body))->getBody();
 
@@ -46,22 +47,14 @@ final class ResponseManager
         if (function_exists('fastcgi_finish_request')) {
             fastcgi_finish_request();
         }
-
-        if ($exit) {
-            exit(0);
-        }
     }
 
     /**
      * Redirects to specified url.
      */
-    public function redirect(string $url, int $code = 302, bool $exit = true): void
+    public function redirect(string $url, int $code = 302): void
     {
         header(sprintf('Location: %s', $url), true, $code);
-
-        if ($exit) {
-            exit(0);
-        }
     }
 
     /**
