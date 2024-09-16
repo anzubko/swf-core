@@ -100,7 +100,10 @@ final class FileHandler
         }
 
         return new FileStats(
-            name: basename($file),
+            name: $file,
+            dirname: dirname($file),
+            basename: basename($file),
+            extension: preg_match('/\.([^.]+)$/', $file, $M) ? $M[1] : null,
             size: $fileStats['size'],
             created: $fileStats['ctime'],
             modified: $fileStats['mtime'],
