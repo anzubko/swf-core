@@ -8,6 +8,9 @@ use SWF\Enum\CommandTypeEnum;
 use SWF\Enum\CommandValueEnum;
 use function in_array;
 
+/**
+ * @internal
+ */
 final class CommandProcessor extends AbstractActionProcessor
 {
     private const RESTRICTED_KEYS = ['help'];

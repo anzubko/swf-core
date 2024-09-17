@@ -131,11 +131,7 @@ final class CommonLogger implements LoggerInterface
 
         try {
             i(EventDispatcher::class)->dispatch(
-                new LogEvent(
-                    level: $level,
-                    complexMessage: $complexMessage,
-                    exception: $message instanceof Throwable ? $message : null,
-                ),
+                new LogEvent($level, $complexMessage, $message instanceof Throwable ? $message : null),
             );
         } catch (Throwable) {
         }

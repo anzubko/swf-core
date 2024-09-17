@@ -5,6 +5,9 @@ namespace SWF;
 use LogicException;
 use RuntimeException;
 
+/**
+ * @internal
+ */
 abstract class AbstractActionProcessor
 {
     protected string $relativeCacheFile;

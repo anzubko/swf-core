@@ -4,7 +4,11 @@ namespace SWF;
 
 use SWF\Enum\CommandTypeEnum;
 use SWF\Enum\CommandValueEnum;
+use function array_key_exists;
 
+/**
+ * @internal
+ */
 final class CommandHelper
 {
     /**

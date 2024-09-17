@@ -8,6 +8,9 @@ use SWF\Enum\CommandValueEnum;
 use function array_key_exists;
 use function count;
 
+/**
+ * @internal
+ */
 final readonly class CommandParamsParser
 {
     public function __construct(

@@ -6,6 +6,9 @@ use LogicException;
 use SWF\Attribute\AsListener;
 use function count;
 
+/**
+ * @internal
+ */
 final class ListenerProcessor extends AbstractActionProcessor
 {
     protected string $relativeCacheFile = '/.system/listeners.php';

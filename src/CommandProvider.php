@@ -46,7 +46,7 @@ final class CommandProvider
         }
 
         if (null === $this->alias) {
-            return new CurrentActionInfo(ActionTypeEnum::COMMAND, implode('::', [self::class, 'listAll']));
+            return new CurrentActionInfo(ActionTypeEnum::COMMAND, implode('::', [self::class, 'listAll']), null);
         }
 
         if (null === $this->command) {

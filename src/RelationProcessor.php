@@ -4,6 +4,9 @@ namespace SWF;
 
 use SWF\Attribute\Priority;
 
+/**
+ * @internal
+ */
 final class RelationProcessor extends AbstractActionProcessor
 {
     protected string $relativeCacheFile = '/.system/relations.php';

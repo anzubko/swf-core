@@ -12,6 +12,9 @@ use function count;
 use function is_array;
 use function strlen;
 
+/**
+ * @internal
+ */
 final class ActionManager
 {
     private const RELATIVE_METRICS_FILE = '/.system/actions.metrics.php';

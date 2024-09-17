@@ -7,6 +7,9 @@ use SWF\Attribute\AsController;
 use function count;
 use function is_string;
 
+/**
+ * @internal
+ */
 final class ControllerProcessor extends AbstractActionProcessor
 {
     protected string $relativeCacheFile = '/.system/controllers.php';
