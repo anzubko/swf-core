@@ -7,6 +7,7 @@ use LogicException;
 use RuntimeException;
 use SWF\Enum\ActionTypeEnum;
 use SWF\Enum\CommandValueEnum;
+use SWF\Exception\SilentException;
 use function count;
 use function strlen;
 
@@ -38,6 +39,8 @@ final class CommandProvider
 
     /**
      * Gets current action.
+     *
+     * @throws SilentException
      */
     public function getCurrentAction(): ?CurrentActionInfo
     {
@@ -73,7 +76,14 @@ final class CommandProvider
 
             $paramsParser->checkForRequires();
         } catch (InvalidArgumentException $e) {
-            $this->error($e->getMessage());
+            $usage = $this->genUsage();
+            if (null === $usage) {
+                echo sprintf("Error: %s\n", $e->getMessage());
+            } else {
+                echo sprintf("Usage:\n  %s\n\nError: %s\n", $this->genUsage(), $e->getMessage());
+            }
+
+            throw new SilentException();
         }
 
         return new CurrentActionInfo(ActionTypeEnum::COMMAND, $this->command->action, $this->alias);
@@ -206,17 +216,5 @@ final class CommandProvider
         }
 
         return implode(' ', [$this->alias, ...$optionsUsage, ...$argumentsUsage]);
-    }
-
-    private function error(string $message): never
-    {
-        $usage = $this->genUsage();
-        if (null === $usage) {
-            echo sprintf("Error: %s\n", $message);
-        } else {
-            echo sprintf("Usage:\n  %s\n\nError: %s\n", $this->genUsage(), $message);
-        }
-
-        exit(1);
     }
 }

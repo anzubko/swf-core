@@ -9,6 +9,7 @@ use SWF\Event\BeforeCommandEvent;
 use SWF\Event\BeforeControllerEvent;
 use SWF\Event\ShutdownEvent;
 use SWF\Exception\DatabaserException;
+use SWF\Exception\SilentException;
 use SWF\Interface\DatabaserInterface;
 use Throwable;
 use function in_array;
@@ -37,7 +38,7 @@ abstract class AbstractRunner
             $this->setTimezone();
             $this->setStartupParameters();
         } catch (Throwable $e) {
-            $this->terminate($e);
+            $this->shutdown($e);
         }
     }
 
@@ -62,7 +63,7 @@ abstract class AbstractRunner
 
             CallbackHandler::normalize($action->method)();
         } catch (Throwable $e) {
-            $this->terminate($e);
+            $this->shutdown($e);
         }
     }
 
@@ -87,7 +88,7 @@ abstract class AbstractRunner
 
             CallbackHandler::normalize($action->method)();
         } catch (Throwable $e) {
-            $this->terminate($e);
+            $this->shutdown($e);
         }
     }
 
@@ -163,9 +164,11 @@ abstract class AbstractRunner
         }
     }
 
-    private function terminate(Throwable $e): never
+    private function shutdown(Throwable $e): void
     {
-        i(CommonLogger::class)->error($e);
+        if (!$e instanceof SilentException) {
+            i(CommonLogger::class)->error($e);
+        }
 
         i(ListenerProvider::class)->removeAllListeners(true);
 
@@ -173,6 +176,9 @@ abstract class AbstractRunner
             exit(1);
         }
 
-        i(ResponseManager::class)->error(500);
+        try {
+            i(ResponseManager::class)->error(500);
+        } catch (SilentException) {
+        }
     }
 }
