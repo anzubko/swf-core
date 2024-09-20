@@ -184,7 +184,7 @@ abstract class AbstractRunner
         }
 
         if (PHP_SAPI !== 'cli') {
-            i(ResponseManager::class)->errorPage($e->getCode() ?: 500);
+            i(ResponseManager::class)->errorPage($e->getCode() > 0 ? $e->getCode() : 500);
         }
 
         i(ListenerProvider::class)->removeAllListeners(true);
