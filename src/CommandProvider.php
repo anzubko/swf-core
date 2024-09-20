@@ -75,10 +75,10 @@ final class CommandProvider
         } catch (InvalidArgumentException $e) {
             $usage = $this->genUsage();
             if (null !== $usage) {
-                i(CmdManager::class)->writeLn(sprintf("Usage:\n  %s\n", $usage));
+                i(CommandLineManager::class)->writeLn(sprintf("Usage:\n  %s\n", $usage));
             }
 
-            i(CmdManager::class)->error($e->getMessage());
+            i(CommandLineManager::class)->error($e->getMessage());
         }
 
         return new CurrentActionInfo(ActionTypeEnum::COMMAND, $this->command->action, $this->alias);
@@ -97,21 +97,21 @@ final class CommandProvider
 
         $commands = $this->cache->data['commands'];
         if (count($commands) === 0) {
-            i(CmdManager::class)->writeLn('No commands found')->exit();
+            i(CommandLineManager::class)->writeLn('No commands found')->exit();
         }
 
-        i(CmdManager::class)->writeLn('Available commands:');
+        i(CommandLineManager::class)->writeLn('Available commands:');
 
         ksort($commands);
         foreach ($commands as $name => $command) {
-            i(CmdManager::class)->write(sprintf("\n%s --> %s\n", $name, $command['action']));
+            i(CommandLineManager::class)->write(sprintf("\n%s --> %s\n", $name, $command['action']));
 
             if (isset($command['description'])) {
-                i(CmdManager::class)->writeLn(sprintf('  %s', $command['description']));
+                i(CommandLineManager::class)->writeLn(sprintf('  %s', $command['description']));
             }
         }
 
-        i(CmdManager::class)->writeLn();
+        i(CommandLineManager::class)->writeLn();
     }
 
     private function showHelp(): void
@@ -152,17 +152,17 @@ final class CommandProvider
         }
 
         if (null !== $this->command->description) {
-            i(CmdManager::class)->write(sprintf("Description:\n  %s\n\n", $this->command->description));
+            i(CommandLineManager::class)->write(sprintf("Description:\n  %s\n\n", $this->command->description));
         }
 
-        i(CmdManager::class)->write(sprintf("Usage:\n  %s\n", $this->genUsage(false)));
+        i(CommandLineManager::class)->write(sprintf("Usage:\n  %s\n", $this->genUsage(false)));
 
         if (count($arguments) > 0) {
-            i(CmdManager::class)->write(sprintf("\nArguments:\n  %s\n", implode("\n  ", $arguments)));
+            i(CommandLineManager::class)->write(sprintf("\nArguments:\n  %s\n", implode("\n  ", $arguments)));
         }
 
         if (count($options) > 0) {
-            i(CmdManager::class)->write(sprintf("\nOptions:\n  %s\n", implode("\n  ", $options)));
+            i(CommandLineManager::class)->write(sprintf("\nOptions:\n  %s\n", implode("\n  ", $options)));
         }
     }
 

@@ -123,20 +123,20 @@ final class ControllerProvider
         }
 
         if (count($controllers) === 0) {
-            i(CmdManager::class)->writeLn('No controllers found')->exit();
+            i(CommandLineManager::class)->writeLn('No controllers found')->exit();
         }
 
-        i(CmdManager::class)->writeLn('Available controllers:');
+        i(CommandLineManager::class)->writeLn('Available controllers:');
 
         ksort($controllers);
         foreach ($controllers as $path => $controller) {
-            i(CmdManager::class)->write(sprintf("\n%s %s --> %s\n", implode('|', $controller['methods']), $path, $controller['action'][0]));
+            i(CommandLineManager::class)->write(sprintf("\n%s %s --> %s\n", implode('|', $controller['methods']), $path, $controller['action'][0]));
 
             if (isset($controller['action'][1])) {
-                i(CmdManager::class)->writeLn(sprintf('  alias: %s', $controller['action'][1]));
+                i(CommandLineManager::class)->writeLn(sprintf('  alias: %s', $controller['action'][1]));
             }
         }
 
-        i(CmdManager::class)->writeLn();
+        i(CommandLineManager::class)->writeLn();
     }
 }

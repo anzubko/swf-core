@@ -144,21 +144,21 @@ final class ListenerProvider implements ListenerProviderInterface
         }
 
         if (count($listeners) === 0) {
-            i(CmdManager::class)->writeLn('No listeners found')->exit();
+            i(CommandLineManager::class)->writeLn('No listeners found')->exit();
         }
 
-        i(CmdManager::class)->writeLn('Registered listeners:');
+        i(CommandLineManager::class)->writeLn('Registered listeners:');
 
         ksort($listeners);
         foreach ($listeners as $type => $actions) {
-            i(CmdManager::class)->write(sprintf("\n%s -->\n", $type));
+            i(CommandLineManager::class)->write(sprintf("\n%s -->\n", $type));
 
             sort($actions);
             foreach ($actions as $action) {
-                i(CmdManager::class)->writeLn(sprintf('  %s', $action));
+                i(CommandLineManager::class)->writeLn(sprintf('  %s', $action));
             }
         }
 
-        i(CmdManager::class)->writeLn();
+        i(CommandLineManager::class)->writeLn();
     }
 }

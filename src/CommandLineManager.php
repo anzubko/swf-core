@@ -5,7 +5,7 @@ namespace SWF;
 use Exception;
 use SWF\Exception\ExitSimulationException;
 
-final class CmdManager
+final class CommandLineManager
 {
     /**
      * Wrapped echo.

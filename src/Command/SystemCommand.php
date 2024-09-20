@@ -3,7 +3,7 @@
 namespace SWF\Command;
 
 use SWF\Attribute\AsCommand;
-use SWF\CmdManager;
+use SWF\CommandLineManager;
 use SWF\CommandProvider;
 use SWF\ConfigStorage;
 use SWF\ControllerProvider;
@@ -21,7 +21,7 @@ class SystemCommand
     {
         DirHandler::clear(ConfigStorage::$system->cacheDir);
 
-        i(CmdManager::class)->writeLn('Done!');
+        i(CommandLineManager::class)->writeLn('Done!');
     }
 
     /**
