@@ -82,9 +82,9 @@ final class ResponseManager
      *
      * @throws Exception
      */
-    public function error(int $code): never
+    public function error(int $code, string $message = ''): never
     {
-        throw new Exception(code: $code);
+        throw new Exception($message, $code);
     }
 
     /**

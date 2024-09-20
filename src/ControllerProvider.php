@@ -5,6 +5,7 @@ namespace SWF;
 use LogicException;
 use RuntimeException;
 use SWF\Enum\ActionTypeEnum;
+use SWF\Exception\ExitSimulationException;
 use function count;
 use function is_string;
 
@@ -92,6 +93,8 @@ final class ControllerProvider
     }
 
     /**
+     * @throws ExitSimulationException
+     *
      * @internal
      */
     public function listAll(): void
@@ -120,21 +123,20 @@ final class ControllerProvider
         }
 
         if (count($controllers) === 0) {
-            echo "No controllers found.\n";
-            return;
+            i(CmdManager::class)->writeLn('No controllers found')->exit();
         }
 
-        echo "Available controllers:\n";
+        i(CmdManager::class)->writeLn('Available controllers:');
 
         ksort($controllers);
         foreach ($controllers as $path => $controller) {
-            echo sprintf("\n%s %s --> %s\n", implode('|', $controller['methods']), $path, $controller['action'][0]);
+            i(CmdManager::class)->write(sprintf("\n%s %s --> %s\n", implode('|', $controller['methods']), $path, $controller['action'][0]));
 
             if (isset($controller['action'][1])) {
-                echo sprintf("  alias: %s\n", $controller['action'][1]);
+                i(CmdManager::class)->writeLn(sprintf('  alias: %s', $controller['action'][1]));
             }
         }
 
-        echo "\n";
+        i(CmdManager::class)->writeLn();
     }
 }

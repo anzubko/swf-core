@@ -8,6 +8,7 @@ use Psr\EventDispatcher\ListenerProviderInterface;
 use ReflectionException;
 use ReflectionFunction;
 use RuntimeException;
+use SWF\Exception\ExitSimulationException;
 use function count;
 use function in_array;
 
@@ -127,6 +128,8 @@ final class ListenerProvider implements ListenerProviderInterface
     }
 
     /**
+     * @throws ExitSimulationException
+     *
      * @internal
      */
     public function listAll(): void
@@ -141,22 +144,21 @@ final class ListenerProvider implements ListenerProviderInterface
         }
 
         if (count($listeners) === 0) {
-            echo "No listeners found.\n";
-            return;
+            i(CmdManager::class)->writeLn('No listeners found')->exit();
         }
 
-        echo "Registered listeners:\n";
+        i(CmdManager::class)->writeLn('Registered listeners:');
 
         ksort($listeners);
         foreach ($listeners as $type => $actions) {
-            echo sprintf("\n%s -->\n", $type);
+            i(CmdManager::class)->write(sprintf("\n%s -->\n", $type));
 
             sort($actions);
             foreach ($actions as $action) {
-                echo sprintf("  %s\n", $action);
+                i(CmdManager::class)->writeLn(sprintf('  %s', $action));
             }
         }
 
-        echo "\n";
+        i(CmdManager::class)->writeLn();
     }
 }

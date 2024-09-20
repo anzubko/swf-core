@@ -2,11 +2,13 @@
 
 namespace SWF;
 
+use Exception;
 use InvalidArgumentException;
 use LogicException;
 use RuntimeException;
 use SWF\Enum\ActionTypeEnum;
 use SWF\Enum\CommandValueEnum;
+use SWF\Exception\ExitSimulationException;
 use function count;
 use function strlen;
 
@@ -38,6 +40,8 @@ final class CommandProvider
 
     /**
      * Gets current action.
+     *
+     * @throws Exception
      */
     public function getCurrentAction(): CurrentActionInfo
     {
@@ -71,16 +75,18 @@ final class CommandProvider
         } catch (InvalidArgumentException $e) {
             $usage = $this->genUsage();
             if (null !== $usage) {
-                echo sprintf("Usage:\n  %s\n\n", $usage);
+                i(CmdManager::class)->writeLn(sprintf("Usage:\n  %s\n", $usage));
             }
 
-            throw ExceptionHandler::removeFileAndLine($e);
+            i(CmdManager::class)->error($e->getMessage());
         }
 
         return new CurrentActionInfo(ActionTypeEnum::COMMAND, $this->command->action, $this->alias);
     }
 
     /**
+     * @throws ExitSimulationException
+     *
      * @internal
      */
     public function listAll(): void
@@ -91,22 +97,21 @@ final class CommandProvider
 
         $commands = $this->cache->data['commands'];
         if (count($commands) === 0) {
-            echo "No commands found.\n";
-            return;
+            i(CmdManager::class)->writeLn('No commands found')->exit();
         }
 
-        echo "Available commands:\n";
+        i(CmdManager::class)->writeLn('Available commands:');
 
         ksort($commands);
         foreach ($commands as $name => $command) {
-            echo sprintf("\n%s --> %s\n", $name, $command['action']);
+            i(CmdManager::class)->write(sprintf("\n%s --> %s\n", $name, $command['action']));
 
             if (isset($command['description'])) {
-                echo sprintf("  %s\n", $command['description']);
+                i(CmdManager::class)->writeLn(sprintf('  %s', $command['description']));
             }
         }
 
-        echo "\n";
+        i(CmdManager::class)->writeLn();
     }
 
     private function showHelp(): void
@@ -147,17 +152,17 @@ final class CommandProvider
         }
 
         if (null !== $this->command->description) {
-            echo sprintf("Description:\n  %s\n\n", $this->command->description);
+            i(CmdManager::class)->write(sprintf("Description:\n  %s\n\n", $this->command->description));
         }
 
-        echo sprintf("Usage:\n  %s\n", $this->genUsage(false));
+        i(CmdManager::class)->write(sprintf("Usage:\n  %s\n", $this->genUsage(false)));
 
         if (count($arguments) > 0) {
-            echo sprintf("\nArguments:\n  %s\n", implode("\n  ", $arguments));
+            i(CmdManager::class)->write(sprintf("\nArguments:\n  %s\n", implode("\n  ", $arguments)));
         }
 
         if (count($options) > 0) {
-            echo sprintf("\nOptions:\n  %s\n", implode("\n  ", $options));
+            i(CmdManager::class)->write(sprintf("\nOptions:\n  %s\n", implode("\n  ", $options)));
         }
     }
 

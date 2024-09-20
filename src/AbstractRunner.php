@@ -73,7 +73,7 @@ abstract class AbstractRunner
         try {
             $action = i(CommandProvider::class)->getCurrentAction();
             if (null === $action->method) {
-                throw ExceptionHandler::removeFileAndLine(new InvalidArgumentException(sprintf('Command %s not found', $action->alias)));
+                i(CmdManager::class)->error(sprintf('Command %s not found', $action->alias));
             }
 
             $_SERVER['ACTION_TYPE'] = $action->type->value;
@@ -190,7 +190,7 @@ abstract class AbstractRunner
         i(ListenerProvider::class)->removeAllListeners(true);
 
         if (PHP_SAPI === 'cli') {
-            exit(1);
+            exit($e->getCode() > 0 ? $e->getCode() : 1);
         }
     }
 }
