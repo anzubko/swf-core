@@ -30,4 +30,16 @@ final class ExceptionHandler
 
         return $exception;
     }
+
+    /**
+     * @template T
+     *
+     * @param T $exception
+     *
+     * @return T
+     */
+    public static function removeFileAndLine($exception)
+    {
+        return self::overrideFileAndLine($exception, '', 0);
+    }
 }

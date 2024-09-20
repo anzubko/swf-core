@@ -14,7 +14,7 @@ final class CommandHelper
     /**
      * @param mixed[] $command
      */
-    public function arrayToCommandDefinition(array $command): CommandDefinition
+    public function arrayToCommandDefinition(string $alias, array $command): CommandDefinition
     {
         if (array_key_exists('arguments', $command)) {
             foreach ($command['arguments'] as $key => $argument) {
@@ -51,6 +51,6 @@ final class CommandHelper
             }
         }
 
-        return new CommandDefinition(...$command);
+        return new CommandDefinition(...['alias' => $alias] + $command);
     }
 }

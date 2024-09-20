@@ -13,6 +13,7 @@ final readonly class CommandDefinition
      */
     public function __construct(
         public string $action,
+        public string $alias,
         public ?string $description = null,
         public array $arguments = [],
         public array $argumentsIndex = [],

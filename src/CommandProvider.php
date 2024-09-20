@@ -32,7 +32,7 @@ final class CommandProvider
         $this->alias = $_SERVER['argv'][1] ?? null;
 
         if (isset($this->cache->data['commands'][$this->alias])) {
-            $this->command = i(CommandHelper::class)->arrayToCommandDefinition($this->cache->data['commands'][$this->alias]);
+            $this->command = i(CommandHelper::class)->arrayToCommandDefinition($this->alias, $this->cache->data['commands'][$this->alias]);
         }
     }
 
@@ -74,7 +74,7 @@ final class CommandProvider
                 echo sprintf("Usage:\n  %s\n\n", $usage);
             }
 
-            throw $e;
+            throw ExceptionHandler::removeFileAndLine($e);
         }
 
         return new CurrentActionInfo(ActionTypeEnum::COMMAND, $this->command->action, $this->alias);

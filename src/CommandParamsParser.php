@@ -27,13 +27,13 @@ final readonly class CommandParamsParser
 
         $name = $pair[0];
         if ('' === $name) {
-            throw new InvalidArgumentException(sprintf('Malformed option %s', $chunk));
+            throw new InvalidArgumentException(sprintf('Malformed option %s of command %s', $chunk, $this->command->alias));
         }
         if ('help' === $name) {
             return true;
         }
         if (!array_key_exists($name, $this->command->optionNames)) {
-            throw new InvalidArgumentException(sprintf('Unknown option --%s', $name));
+            throw new InvalidArgumentException(sprintf('Unknown option --%s of command %s', $name, $this->command->alias));
         }
 
         $key = $this->command->optionNames[$name];
@@ -43,14 +43,14 @@ final readonly class CommandParamsParser
         $value = $pair[1] ?? null;
         if (null !== $value) {
             if (CommandValueEnum::NONE === $option->value) {
-                throw new InvalidArgumentException(sprintf("Option --%s can't have value", $name));
+                throw new InvalidArgumentException(sprintf("Option --%s of command %s can't have value", $name, $this->command->alias));
             }
 
             $this->store($key, $this->typify($option->type, $value), $option->isArray);
         } elseif (CommandValueEnum::NONE === $option->value) {
             $this->store($key, true, $option->isArray);
         } elseif (CommandValueEnum::REQUIRED === $option->value) {
-            throw new InvalidArgumentException(sprintf('Option --%s must have value', $name));
+            throw new InvalidArgumentException(sprintf('Option --%s of command %s must have value', $name, $this->command->alias));
         }
 
         return false;
@@ -69,7 +69,7 @@ final readonly class CommandParamsParser
                 return true;
             }
             if (!array_key_exists($shortcut, $this->command->optionShortcuts)) {
-                throw new InvalidArgumentException(sprintf('Unknown option -%s', $shortcut));
+                throw new InvalidArgumentException(sprintf('Unknown option -%s of command %s', $shortcut, $this->command->alias));
             }
 
             $key = $this->command->optionShortcuts[$shortcut];
@@ -89,7 +89,7 @@ final readonly class CommandParamsParser
                 $this->store($key, null, $option->isArray);
                 return false;
             } elseif (CommandValueEnum::REQUIRED === $option->value) {
-                throw new InvalidArgumentException(sprintf('Option -%s must have value', $shortcut));
+                throw new InvalidArgumentException(sprintf('Option -%s of command %s must have value', $shortcut, $this->command->alias));
             }
         }
 
@@ -102,12 +102,12 @@ final readonly class CommandParamsParser
     public function processArgument(string $chunk): bool
     {
         if (count($this->command->arguments) === 0) {
-            throw new InvalidArgumentException('No arguments expected');
+            throw new InvalidArgumentException(sprintf('No arguments expected at command %s', $this->command->alias));
         }
 
         static $index = 0;
         if (!array_key_exists($index, $this->command->argumentsIndex)) {
-            throw new InvalidArgumentException('Too many arguments');
+            throw new InvalidArgumentException(sprintf('Too many arguments for command %s', $this->command->alias));
         }
 
         $key = $this->command->argumentsIndex[$index];
@@ -127,13 +127,13 @@ final readonly class CommandParamsParser
     {
         foreach ($this->command->arguments as $key => $argument) {
             if ($argument->isRequired && !array_key_exists($key, $_REQUEST)) {
-                throw new InvalidArgumentException(sprintf('Argument %s is required', $key));
+                throw new InvalidArgumentException(sprintf('Argument %s of command %s is required', $key, $this->command->alias));
             }
         }
 
         foreach ($this->command->options as $key => $option) {
             if ($option->isRequired && !array_key_exists($key, $_REQUEST)) {
-                throw new InvalidArgumentException(sprintf('Option --%s is required', $option->name));
+                throw new InvalidArgumentException(sprintf('Option --%s of command %s is required', $option->name, $this->command->alias));
             }
         }
     }
@@ -143,13 +143,13 @@ final readonly class CommandParamsParser
         switch ($type) {
             case CommandTypeEnum::INT:
                 if (!filter_var($value, FILTER_VALIDATE_INT)) {
-                    throw new InvalidArgumentException(sprintf('Expected an integer value, got "%s"', $value));
+                    throw new InvalidArgumentException(sprintf('Expected an integer value, got "%s" for command %s', $value, $this->command->alias));
                 }
 
                 return (int) $value;
             case CommandTypeEnum::FLOAT:
                 if (!filter_var($value, FILTER_VALIDATE_FLOAT)) {
-                    throw new InvalidArgumentException(sprintf('Expected an float value, got "%s"', $value));
+                    throw new InvalidArgumentException(sprintf('Expected an float value, got "%s" for command %s', $value, $this->command->alias));
                 }
 
                 return (float) $value;

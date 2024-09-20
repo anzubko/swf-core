@@ -12,7 +12,9 @@ use Stringable;
 use SWF\Event\LogEvent;
 use Throwable;
 use function array_key_exists;
+use function count;
 use function is_string;
+use function strlen;
 
 final class CommonLogger implements LoggerInterface
 {
@@ -153,7 +155,7 @@ final class CommonLogger implements LoggerInterface
             }
         }
 
-        FileHandler::put($file, sprintf('[%s] %s', (new DateTime())->setTimezone($this->timezone)->format('d-M-Y H:i:s.v e'), $message), FILE_APPEND);
+        FileHandler::put($file, sprintf("[%s] %s\n", (new DateTime())->setTimezone($this->timezone)->format('d-M-Y H:i:s.v e'), $message), FILE_APPEND);
     }
 
     /**
@@ -162,8 +164,15 @@ final class CommonLogger implements LoggerInterface
      */
     private function getComplexMessage(string $level, string|Stringable $message, array $context, array $options): string
     {
-        $complexMessage = (string) $message;
-        if (!$message instanceof Throwable) {
+        if ($message instanceof Throwable) {
+            if (strlen($message->getFile()) > 0) {
+                $complexMessage = (string) $message;
+            } else {
+                $complexMessage = $message->getMessage();
+            }
+        } else {
+            $complexMessage = (string) $message;
+
             [$file, $line] = $this->getFileAndLine($options);
 
             if (isset($file, $line)) {
@@ -171,7 +180,7 @@ final class CommonLogger implements LoggerInterface
             }
         }
 
-        if (!empty($context)) {
+        if (count($context) > 0) {
             try {
                 $encodedContext = json_encode($context, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             } catch (JsonException $e) {
@@ -191,25 +200,32 @@ final class CommonLogger implements LoggerInterface
      */
     private function getFileAndLine(array $options): array
     {
-        if (!empty($options['file'])) {
-            return [
-                (string) $options['file'],
-                (int) ($options['line'] ?? 0),
-            ];
-        } elseif (array_key_exists('file', $options)) {
-            return [null, null];
+        if (array_key_exists('file', $options)) {
+            if (strlen((string) $options['file']) > 0) {
+                return [
+                    (string) $options['file'],
+                    (int) ($options['line'] ?? 0),
+                ];
+            } else {
+                return [null, null];
+            }
         }
 
         $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS);
+
         foreach ($trace as $i => $item) {
             if (isset($item['object']) && $item['object'] instanceof LoggerInterface) {
                 continue;
             }
 
-            return [
-                $trace[$i - 1]['file'] ?? '',
-                $trace[$i - 1]['line'] ?? 0,
-            ];
+            if (strlen($trace[$i - 1]['file'] ?? '') > 0) {
+                return [
+                    $trace[$i - 1]['file'],
+                    $trace[$i - 1]['line'] ?? 0,
+                ];
+            } else {
+                return [null, null];
+            }
         }
 
         return [null, null];

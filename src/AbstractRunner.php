@@ -72,7 +72,7 @@ abstract class AbstractRunner
         try {
             $action = i(CommandProvider::class)->getCurrentAction();
             if (null === $action->method) {
-                throw new InvalidArgumentException(sprintf('Command not found: %s', $action->alias));
+                throw ExceptionHandler::removeFileAndLine(new InvalidArgumentException(sprintf('Command %s not found', $action->alias)));
             }
 
             $_SERVER['ACTION_TYPE'] = $action->type->value;
@@ -97,18 +97,22 @@ abstract class AbstractRunner
      */
     private function setTimezone(): void
     {
-        ini_set('date.timezone', ConfigStorage::$system->timezone);
+        try {
+            ini_set('date.timezone', ConfigStorage::$system->timezone);
+        } catch (Exception) {
+            throw ExceptionHandler::removeFileAndLine(new Exception('Incorrect timezone in system configuration'));
+        }
     }
 
     /**
-     * @throws InvalidArgumentException
+     * @throws Exception
      */
     private function setStartupParameters(): void
     {
         try {
             $userUrl = new UrlNormalizer(ConfigStorage::$system->url);
         } catch (InvalidArgumentException) {
-            throw new InvalidArgumentException('Incorrect URL in configuration');
+            throw ExceptionHandler::removeFileAndLine(new Exception('Incorrect URL in system configuration'));
         }
 
         $_SERVER['USER_SCHEME'] = $userUrl->getScheme();
