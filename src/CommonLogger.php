@@ -11,6 +11,7 @@ use Psr\Log\LogLevel;
 use Stringable;
 use SWF\Event\LogEvent;
 use Throwable;
+use function array_key_exists;
 use function is_string;
 
 final class CommonLogger implements LoggerInterface
@@ -190,11 +191,13 @@ final class CommonLogger implements LoggerInterface
      */
     private function getFileAndLine(array $options): array
     {
-        if (isset($options['file'], $options['line'])) {
+        if (!empty($options['file'])) {
             return [
                 (string) $options['file'],
-                (int) $options['line'],
+                (int) ($options['line'] ?? 0),
             ];
+        } elseif (array_key_exists('file', $options)) {
+            return [null, null];
         }
 
         $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS);

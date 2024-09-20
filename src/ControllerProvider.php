@@ -24,10 +24,10 @@ final class ControllerProvider
     /**
      * Gets current action.
      */
-    public function getCurrentAction(): ?CurrentActionInfo
+    public function getCurrentAction(): CurrentActionInfo
     {
         if (null === $this->cache) {
-            return null;
+            return new CurrentActionInfo(ActionTypeEnum::CONTROLLER);
         }
 
         $path = explode('?', $_SERVER['REQUEST_URI'], 2)[0];
@@ -42,12 +42,12 @@ final class ControllerProvider
         }
 
         if (null === $actions) {
-            return null;
+            return new CurrentActionInfo(ActionTypeEnum::CONTROLLER);
         }
 
         $action = $actions[$_SERVER['REQUEST_METHOD']] ?? $actions['ANY'] ?? null;
         if (null === $action) {
-            return null;
+            return new CurrentActionInfo(ActionTypeEnum::CONTROLLER);
         }
 
         if (is_string($action)) {

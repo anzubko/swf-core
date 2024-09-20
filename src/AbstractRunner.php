@@ -9,10 +9,10 @@ use SWF\Event\BeforeCommandEvent;
 use SWF\Event\BeforeControllerEvent;
 use SWF\Event\ShutdownEvent;
 use SWF\Exception\DatabaserException;
-use SWF\Exception\SilentException;
 use SWF\Interface\DatabaserInterface;
 use Throwable;
 use function in_array;
+use function strlen;
 
 abstract class AbstractRunner
 {
@@ -46,8 +46,8 @@ abstract class AbstractRunner
     {
         try {
             $action = i(ControllerProvider::class)->getCurrentAction();
-            if (null === $action) {
-                i(ResponseManager::class)->error(404);
+            if (null === $action->method) {
+                throw new Exception(code: 404);
             }
 
             $_SERVER['ACTION_TYPE'] = $action->type->value;
@@ -71,8 +71,8 @@ abstract class AbstractRunner
     {
         try {
             $action = i(CommandProvider::class)->getCurrentAction();
-            if (null === $action) {
-                throw new InvalidArgumentException('Command not found');
+            if (null === $action->method) {
+                throw new InvalidArgumentException(sprintf('Command not found: %s', $action->alias));
             }
 
             $_SERVER['ACTION_TYPE'] = $action->type->value;
@@ -166,19 +166,20 @@ abstract class AbstractRunner
 
     private function shutdown(Throwable $e): void
     {
-        if (!$e instanceof SilentException) {
+        while (ob_get_length()) {
+            ob_end_clean();
+        }
+
+        if (strlen($e->getMessage()) > 0) {
             i(CommonLogger::class)->error($e);
         }
 
         i(ListenerProvider::class)->removeAllListeners(true);
 
-        if ('cli' === PHP_SAPI) {
+        if (PHP_SAPI === 'cli') {
             exit(1);
         }
 
-        try {
-            i(ResponseManager::class)->error(500);
-        } catch (SilentException) {
-        }
+        i(ResponseManager::class)->errorPage($e->getCode() ?: 500);
     }
 }

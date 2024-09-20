@@ -3,9 +3,8 @@
 namespace SWF;
 
 use ReflectionException;
-use SWF\Event\ResponseEvent;
 use SWF\Event\HttpErrorEvent;
-use SWF\Exception\SilentException;
+use SWF\Event\ResponseEvent;
 use Throwable;
 use function is_resource;
 use function is_string;
@@ -35,7 +34,7 @@ final class ResponseManager
 
         http_response_code($code);
 
-        foreach (self::headers()->getAllLines() as $line) {
+        foreach ($this->headers()->getAllLines() as $line) {
             header($line);
         }
 
@@ -59,18 +58,12 @@ final class ResponseManager
     }
 
     /**
-     * Shows error page and throws silent exception.
-     *
-     * @throws SilentException
+     * Shows error page.
      */
-    public function error(int $code): never
+    public function errorPage(int $code): void
     {
         if (headers_sent()) {
-            throw new SilentException();
-        }
-
-        while (ob_get_length()) {
-            ob_end_clean();
+            return;
         }
 
         http_response_code($code);
@@ -80,17 +73,5 @@ final class ResponseManager
         } catch (Throwable $e) {
             i(CommonLogger::class)->error($e);
         }
-
-        throw new SilentException();
-    }
-
-    /**
-     * Just throws silent exception.
-     *
-     * @throws SilentException
-     */
-    public function end(): never
-    {
-        throw new SilentException();
     }
 }
