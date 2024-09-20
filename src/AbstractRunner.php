@@ -9,6 +9,7 @@ use SWF\Event\BeforeCommandEvent;
 use SWF\Event\BeforeControllerEvent;
 use SWF\Event\ShutdownEvent;
 use SWF\Exception\DatabaserException;
+use SWF\Exception\ExitSimulationException;
 use SWF\Interface\DatabaserInterface;
 use Throwable;
 use function in_array;
@@ -47,7 +48,7 @@ abstract class AbstractRunner
         try {
             $action = i(ControllerProvider::class)->getCurrentAction();
             if (null === $action->method) {
-                throw new Exception(code: 404);
+                i(ResponseManager::class)->error(404);
             }
 
             $_SERVER['ACTION_TYPE'] = $action->type->value;
@@ -170,6 +171,10 @@ abstract class AbstractRunner
 
     private function shutdown(Throwable $e): void
     {
+        if ($e instanceof ExitSimulationException) {
+            return;
+        }
+
         while (ob_get_length()) {
             ob_end_clean();
         }

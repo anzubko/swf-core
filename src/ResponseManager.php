@@ -2,9 +2,11 @@
 
 namespace SWF;
 
+use Exception;
 use ReflectionException;
 use SWF\Event\HttpErrorEvent;
 use SWF\Event\ResponseEvent;
+use SWF\Exception\ExitSimulationException;
 use Throwable;
 use function is_resource;
 use function is_string;
@@ -73,5 +75,25 @@ final class ResponseManager
         } catch (Throwable $e) {
             i(CommonLogger::class)->error($e);
         }
+    }
+
+    /**
+     * Shows error page through regular exception.
+     *
+     * @throws Exception
+     */
+    public function error(int $code): never
+    {
+        throw new Exception(code: $code);
+    }
+
+    /**
+     * Exit call simulation through special exception.
+     *
+     * @throws ExitSimulationException
+     */
+    public function exit(): never
+    {
+        throw new ExitSimulationException();
     }
 }
