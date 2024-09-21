@@ -190,7 +190,7 @@ abstract class AbstractRunner
         i(ListenerProvider::class)->removeAllListeners(true);
 
         if (PHP_SAPI === 'cli') {
-            exit($e->getCode() > 0 ? $e->getCode() : 1);
+            exit(max(min($e->getCode(), 254), 1));
         }
     }
 }

@@ -32,7 +32,7 @@ final class CommandLineManager
      *
      * @throws Exception
      */
-    public function error(string $message, int $code = 1): never
+    public function error(string $message = '', int $code = 1): never
     {
         throw ExceptionHandler::removeFileAndLine(new Exception($message, $code));
     }
