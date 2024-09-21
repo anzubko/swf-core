@@ -28,7 +28,7 @@ final class CommandLineManager
     }
 
     /**
-     * Shows error message through regular exception.
+     * Shows error message through regular exception and calls real exit() with code from 1 to 254.
      *
      * @throws Exception
      */
@@ -38,7 +38,7 @@ final class CommandLineManager
     }
 
     /**
-     * Exit call simulation through special exception.
+     * Exit(0) call simulation through special exception.
      *
      * @throws ExitSimulationException
      */
