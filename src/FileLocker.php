@@ -22,7 +22,7 @@ final class FileLocker
     public function acquire(string $key, bool $wait = true): bool
     {
         if (isset($this->files[$key])) {
-            throw new LogicException(sprintf('You already have lock with key: %s', $key));
+            throw new LogicException(sprintf('You already have lock with key %s', $key));
         }
 
         $file = sprintf('%s/%s', ConfigStorage::$system->locksDir, $key);

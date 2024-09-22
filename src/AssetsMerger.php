@@ -273,7 +273,7 @@ final class AssetsMerger
         foreach ($files as $file) {
             $contents = FileHandler::get($file);
             if (null === $contents) {
-                throw new RuntimeException(sprintf('Unable to read file: %s', $file));
+                throw new RuntimeException(sprintf('Unable to read file %s', $file));
             }
 
             $merged[] = $contents;
