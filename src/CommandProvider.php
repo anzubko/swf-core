@@ -81,7 +81,7 @@ final class CommandProvider
             i(CommandLineManager::class)->error($e->getMessage());
         }
 
-        return new CurrentActionInfo(ActionTypeEnum::COMMAND, $this->command->action, $this->alias);
+        return new CurrentActionInfo(ActionTypeEnum::COMMAND, $this->command->method, $this->alias);
     }
 
     /**
@@ -104,7 +104,7 @@ final class CommandProvider
 
         ksort($commands);
         foreach ($commands as $name => $command) {
-            i(CommandLineManager::class)->write(sprintf("\n%s --> %s\n", $name, $command['action']));
+            i(CommandLineManager::class)->write(sprintf("\n%s --> %s\n", $name, $command['method']));
 
             if (isset($command['description'])) {
                 i(CommandLineManager::class)->writeLn(sprintf('  %s', $command['description']));
