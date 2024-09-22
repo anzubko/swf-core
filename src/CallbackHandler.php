@@ -29,9 +29,6 @@ final class CallbackHandler
         }
 
         $method = new ReflectionMethod(...$callback);
-        if ($method->isStatic()) {
-            return $method->getClosure();
-        }
 
         return $method->getClosure(i($method->class));
     }
