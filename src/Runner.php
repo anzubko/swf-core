@@ -24,9 +24,7 @@ final class Runner
     public function __construct(string $systemConfig)
     {
         if (isset(ConfigStorage::$system)) {
-            $this->shutdown(ExceptionHandler::removeFileAndLine(new Exception('Runner can be called only once')));
-
-            exit(1);
+            $this->shutdown(ExceptionHandler::removeFileAndLine(new Exception('Runner can be called only once')), true);
         }
 
         ConfigStorage::$system = i($systemConfig);
@@ -167,7 +165,7 @@ final class Runner
         }
     }
 
-    private function shutdown(Throwable $e): void
+    private function shutdown(Throwable $e, bool $hard = false): void
     {
         if ($e instanceof ExitSimulationException) {
             return;
@@ -190,7 +188,9 @@ final class Runner
         i(ListenerProvider::class)->removeAllListeners(true);
 
         if (PHP_SAPI === 'cli') {
-            exit(is_int($code) ? min(max($code, 1), 254) : $e->getCode());
+            exit(is_int($code) ? min(max($code, 1), 254) : 1);
+        } elseif ($hard) {
+            exit(1);
         }
     }
 }
