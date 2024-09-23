@@ -59,6 +59,7 @@ final class Runner
             i(EventDispatcher::class)->dispatch(new BeforeControllerEvent());
 
             CallbackHandler::normalize($action->method)();
+        } catch (ExitSimulationException) {
         } catch (Throwable $e) {
             $this->shutdown($e);
         }
@@ -84,6 +85,7 @@ final class Runner
             i(EventDispatcher::class)->dispatch(new BeforeCommandEvent());
 
             CallbackHandler::normalize($action->method)();
+        } catch (ExitSimulationException) {
         } catch (Throwable $e) {
             $this->shutdown($e);
         }
@@ -167,10 +169,6 @@ final class Runner
 
     private function shutdown(Throwable $e, bool $hard = false): void
     {
-        if ($e instanceof ExitSimulationException) {
-            return;
-        }
-
         while (ob_get_length()) {
             ob_end_clean();
         }
