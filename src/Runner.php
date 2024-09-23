@@ -19,15 +19,15 @@ use function strlen;
 final class Runner
 {
     /**
-     * @param class-string<AbstractSystemConfig> $systemConfig
+     * @param class-string<AbstractSystemConfig> $systemConfigName
      */
-    public function __construct(string $systemConfig)
+    public function __construct(string $systemConfigName)
     {
         if (isset(ConfigStorage::$system)) {
             $this->shutdown(ExceptionHandler::removeFileAndLine(new Exception('Runner can be called only once')), true);
         }
 
-        ConfigStorage::$system = i($systemConfig);
+        ConfigStorage::$system = i($systemConfigName);
 
         set_error_handler($this->errorHandler(...));
 
