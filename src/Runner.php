@@ -13,25 +13,23 @@ use SWF\Exception\ExitSimulationException;
 use SWF\Interface\DatabaserInterface;
 use Throwable;
 use function in_array;
+use function is_int;
 use function strlen;
 
-abstract class AbstractRunner
+final class Runner
 {
     /**
-     * @var class-string<AbstractSystemConfig>
+     * @param class-string<AbstractSystemConfig> $systemConfig
      */
-    protected string $systemConfig;
-
-    private static self $instance;
-
-    final public static function getInstance(): self
+    public function __construct(string $systemConfig)
     {
-        return self::$instance ??= new static();
-    }
+        if (isset(ConfigStorage::$system)) {
+            $this->shutdown(ExceptionHandler::removeFileAndLine(new Exception('Runner can be called only once')));
 
-    final private function __construct()
-    {
-        ConfigStorage::$system = i($this->systemConfig);
+            exit(1);
+        }
+
+        ConfigStorage::$system = i($systemConfig);
 
         set_error_handler($this->errorHandler(...));
 
@@ -43,7 +41,7 @@ abstract class AbstractRunner
         }
     }
 
-    final public function runController(): void
+    public function runController(): void
     {
         try {
             $action = i(ControllerProvider::class)->getCurrentAction();
@@ -68,7 +66,7 @@ abstract class AbstractRunner
         }
     }
 
-    final public function runCommand(): void
+    public function runCommand(): void
     {
         try {
             $action = i(CommandProvider::class)->getCurrentAction();
@@ -180,17 +178,19 @@ abstract class AbstractRunner
         }
 
         if (strlen($e->getMessage()) > 0) {
-            i(CommonLogger::class)->error($e);
+            i(CommonLogger::class)->critical($e);
         }
 
+        $code = $e->getCode();
+
         if (PHP_SAPI !== 'cli') {
-            i(ResponseManager::class)->errorPage(min(max($e->getCode(), 100), 599));
+            i(ResponseManager::class)->errorPage(is_int($code) && $code > 0 ? min(max($code, 100), 599) : 500);
         }
 
         i(ListenerProvider::class)->removeAllListeners(true);
 
         if (PHP_SAPI === 'cli') {
-            exit(min(max($e->getCode(), 1), 254));
+            exit(is_int($code) ? min(max($code, 1), 254) : $e->getCode());
         }
     }
 }
