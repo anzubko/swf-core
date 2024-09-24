@@ -18,14 +18,23 @@ use function strlen;
 
 final class Runner
 {
+    private static self $instance;
+
+    public static function getInstance(): self
+    {
+        return self::$instance;
+    }
+
     /**
      * @param class-string<AbstractSystemConfig> $systemConfigName
      */
     public function __construct(string $systemConfigName)
     {
-        if (isset(ConfigStorage::$system)) {
+        if (isset(self::$instance)) {
             $this->shutdown(ExceptionHandler::removeFileAndLine(new Exception('Runner can be called only once')), true);
         }
+
+        self::$instance = $this;
 
         ConfigStorage::$system = i($systemConfigName);
 
