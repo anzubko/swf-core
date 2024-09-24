@@ -22,6 +22,10 @@ final class Runner
 
     public static function getInstance(): self
     {
+        if (!isset(self::$instance)) {
+            self::shutdown(ExceptionHandler::removeFileAndLine(new Exception('Runner must be instantiated before')), true);
+        }
+
         return self::$instance;
     }
 
@@ -31,21 +35,21 @@ final class Runner
     public function __construct(string $systemConfigName)
     {
         if (isset(self::$instance)) {
-            $this->shutdown(ExceptionHandler::removeFileAndLine(new Exception('Runner can be called only once')), true);
+            self::shutdown(ExceptionHandler::removeFileAndLine(new Exception('Runner can be instantiated only once')), true);
         }
-
-        self::$instance = $this;
 
         ConfigStorage::$system = i($systemConfigName);
 
-        set_error_handler($this->errorHandler(...));
+        set_error_handler(self::errorHandler(...));
 
         try {
-            $this->setTimezone();
-            $this->setStartupParameters();
+            self::setTimezone();
+            self::setStartupParameters();
         } catch (Throwable $e) {
-            $this->shutdown($e);
+            self::shutdown($e);
         }
+
+        self::$instance = $this;
     }
 
     public function runController(): void
@@ -62,7 +66,7 @@ final class Runner
 
             $_SERVER['ACTION_ALIAS'] = $action->alias;
 
-            register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
+            register_shutdown_function(self::cleanupAndDispatchAtShutdown(...));
 
             i(EventDispatcher::class)->dispatch(new BeforeAllEvent());
             i(EventDispatcher::class)->dispatch(new BeforeControllerEvent());
@@ -70,7 +74,7 @@ final class Runner
             CallbackHandler::normalize($action->method)();
         } catch (ExitSimulationException) {
         } catch (Throwable $e) {
-            $this->shutdown($e);
+            self::shutdown($e);
         }
     }
 
@@ -88,7 +92,7 @@ final class Runner
 
             $_SERVER['ACTION_ALIAS'] = $action->alias;
 
-            register_shutdown_function($this->cleanupAndDispatchAtShutdown(...));
+            register_shutdown_function(self::cleanupAndDispatchAtShutdown(...));
 
             i(EventDispatcher::class)->dispatch(new BeforeAllEvent());
             i(EventDispatcher::class)->dispatch(new BeforeCommandEvent());
@@ -96,14 +100,14 @@ final class Runner
             CallbackHandler::normalize($action->method)();
         } catch (ExitSimulationException) {
         } catch (Throwable $e) {
-            $this->shutdown($e);
+            self::shutdown($e);
         }
     }
 
     /**
      * @throws Exception
      */
-    private function setTimezone(): void
+    private static function setTimezone(): void
     {
         try {
             ini_set('date.timezone', ConfigStorage::$system->timezone);
@@ -115,7 +119,7 @@ final class Runner
     /**
      * @throws Exception
      */
-    private function setStartupParameters(): void
+    private static function setStartupParameters(): void
     {
         try {
             $userUrl = new UrlNormalizer(ConfigStorage::$system->url);
@@ -143,7 +147,7 @@ final class Runner
     /**
      * @throws Exception
      */
-    private function errorHandler(int $code, string $message, string $file, int $line): bool
+    private static function errorHandler(int $code, string $message, string $file, int $line): bool
     {
         if (!(error_reporting() & $code)) {
             return true;
@@ -158,7 +162,7 @@ final class Runner
         throw ExceptionHandler::overrideFileAndLine(new Exception($message), $file, $line);
     }
 
-    private function cleanupAndDispatchAtShutdown(): void
+    private static function cleanupAndDispatchAtShutdown(): void
     {
         foreach (InstanceStorage::$instances as $instance) {
             if ($instance instanceof DatabaserInterface && $instance->isInTrans()) {
@@ -176,7 +180,7 @@ final class Runner
         }
     }
 
-    private function shutdown(Throwable $e, bool $hard = false): void
+    private static function shutdown(Throwable $e, bool $hard = false): void
     {
         while (ob_get_length()) {
             ob_end_clean();
