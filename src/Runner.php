@@ -71,16 +71,12 @@ final class Runner
 
             i(EventDispatcher::class)->dispatch(new BeforeControllerEvent());
 
-            CallbackHandler::normalize($action->method)();
-
-            throw new ExitSimulationException();
-        } catch (ExitSimulationException) {
             try {
-                i(EventDispatcher::class)->dispatch(new AfterControllerEvent());
+                CallbackHandler::normalize($action->method)();
             } catch (ExitSimulationException) {
-            } catch (Throwable $e) {
-                self::shutdown($e);
             }
+
+            i(EventDispatcher::class)->dispatch(new AfterControllerEvent());
         } catch (Throwable $e) {
             self::shutdown($e);
         }
@@ -102,16 +98,12 @@ final class Runner
 
             i(EventDispatcher::class)->dispatch(new BeforeCommandEvent());
 
-            CallbackHandler::normalize($action->method)();
-
-            throw new ExitSimulationException();
-        } catch (ExitSimulationException) {
             try {
-                i(EventDispatcher::class)->dispatch(new AfterCommandEvent());
+                CallbackHandler::normalize($action->method)();
             } catch (ExitSimulationException) {
-            } catch (Throwable $e) {
-                self::shutdown($e);
             }
+
+            i(EventDispatcher::class)->dispatch(new AfterCommandEvent());
         } catch (Throwable $e) {
             self::shutdown($e);
         }

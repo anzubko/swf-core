@@ -114,13 +114,13 @@ final class ListenerProvider implements ListenerProviderInterface
                 continue;
             }
 
-            $listener['callback'] = CallbackHandler::normalize($listener['callback']);
+            $listener['normalizedCallback'] ??= CallbackHandler::normalize($listener['callback']);
 
             if ($removeDisposables && ($listener['disposable'] ?? false)) {
                 unset($this->cache->data['listeners'][$i]);
             }
 
-            yield $listener['callback'];
+            yield $listener['normalizedCallback'];
         }
     }
 

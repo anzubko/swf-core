@@ -4,6 +4,7 @@ namespace SWF;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\EventDispatcher\StoppableEventInterface;
+use SWF\Exception\ExitSimulationException;
 use Throwable;
 
 final class EventDispatcher implements EventDispatcherInterface
@@ -26,7 +27,10 @@ final class EventDispatcher implements EventDispatcherInterface
                 return $event;
             }
 
-            $listener($event);
+            try {
+                $listener($event);
+            } catch (ExitSimulationException) {
+            }
         }
 
         return $event;
