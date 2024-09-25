@@ -2,8 +2,8 @@
 
 namespace SWF;
 
+use InvalidArgumentException;
 use LogicException;
-use RuntimeException;
 use SWF\Event\ShutdownEvent;
 use SWF\Event\TransactionCommitEvent;
 use SWF\Interface\DatabaserInterface;
@@ -17,8 +17,8 @@ final class DelayedNotifier
     private array $notifies = [];
 
     /**
+     * @throws InvalidArgumentException
      * @throws LogicException
-     * @throws RuntimeException
      */
     public function __construct()
     {
@@ -33,8 +33,8 @@ final class DelayedNotifier
     /**
      * Adds notify to queue only if current transaction successful commit, or it's called outside of transaction.
      *
+     * @throws InvalidArgumentException
      * @throws LogicException
-     * @throws RuntimeException
      */
     public function add(AbstractNotify $notify): void
     {

@@ -10,11 +10,11 @@ use RuntimeException;
  */
 abstract class AbstractActionProcessor
 {
-    protected string $relativeCacheFile;
+    abstract protected function getRelativeCacheFile(): string;
 
     public function getCacheFile(): string
     {
-        return ConfigStorage::$system->cacheDir . $this->relativeCacheFile;
+        return ConfigStorage::$system->cacheDir . $this->getRelativeCacheFile();
     }
 
     /**

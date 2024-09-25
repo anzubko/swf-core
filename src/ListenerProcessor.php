@@ -3,15 +3,24 @@
 namespace SWF;
 
 use LogicException;
+use ReflectionFunction;
+use ReflectionIntersectionType;
+use ReflectionMethod;
+use ReflectionNamedType;
+use ReflectionUnionType;
 use SWF\Attribute\AsListener;
-use function count;
 
 /**
  * @internal
  */
 final class ListenerProcessor extends AbstractActionProcessor
 {
-    protected string $relativeCacheFile = '/.system/listeners.php';
+    private const RELATIVE_CACHE_FILE = '/.system/listeners.php';
+
+    protected function getRelativeCacheFile(): string
+    {
+        return self::RELATIVE_CACHE_FILE;
+    }
 
     public function buildCache(ActionClasses $classes): ActionCache
     {
@@ -25,31 +34,20 @@ final class ListenerProcessor extends AbstractActionProcessor
                             throw new LogicException("Constructor can't be a listener");
                         }
 
-                        $params = $method->getParameters();
-                        $type = count($params) === 0 ? null : $params[0]->getType();
-                        if (null === $type) {
-                            throw new LogicException('Listener must have first parameter with declared type');
-                        }
-
                         $instance = $attribute->newInstance();
 
-                        $listener = [];
+                        foreach (self::getTypes($method) as $type) {
+                            $listener = ['callback' => sprintf('%s::%s', $class->name, $method->name), 'type' => $type, 'priority' => $instance->priority];
 
-                        $listener['callback'] = sprintf('%s::%s', $class->name, $method->name);
+                            if ($instance->disposable) {
+                                $listener['disposable'] = true;
+                            }
+                            if ($instance->persistent) {
+                                $listener['persistent'] = true;
+                            }
 
-                        $listener['type'] = (string) $type;
-
-                        if ($instance->disposable) {
-                            $listener['disposable'] = true;
+                            $cache->data['listeners'][] = $listener;
                         }
-
-                        if ($instance->persistent) {
-                            $listener['persistent'] = true;
-                        }
-
-                        $listener['priority'] = $instance->priority;
-
-                        $cache->data['listeners'][] = $listener;
                     }
                 } catch (LogicException $e) {
                     throw ExceptionHandler::overrideFileAndLine($e, (string) $method->getFileName(), (int) $method->getStartLine());
@@ -64,5 +62,34 @@ final class ListenerProcessor extends AbstractActionProcessor
         }
 
         return $cache;
+    }
+
+    /**
+     * @return string[]
+     *
+     * @throws LogicException
+     */
+    public static function getTypes(ReflectionFunction | ReflectionMethod $reflection): array
+    {
+        $type = ($reflection->getParameters()[0] ?? null)?->getType();
+
+        $names = [];
+        if ($type instanceof ReflectionNamedType) {
+            $names[] = $type->getName();
+        } elseif ($type instanceof ReflectionUnionType) {
+            foreach ($type->getTypes() as $subType) {
+                if ($subType instanceof ReflectionNamedType) {
+                    $names[] = $subType->getName();
+                } elseif ($subType instanceof ReflectionIntersectionType) {
+                    throw new LogicException('Intersection types have no sense for listeners');
+                }
+            }
+        } elseif ($type instanceof ReflectionIntersectionType) {
+            throw new LogicException('Intersection types have no sense for listeners');
+        } elseif (null === $type) {
+            throw new LogicException('Listener must have first parameter with declared type');
+        }
+
+        return $names;
     }
 }

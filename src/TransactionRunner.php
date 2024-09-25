@@ -2,7 +2,6 @@
 
 namespace SWF;
 
-use ReflectionException;
 use SWF\Event\TransactionCommitEvent;
 use SWF\Event\TransactionFailEvent;
 use SWF\Event\TransactionRollbackEvent;
@@ -19,17 +18,13 @@ final class TransactionRunner
      * @param string[] $retryAt
      *
      * @throws DatabaserException
-     * @throws ReflectionException
      * @throws Throwable
      */
     public function run(DatabaserInterface $db, callable $body, ?string $isolation, array $retryAt, int $retries = 3): void
     {
         while (--$retries >= 0) {
             try {
-                i(ListenerProvider::class)->removeListenersByType([
-                    TransactionCommitEvent::class,
-                    TransactionRollbackEvent::class,
-                ]);
+                i(ListenerProvider::class)->removeListenersByType([TransactionCommitEvent::class, TransactionRollbackEvent::class]);
 
                 $db->begin($isolation);
 

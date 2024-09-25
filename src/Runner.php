@@ -4,7 +4,8 @@ namespace SWF;
 
 use Exception;
 use InvalidArgumentException;
-use SWF\Event\BeforeAllEvent;
+use SWF\Event\AfterCommandEvent;
+use SWF\Event\AfterControllerEvent;
 use SWF\Event\BeforeCommandEvent;
 use SWF\Event\BeforeControllerEvent;
 use SWF\Event\ShutdownEvent;
@@ -49,6 +50,8 @@ final class Runner
             self::shutdown($e);
         }
 
+        register_shutdown_function(self::cleanupAndDispatchAtShutdown(...));
+
         self::$instance = $this;
     }
 
@@ -66,13 +69,18 @@ final class Runner
 
             $_SERVER['ACTION_ALIAS'] = $action->alias;
 
-            register_shutdown_function(self::cleanupAndDispatchAtShutdown(...));
-
-            i(EventDispatcher::class)->dispatch(new BeforeAllEvent());
             i(EventDispatcher::class)->dispatch(new BeforeControllerEvent());
 
             CallbackHandler::normalize($action->method)();
+
+            throw new ExitSimulationException();
         } catch (ExitSimulationException) {
+            try {
+                i(EventDispatcher::class)->dispatch(new AfterControllerEvent());
+            } catch (ExitSimulationException) {
+            } catch (Throwable $e) {
+                self::shutdown($e);
+            }
         } catch (Throwable $e) {
             self::shutdown($e);
         }
@@ -92,13 +100,18 @@ final class Runner
 
             $_SERVER['ACTION_ALIAS'] = $action->alias;
 
-            register_shutdown_function(self::cleanupAndDispatchAtShutdown(...));
-
-            i(EventDispatcher::class)->dispatch(new BeforeAllEvent());
             i(EventDispatcher::class)->dispatch(new BeforeCommandEvent());
 
             CallbackHandler::normalize($action->method)();
+
+            throw new ExitSimulationException();
         } catch (ExitSimulationException) {
+            try {
+                i(EventDispatcher::class)->dispatch(new AfterCommandEvent());
+            } catch (ExitSimulationException) {
+            } catch (Throwable $e) {
+                self::shutdown($e);
+            }
         } catch (Throwable $e) {
             self::shutdown($e);
         }

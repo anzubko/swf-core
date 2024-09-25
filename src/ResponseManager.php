@@ -3,7 +3,6 @@
 namespace SWF;
 
 use Exception;
-use ReflectionException;
 use SWF\Event\HttpErrorEvent;
 use SWF\Event\ResponseEvent;
 use SWF\Exception\ExitSimulationException;
@@ -28,7 +27,7 @@ final class ResponseManager
      *
      * @param string|resource $body
      *
-     * @throws ReflectionException
+     * @throws Throwable
      */
     public function send(mixed $body, int $code = 200): void
     {

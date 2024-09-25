@@ -13,11 +13,16 @@ use function in_array;
  */
 final class CommandProcessor extends AbstractActionProcessor
 {
+    private const RELATIVE_CACHE_FILE = '/.system/commands.php';
+
     private const RESTRICTED_KEYS = ['help'];
     private const RESTRICTED_OPTION_NAMES = ['help'];
     private const RESTRICTED_OPTION_SHORTCUTS = ['h'];
 
-    protected string $relativeCacheFile = '/.system/commands.php';
+    protected function getRelativeCacheFile(): string
+    {
+        return self::RELATIVE_CACHE_FILE;
+    }
 
     public function buildCache(ActionClasses $classes): ActionCache
     {

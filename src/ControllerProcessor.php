@@ -12,7 +12,12 @@ use function is_string;
  */
 final class ControllerProcessor extends AbstractActionProcessor
 {
-    protected string $relativeCacheFile = '/.system/controllers.php';
+    private const RELATIVE_CACHE_FILE = '/.system/controllers.php';
+
+    protected function getRelativeCacheFile(): string
+    {
+        return self::RELATIVE_CACHE_FILE;
+    }
 
     public function buildCache(ActionClasses $classes): ActionCache
     {

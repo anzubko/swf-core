@@ -5,8 +5,8 @@ namespace SWF\Event;
 use SWF\AbstractEvent;
 
 /**
- * Emits before command run.
+ * Emits after controller finish.
  */
-class BeforeCommandEvent extends AbstractEvent
+class AfterControllerEvent extends AbstractEvent
 {
 }

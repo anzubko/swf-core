@@ -32,6 +32,7 @@ final class ListenerProvider implements ListenerProviderInterface
      * @param bool $persistent Listener can only be removed with the force parameter.
      *
      * @throws InvalidArgumentException
+     * @throws LogicException
      */
     public function addListener(callable $callback, bool $disposable = false, bool $persistent = false): void
     {
@@ -39,22 +40,18 @@ final class ListenerProvider implements ListenerProviderInterface
             return;
         }
 
-        $params = (new ReflectionFunction($callback(...)))->getParameters();
-        $type = count($params) === 0 ? null : $params[0]->getType();
-        if (null === $type) {
-            throw new InvalidArgumentException('Listener must have first parameter with declared type');
-        }
+        foreach (ListenerProcessor::getTypes(new ReflectionFunction($callback(...))) as $typeName) {
+            $listener = ['callback' => $callback, 'type' => $typeName];
 
-        $listener = ['callback' => $callback, 'type' => (string) $type];
+            if ($disposable) {
+                $listener['disposable'] = true;
+            }
+            if ($persistent) {
+                $listener['persistent'] = true;
+            }
 
-        if ($disposable) {
-            $listener['disposable'] = true;
+            $this->cache->data['listeners'][] = $listener;
         }
-        if ($persistent) {
-            $listener['persistent'] = true;
-        }
-
-        $this->cache->data['listeners'][] = $listener;
     }
 
     /**

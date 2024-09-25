@@ -9,7 +9,12 @@ use SWF\Attribute\Priority;
  */
 final class RelationProcessor extends AbstractActionProcessor
 {
-    protected string $relativeCacheFile = '/.system/relations.php';
+    private const RELATIVE_CACHE_FILE = '/.system/relations.php';
+
+    protected function getRelativeCacheFile(): string
+    {
+        return self::RELATIVE_CACHE_FILE;
+    }
 
     public function buildCache(ActionClasses $classes): ActionCache
     {

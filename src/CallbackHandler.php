@@ -4,6 +4,8 @@ namespace SWF;
 
 use ReflectionException;
 use ReflectionMethod;
+use function is_array;
+use function is_object;
 use function is_string;
 
 final class CallbackHandler
@@ -17,15 +19,17 @@ final class CallbackHandler
      */
     public static function normalize(callable|array|string $callback): callable
     {
-        if (is_callable($callback)) {
-            return $callback;
-        }
-
-        if (is_string($callback)) {
-            $callback = explode('::', $callback);
-            if (is_callable($callback)) {
+        if (is_array($callback)) {
+            if (is_object($callback[0] ?? null) && is_callable($callback)) {
                 return $callback;
             }
+        } elseif (is_string($callback)) {
+            if (!str_contains($callback, '::') && is_callable($callback)) {
+                return $callback;
+            }
+            $callback = explode('::', $callback);
+        } elseif (is_callable($callback)) {
+            return $callback;
         }
 
         $method = new ReflectionMethod(...$callback);
