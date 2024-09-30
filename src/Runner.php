@@ -167,15 +167,11 @@ final class Runner
 
         $code = $e->getCode();
 
-        if (PHP_SAPI !== 'cli') {
-            i(ResponseManager::class)->errorPage(is_int($code) && $code > 0 ? min(max($code, 100), 599) : 500);
-        }
-
-        i(ListenerProvider::class)->removeAllListeners(true);
-
         if (PHP_SAPI === 'cli') {
             exit(is_int($code) ? min(max($code, 1), 254) : 1);
         }
+
+        i(ResponseManager::class)->errorPage(is_int($code) && $code > 0 ? min(max($code, 100), 599) : 500);
 
         if ($hard) {
             exit(1);
