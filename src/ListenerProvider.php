@@ -28,29 +28,27 @@ final class ListenerProvider implements ListenerProviderInterface
     /**
      * Adds listener.
      *
+     * @param float $priority Listener with higher priority will be called earlier.
      * @param bool $disposable Listener can be called only once.
      * @param bool $persistent Listener can only be removed with the force parameter.
      *
      * @throws InvalidArgumentException
      * @throws LogicException
      */
-    public function addListener(callable $callback, bool $disposable = false, bool $persistent = false): void
+    public function addListener(callable $callback, float $priority = 0.0, bool $disposable = false, bool $persistent = false): void
     {
         if (null === $this->cache) {
             return;
         }
 
         foreach (ListenerProcessor::getTypes(new ReflectionFunction($callback(...))) as $typeName) {
-            $listener = ['callback' => $callback, 'type' => $typeName];
-
-            if ($disposable) {
-                $listener['disposable'] = true;
-            }
-            if ($persistent) {
-                $listener['persistent'] = true;
-            }
-
-            $this->cache->data['listeners'][] = $listener;
+            $this->cache->data['listeners'][] = [
+                'callback' => $callback,
+                'type' => $typeName,
+                'priority' => $priority,
+                'disposable' => $disposable,
+                'persistent' => $persistent,
+            ];
         }
     }
 
@@ -106,9 +104,10 @@ final class ListenerProvider implements ListenerProviderInterface
     public function getListenersForEvent(object $event, bool $removeDisposables = false): iterable
     {
         if (null === $this->cache) {
-            return;
+            return [];
         }
 
+        $listeners = [];
         foreach ($this->cache->data['listeners'] as $i => &$listener) {
             if (!$event instanceof $listener['type']) {
                 continue;
@@ -116,12 +115,14 @@ final class ListenerProvider implements ListenerProviderInterface
 
             $listener['normalizedCallback'] ??= CallbackHandler::normalize($listener['callback']);
 
+            $listeners[] = $listener;
+
             if ($removeDisposables && ($listener['disposable'] ?? false)) {
                 unset($this->cache->data['listeners'][$i]);
             }
-
-            yield $listener['normalizedCallback'];
         }
+
+        return array_column($this->sort($listeners), 'normalizedCallback');
     }
 
     /**
@@ -135,27 +136,42 @@ final class ListenerProvider implements ListenerProviderInterface
             return;
         }
 
-        $listeners = [];
+        $listenersByType = [];
         foreach ($this->cache->data['listeners'] as $listener) {
-            $listeners[$listener['type']][] = $listener['callback'];
+            $listenersByType[$listener['type']][] = $listener;
         }
 
-        if (count($listeners) === 0) {
+        if (count($listenersByType) === 0) {
             i(CommandLineManager::class)->writeLn('No listeners found')->exit();
         }
 
         i(CommandLineManager::class)->writeLn('Registered listeners:');
 
-        ksort($listeners);
-        foreach ($listeners as $type => $actions) {
+        ksort($listenersByType);
+        foreach ($listenersByType as $type => $listeners) {
             i(CommandLineManager::class)->write(sprintf("\n%s -->\n", $type));
 
-            sort($actions);
-            foreach ($actions as $action) {
-                i(CommandLineManager::class)->writeLn(sprintf('  %s', $action));
+            foreach ($this->sort($listeners) as $listener) {
+                if (($listener['priority'] ?? 0.0) === 0.0) {
+                    i(CommandLineManager::class)->writeLn(sprintf('  %s', $listener['callback']));
+                } else {
+                    i(CommandLineManager::class)->writeLn(sprintf('  %s (priority %s)', $listener['callback'], $listener['priority']));
+                }
             }
         }
 
         i(CommandLineManager::class)->writeLn();
+    }
+
+    /**
+     * @param mixed[] $listeners
+     *
+     * @return mixed[]
+     */
+    private function sort(array $listeners): array
+    {
+        usort($listeners, fn ($a, $b) => ($b['priority'] ?? 0.0) <=> ($a['priority'] ?? 0.0));
+
+        return $listeners;
     }
 }

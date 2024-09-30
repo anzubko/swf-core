@@ -8,10 +8,7 @@ use SWF\Event\AfterCommandEvent;
 use SWF\Event\AfterControllerEvent;
 use SWF\Event\BeforeCommandEvent;
 use SWF\Event\BeforeControllerEvent;
-use SWF\Event\ShutdownEvent;
-use SWF\Exception\DatabaserException;
 use SWF\Exception\ExitSimulationException;
-use SWF\Interface\DatabaserInterface;
 use Throwable;
 use function in_array;
 use function is_int;
@@ -44,13 +41,10 @@ final class Runner
         set_error_handler(self::errorHandler(...));
 
         try {
-            self::setTimezone();
             self::setStartupParameters();
         } catch (Throwable $e) {
-            self::shutdown($e);
+            self::shutdown($e, true);
         }
-
-        register_shutdown_function(self::cleanupAndDispatchAtShutdown(...));
 
         self::$instance = $this;
     }
@@ -112,20 +106,14 @@ final class Runner
     /**
      * @throws Exception
      */
-    private static function setTimezone(): void
+    private static function setStartupParameters(): void
     {
         try {
             ini_set('date.timezone', ConfigStorage::$system->timezone);
         } catch (Exception) {
             throw ExceptionHandler::removeFileAndLine(new Exception('Incorrect timezone in system configuration'));
         }
-    }
 
-    /**
-     * @throws Exception
-     */
-    private static function setStartupParameters(): void
-    {
         try {
             $userUrl = new UrlNormalizer(ConfigStorage::$system->url);
         } catch (InvalidArgumentException) {
@@ -167,24 +155,6 @@ final class Runner
         throw ExceptionHandler::overrideFileAndLine(new Exception($message), $file, $line);
     }
 
-    private static function cleanupAndDispatchAtShutdown(): void
-    {
-        foreach (InstanceStorage::$instances as $instance) {
-            if ($instance instanceof DatabaserInterface && $instance->isInTrans()) {
-                try {
-                    $instance->rollback(true);
-                } catch (DatabaserException) {
-                }
-            }
-        }
-
-        try {
-            i(EventDispatcher::class)->dispatch(new ShutdownEvent());
-        } catch (Throwable $e) {
-            i(CommonLogger::class)->error($e);
-        }
-    }
-
     private static function shutdown(Throwable $e, bool $hard = false): void
     {
         while (ob_get_length()) {
@@ -205,7 +175,9 @@ final class Runner
 
         if (PHP_SAPI === 'cli') {
             exit(is_int($code) ? min(max($code, 1), 254) : 1);
-        } elseif ($hard) {
+        }
+
+        if ($hard) {
             exit(1);
         }
     }

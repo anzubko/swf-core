@@ -4,7 +4,8 @@ namespace SWF;
 
 use InvalidArgumentException;
 use LogicException;
-use SWF\Event\ShutdownEvent;
+use SWF\Event\AfterCommandEvent;
+use SWF\Event\AfterControllerEvent;
 use SWF\Event\TransactionCommitEvent;
 use SWF\Interface\DatabaserInterface;
 use Throwable;
@@ -23,9 +24,10 @@ final class DelayedNotifier
     public function __construct()
     {
         i(ListenerProvider::class)->addListener(
-            callback: function (ShutdownEvent $event): void {
-                register_shutdown_function($this->sendAll(...));
+            callback: function (AfterCommandEvent | AfterControllerEvent $event): void {
+                $this->sendAll();
             },
+            priority: PHP_FLOAT_MIN,
             persistent: true,
         );
     }
