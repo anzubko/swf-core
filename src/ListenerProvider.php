@@ -64,11 +64,9 @@ final class ListenerProvider implements ListenerProviderInterface
         }
 
         foreach ($this->cache->data['listeners'] as $i => $listener) {
-            if (!$force && ($listener['persistent'] ?? false) || !in_array($listener['type'], (array) $types, true)) {
-                continue;
+            if (($force || !($listener['persistent'] ?? false)) && in_array($listener['type'], (array) $types, true)) {
+                unset($this->cache->data['listeners'][$i]);
             }
-
-            unset($this->cache->data['listeners'][$i]);
         }
     }
 
@@ -85,11 +83,9 @@ final class ListenerProvider implements ListenerProviderInterface
             $this->cache->data['listeners'] = [];
         } else {
             foreach ($this->cache->data['listeners'] as $i => $listener) {
-                if ($listener['persistent'] ?? false) {
-                    continue;
+                if (!($listener['persistent'] ?? false)) {
+                    unset($this->cache->data['listeners'][$i]);
                 }
-
-                unset($this->cache->data['listeners'][$i]);
             }
         }
     }
