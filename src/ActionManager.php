@@ -23,7 +23,7 @@ final class ActionManager
 
     private const NAMESPACE_SEPARATOR = '\\';
 
-    private string $metricsFile;
+    private const PSR4_CLASS_FILE_PATTERN = '/^[A-Z][A-Za-z\d]*\.php$/';
 
     /**
      * @var AbstractActionProcessor[]
@@ -36,14 +36,12 @@ final class ActionManager
     private array $caches;
 
     /**
-     * @var array<array{class:string, file:string, modified:int}>
+     * @var array<string, int>
      */
     private array $classesInfo;
 
     public function __construct()
     {
-        $this->metricsFile = ConfigStorage::$system->cacheDir . self::RELATIVE_METRICS_FILE;
-
         $this->processors = [new CommandProcessor(), new ControllerProcessor(), new ListenerProcessor(), new RelationProcessor()];
     }
 
@@ -72,17 +70,16 @@ final class ActionManager
     private function readOrRebuildCaches(): array
     {
         $caches = $this->readSavedCaches();
-        if (null !== $caches) {
-            if ('prod' === ConfigStorage::$system->env) {
-                return $caches;
-            }
+        if (null !== $caches && 'prod' === ConfigStorage::$system->env) {
+            return $caches;
+        }
 
+        $metrics = null;
+        if (null !== $caches) {
             $metrics = $this->getMetrics();
             if (null !== $metrics && !$this->isOutdated($metrics)) {
                 return $caches;
             }
-        } else {
-            $metrics = null;
         }
 
         i(FileLocker::class)->acquire(self::LOCK_KEY);
@@ -124,12 +121,17 @@ final class ActionManager
      */
     private function getMetrics(?array $oldMetrics = null): ?array
     {
-        $metrics = @include $this->metricsFile;
+        $metrics = @include $this->getMetricsFile();
         if (!is_array($metrics) || $metrics === $oldMetrics) {
             return null;
         }
 
         return $metrics;
+    }
+
+    private function getMetricsFile(): string
+    {
+        return ConfigStorage::$system->cacheDir . self::RELATIVE_METRICS_FILE;
     }
 
     /**
@@ -144,8 +146,8 @@ final class ActionManager
             return true;
         }
 
-        foreach ($this->classesInfo as $classInfo) {
-            if ($classInfo['modified'] > $metrics['modified']) {
+        foreach ($this->classesInfo as $modified) {
+            if ($modified > $metrics['modified']) {
                 return true;
             }
         }
@@ -164,8 +166,8 @@ final class ActionManager
     private function rebuild(): array
     {
         $this->classesInfo ??= $this->getClassesInfo();
-        foreach ($this->classesInfo as $info) {
-            class_exists($info['class']);
+        foreach ($this->classesInfo as $className => $modified) {
+            class_exists($className);
         }
 
         $classes = new ActionClasses();
@@ -187,15 +189,17 @@ final class ActionManager
             $processor->saveCache($caches[$processor::class]);
         }
 
-        if (!FileHandler::putVar($this->metricsFile, ['modified' => time(), 'count' => count($this->classesInfo), 'hash' => TextHandler::random()])) {
-            throw new RuntimeException(sprintf('Unable to write file %s', $this->metricsFile));
+        $metrics = ['modified' => time(), 'count' => count($this->classesInfo), 'hash' => TextHandler::random()];
+
+        if (!FileHandler::putVar($this->getMetricsFile(), $metrics)) {
+            throw new RuntimeException(sprintf('Unable to write file %s', $this->getMetricsFile()));
         }
 
         return $caches;
     }
 
     /**
-     * @return array<array{class:string, file:string, modified:int}>
+     * @return array<string, int>
      *
      * @throws RuntimeException
      */
@@ -204,10 +208,11 @@ final class ActionManager
         $allowedNsRoots = [];
         foreach (ConfigStorage::$system->allowedNsPrefixes as $nsPrefix) {
             $chunks = explode(self::NAMESPACE_SEPARATOR, $nsPrefix, 2);
-            $allowedNsRoots[] = match (true) {
-                count($chunks) > 1 => $chunks[0] . self::NAMESPACE_SEPARATOR,
-                default => $nsPrefix,
-            };
+            if (count($chunks) > 1) {
+                $allowedNsRoots[] = $chunks[0] . self::NAMESPACE_SEPARATOR;
+            } else {
+                $allowedNsRoots[] = $nsPrefix;
+            }
         }
 
         $classesInfo = [];
@@ -217,19 +222,21 @@ final class ActionManager
             }
 
             foreach ($dirs as $dir) {
-                /** @var RecursiveDirectoryIterator $info */
+                /**
+                 * @var RecursiveDirectoryIterator $info
+                 */
                 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir)) as $info) {
-                    if (!$info->isFile() || false === $info->getMTime() || !preg_match('/^[A-Z][A-Za-z\d]*\.php$/', $info->getFilename())) {
+                    if (!$info->isFile() || false === $info->getMTime() || !preg_match(self::PSR4_CLASS_FILE_PATTERN, $info->getFilename())) {
                         continue;
                     }
 
                     $croppedFile = substr($info->getPathname(), strlen($dir) + 1, -4);
-                    $className = $namespace . strtr($croppedFile, DIRECTORY_SEPARATOR, self::NAMESPACE_SEPARATOR);
-                    if (!TextHandler::startsWith($className, ConfigStorage::$system->allowedNsPrefixes)) {
-                        continue;
-                    }
 
-                    $classesInfo[] = ['class' => $className, 'file' => $info->getPathname(), 'modified' => $info->getMTime()];
+                    $className = $namespace . strtr($croppedFile, DIRECTORY_SEPARATOR, self::NAMESPACE_SEPARATOR);
+
+                    if (TextHandler::startsWith($className, ConfigStorage::$system->allowedNsPrefixes)) {
+                        $classesInfo[$className] = $info->getMTime();
+                    }
                 }
             }
         }
