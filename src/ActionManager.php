@@ -205,14 +205,7 @@ final class ActionManager
             return $classes;
         }
 
-        $allowedNsRoots = [];
-        foreach (ConfigStorage::$system->allowedNsPrefixes as $nsPrefix) {
-            if (preg_match('/^[^\\\\]+\\\\/', $nsPrefix, $M)) {
-                $allowedNsRoots[] = $M[0];
-            } else {
-                $allowedNsRoots[] = $nsPrefix;
-            }
-        }
+        $allowedNsRoots = $this->getAllowedNsRoots();
 
         $classes = [];
         foreach ($this->getLoader()->getPrefixesPsr4() as $namespace => $dirs) {
@@ -239,6 +232,23 @@ final class ActionManager
         }
 
         return $classes;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getAllowedNsRoots(): array
+    {
+        $allowedNsRoots = [];
+        foreach (ConfigStorage::$system->allowedNsPrefixes as $nsPrefix) {
+            if (preg_match('/^[^\\\\]+\\\\/', $nsPrefix, $M)) {
+                $allowedNsRoots[] = $M[0];
+            } else {
+                $allowedNsRoots[] = $nsPrefix;
+            }
+        }
+
+        return $allowedNsRoots;
     }
 
     /**
