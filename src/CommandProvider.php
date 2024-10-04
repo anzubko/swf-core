@@ -8,7 +8,6 @@ use LogicException;
 use RuntimeException;
 use SWF\Enum\ActionTypeEnum;
 use SWF\Enum\CommandValueEnum;
-use SWF\Exception\ExitSimulationException;
 use function array_key_exists;
 use function count;
 use function strlen;
@@ -41,7 +40,7 @@ final class CommandProvider
     public function getCurrentAction(): CurrentActionInfo
     {
         if (null === $this->alias) {
-            return new CurrentActionInfo(ActionTypeEnum::COMMAND, implode('::', [self::class, 'listAll']));
+            return new CurrentActionInfo(ActionTypeEnum::COMMAND, implode('::', [CommandUtil::class, 'listAll']));
         }
 
         if (null === $this->command) {
@@ -77,32 +76,6 @@ final class CommandProvider
         }
 
         return new CurrentActionInfo(ActionTypeEnum::COMMAND, $this->command->method, $this->alias);
-    }
-
-    /**
-     * @throws ExitSimulationException
-     *
-     * @internal
-     */
-    public function listAll(): void
-    {
-        $commands = CommandStorage::$cache;
-        if (count($commands) === 0) {
-            i(CommandLineManager::class)->writeLn('No commands found')->exit();
-        }
-
-        i(CommandLineManager::class)->writeLn('Available commands:');
-
-        ksort($commands);
-        foreach ($commands as $name => $command) {
-            i(CommandLineManager::class)->write(sprintf("\n%s --> %s\n", $name, $command['method']));
-
-            if (isset($command['description'])) {
-                i(CommandLineManager::class)->writeLn(sprintf('  %s', $command['description']));
-            }
-        }
-
-        i(CommandLineManager::class)->writeLn();
     }
 
     private function showHelp(): void
