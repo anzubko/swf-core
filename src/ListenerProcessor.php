@@ -22,11 +22,10 @@ final class ListenerProcessor extends AbstractActionProcessor
         return self::RELATIVE_CACHE_FILE;
     }
 
-    public function buildCache(ActionClasses $classes): ActionCache
+    public function buildCache(array $classes): array
     {
-        $cache = new ActionCache(['listeners' => []]);
-
-        foreach ($classes->list as $class) {
+        $cache = [];
+        foreach ($classes as $class) {
             foreach ($class->getMethods() as $method) {
                 try {
                     foreach ($method->getAttributes(AsListener::class) as $attribute) {
@@ -36,7 +35,7 @@ final class ListenerProcessor extends AbstractActionProcessor
 
                         $instance = $attribute->newInstance();
 
-                        foreach (self::getTypes($method) as $type) {
+                        foreach ($this->getTypes($method) as $type) {
                             $listener = ['callback' => sprintf('%s::%s', $class->name, $method->name), 'type' => $type];
 
                             if (0.0 !== $instance->priority) {
@@ -49,7 +48,7 @@ final class ListenerProcessor extends AbstractActionProcessor
                                 $listener['persistent'] = true;
                             }
 
-                            $cache->data['listeners'][] = $listener;
+                            $cache[] = $listener;
                         }
                     }
                 } catch (LogicException $e) {
@@ -61,12 +60,17 @@ final class ListenerProcessor extends AbstractActionProcessor
         return $cache;
     }
 
+    public function putCacheToStorage(array $cache): void
+    {
+        ListenerStorage::$cache = $cache;
+    }
+
     /**
      * @return string[]
      *
      * @throws LogicException
      */
-    public static function getTypes(ReflectionFunction | ReflectionMethod $reflection): array
+    public function getTypes(ReflectionFunction|ReflectionMethod $reflection): array
     {
         $type = ($reflection->getParameters()[0] ?? null)?->getType();
 

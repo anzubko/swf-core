@@ -18,32 +18,22 @@ final class Runner
 {
     private static self $instance;
 
-    public static function getInstance(): self
-    {
-        if (!isset(self::$instance)) {
-            self::shutdown(ExceptionHandler::removeFileAndLine(new Exception('Runner must be instantiated before')), true);
-        }
-
-        return self::$instance;
-    }
-
-    /**
-     * @param class-string<AbstractSystemConfig> $systemConfigName
-     */
-    public function __construct(string $systemConfigName)
+    public function __construct(AbstractSystemConfig $systemConfig)
     {
         if (isset(self::$instance)) {
-            self::shutdown(ExceptionHandler::removeFileAndLine(new Exception('Runner can be instantiated only once')), true);
+            self::$instance->shutdown(ExceptionHandler::removeFileAndLine(new Exception('Runner can be instantiated only once')), true);
         }
 
-        ConfigStorage::$system = i($systemConfigName);
+        ConfigStorage::$system = $systemConfig;
 
-        set_error_handler(self::errorHandler(...));
+        set_error_handler($this->errorHandler(...));
 
         try {
-            self::setStartupParameters();
+            $this->prepareEnvironment();
+
+            i(ActionManager::class)->prepare();
         } catch (Throwable $e) {
-            self::shutdown($e, true);
+            $this->shutdown($e, true);
         }
 
         self::$instance = $this;
@@ -72,7 +62,7 @@ final class Runner
 
             i(EventDispatcher::class)->dispatch(new AfterControllerEvent());
         } catch (Throwable $e) {
-            self::shutdown($e);
+            $this->shutdown($e);
         }
     }
 
@@ -99,14 +89,14 @@ final class Runner
 
             i(EventDispatcher::class)->dispatch(new AfterCommandEvent());
         } catch (Throwable $e) {
-            self::shutdown($e);
+            $this->shutdown($e);
         }
     }
 
     /**
      * @throws Exception
      */
-    private static function setStartupParameters(): void
+    private static function prepareEnvironment(): void
     {
         try {
             ini_set('date.timezone', ConfigStorage::$system->timezone);
@@ -140,7 +130,7 @@ final class Runner
     /**
      * @throws Exception
      */
-    private static function errorHandler(int $code, string $message, string $file, int $line): bool
+    private function errorHandler(int $code, string $message, string $file, int $line): bool
     {
         if (!(error_reporting() & $code)) {
             return true;
@@ -155,7 +145,7 @@ final class Runner
         throw ExceptionHandler::overrideFileAndLine(new Exception($message), $file, $line);
     }
 
-    private static function shutdown(Throwable $e, bool $hard = false): void
+    private function shutdown(Throwable $e, bool $hard = false): void
     {
         while (ob_get_length()) {
             ob_end_clean();

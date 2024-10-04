@@ -16,18 +16,16 @@ final class RelationProcessor extends AbstractActionProcessor
         return self::RELATIVE_CACHE_FILE;
     }
 
-    public function buildCache(ActionClasses $classes): ActionCache
+    public function buildCache(array $classes): array
     {
-        $cache = new ActionCache(['relations' => []]);
-
-        $priorities = [];
-        foreach ($classes->list as $class) {
+        $cache = $priorities = [];
+        foreach ($classes as $class) {
             foreach ($class->getInterfaceNames() as $interfaceName) {
-                $cache->data['relations'][$interfaceName][] = $class->name;
+                $cache[$interfaceName][] = $class->name;
             }
 
             for ($parentClass = $class->getParentClass(); false !== $parentClass; $parentClass = $parentClass->getParentClass()) {
-                $cache->data['relations'][$parentClass->name][] = $class->name;
+                $cache[$parentClass->name][] = $class->name;
             }
 
             foreach ($class->getAttributes(Priority::class) as $attribute) {
@@ -35,12 +33,17 @@ final class RelationProcessor extends AbstractActionProcessor
             }
         }
 
-        foreach ($cache->data['relations'] as $className => $childrenNames) {
+        foreach ($cache as $className => $childrenNames) {
             usort($childrenNames, fn($a, $b) => ($priorities[$b] ?? 0) <=> ($priorities[$a] ?? 0));
 
-            $cache->data['relations'][$className] = $childrenNames;
+            $cache[$className] = $childrenNames;
         }
 
         return $cache;
+    }
+
+    public function putCacheToStorage(array $cache): void
+    {
+        RelationStorage::$cache = $cache;
     }
 }

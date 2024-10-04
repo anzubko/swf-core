@@ -16,7 +16,9 @@ final class CommandProcessor extends AbstractActionProcessor
     private const RELATIVE_CACHE_FILE = '/.system/commands.php';
 
     private const RESTRICTED_KEYS = ['help'];
+
     private const RESTRICTED_OPTION_NAMES = ['help'];
+
     private const RESTRICTED_OPTION_SHORTCUTS = ['h'];
 
     protected function getRelativeCacheFile(): string
@@ -24,11 +26,10 @@ final class CommandProcessor extends AbstractActionProcessor
         return self::RELATIVE_CACHE_FILE;
     }
 
-    public function buildCache(ActionClasses $classes): ActionCache
+    public function buildCache(array $classes): array
     {
-        $cache = new ActionCache(['commands' => []]);
-
-        foreach ($classes->list as $class) {
+        $cache = [];
+        foreach ($classes as $class) {
             foreach ($class->getMethods() as $method) {
                 try {
                     foreach ($method->getAttributes(AsCommand::class) as $attribute) {
@@ -56,7 +57,7 @@ final class CommandProcessor extends AbstractActionProcessor
                             }
                         }
 
-                        $cache->data['commands'][$instance->alias] = $command;
+                        $cache[$instance->alias] = $command;
                     }
                 } catch (LogicException $e) {
                     throw ExceptionHandler::overrideFileAndLine($e, (string) $method->getFileName(), (int) $method->getStartLine());
@@ -65,6 +66,11 @@ final class CommandProcessor extends AbstractActionProcessor
         }
 
         return $cache;
+    }
+
+    public function putCacheToStorage(array $cache): void
+    {
+        CommandStorage::$cache = $cache;
     }
 
     /**

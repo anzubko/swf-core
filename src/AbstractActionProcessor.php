@@ -3,6 +3,7 @@
 namespace SWF;
 
 use LogicException;
+use ReflectionClass;
 use RuntimeException;
 
 /**
@@ -18,16 +19,27 @@ abstract class AbstractActionProcessor
     }
 
     /**
+     * @param array<ReflectionClass<object>> $classes
+     *
+     * @return mixed[]
+     *
      * @throws LogicException
      */
-    abstract public function buildCache(ActionClasses $classes): ActionCache;
+    abstract public function buildCache(array $classes): array;
 
     /**
+     * @param mixed[] $cache
+     */
+    abstract public function putCacheToStorage(array $cache): void;
+
+    /**
+     * @param mixed[] $cache
+     *
      * @throws RuntimeException
      */
-    public function saveCache(ActionCache $cache): void
+    public function saveCache(array $cache): void
     {
-        if (!FileHandler::putVar($this->getCacheFile(), $cache->data)) {
+        if (!FileHandler::putVar($this->getCacheFile(), $cache)) {
             throw new RuntimeException(sprintf('Unable to write file %s', $this->getCacheFile()));
         }
     }

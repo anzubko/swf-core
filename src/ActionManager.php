@@ -7,6 +7,7 @@ use LogicException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
+use ReflectionException;
 use RuntimeException;
 use function count;
 use function is_array;
@@ -21,55 +22,45 @@ final class ActionManager
 
     private const LOCK_KEY = '.system/action.manager';
 
-    private const NAMESPACE_SEPARATOR = '\\';
-
-    private const PSR4_CLASS_FILE_PATTERN = '/^[A-Z][A-Za-z\d]*\.php$/';
-
-    /**
-     * @var AbstractActionProcessor[]
-     */
-    private array $processors;
+    private const PROCESSOR_CLASS_NAMES = [
+        CommandProcessor::class,
+        ControllerProcessor::class,
+        ListenerProcessor::class,
+        RelationProcessor::class,
+    ];
 
     /**
-     * @var array<class-string<AbstractActionProcessor>, ActionCache>
+     * @var array<class-string<AbstractActionProcessor>, AbstractActionProcessor>
      */
-    private array $caches;
-
-    /**
-     * @var array<string, int>
-     */
-    private array $classesInfo;
+    private array $processors = [];
 
     public function __construct()
     {
-        $this->processors = [new CommandProcessor(), new ControllerProcessor(), new ListenerProcessor(), new RelationProcessor()];
+        foreach (self::PROCESSOR_CLASS_NAMES as $processorClassName) {
+            $this->processors[$processorClassName] = i($processorClassName);
+        }
     }
 
     /**
-     * @param class-string<AbstractActionProcessor> $className
-     *
      * @throws LogicException
      * @throws RuntimeException
      */
-    public function getCache(string $className): ?ActionCache
+    public function prepare(): void
     {
-        if (!isset($this->caches)) {
-            $this->caches = [];
-            $this->caches = $this->readOrRebuildCaches();
+        foreach ($this->readOrRebuildCaches() as $processorClassName => $cache) {
+            $this->processors[$processorClassName]->putCacheToStorage($cache);
         }
-
-        return $this->caches[$className] ?? null;
     }
 
     /**
-     * @return array<class-string<AbstractActionProcessor>, ActionCache>
+     * @return array<class-string<AbstractActionProcessor>, mixed[]>
      *
      * @throws LogicException
      * @throws RuntimeException
      */
     private function readOrRebuildCaches(): array
     {
-        $caches = $this->readSavedCaches();
+        $caches = $this->readCaches();
         if (null !== $caches && 'prod' === ConfigStorage::$system->env) {
             return $caches;
         }
@@ -85,9 +76,13 @@ final class ActionManager
         i(FileLocker::class)->acquire(self::LOCK_KEY);
 
         try {
-            $caches = $this->readSavedCaches();
-            if (null === $caches || null === $this->getMetrics($metrics)) {
+            if (null === $this->getMetrics($metrics)) {
                 $caches = $this->rebuild();
+            } else {
+                $caches = $this->readCaches();
+                if (null === $caches) {
+                    $caches = $this->rebuild();
+                }
             }
         } finally {
             i(FileLocker::class)->release(self::LOCK_KEY);
@@ -97,9 +92,9 @@ final class ActionManager
     }
 
     /**
-     * @return array<class-string<AbstractActionProcessor>, ActionCache>|null
+     * @return array<class-string<AbstractActionProcessor>, mixed[]>|null
      */
-    private function readSavedCaches(): ?array
+    private function readCaches(): ?array
     {
         $caches = [];
         foreach ($this->processors as $processor) {
@@ -108,7 +103,7 @@ final class ActionManager
                 return null;
             }
 
-            $caches[$processor::class] = new ActionCache($cache);
+            $caches[$processor::class] = $cache;
         }
 
         return $caches;
@@ -141,12 +136,11 @@ final class ActionManager
      */
     private function isOutdated(array $metrics): bool
     {
-        $this->classesInfo ??= $this->getClassesInfo();
-        if (count($this->classesInfo) !== $metrics['count']) {
+        if (count($this->getClassesInfo()) !== $metrics['count']) {
             return true;
         }
 
-        foreach ($this->classesInfo as $modified) {
+        foreach ($this->getClassesInfo() as $modified) {
             if ($modified > $metrics['modified']) {
                 return true;
             }
@@ -158,27 +152,29 @@ final class ActionManager
     /**
      * Method can generate not catchable fatal errors.
      *
-     * @return array<class-string<AbstractActionProcessor>, ActionCache>
+     * @return array<class-string<AbstractActionProcessor>, mixed[]>
      *
      * @throws LogicException
      * @throws RuntimeException
      */
     private function rebuild(): array
     {
-        $this->classesInfo ??= $this->getClassesInfo();
-        foreach ($this->classesInfo as $className => $modified) {
+        foreach ($this->getClassesInfo() as $className => $modified) {
             class_exists($className);
         }
 
-        $classes = new ActionClasses();
+        $classes = [];
         foreach (get_declared_classes() as $className) {
             if (!TextHandler::startsWith($className, ConfigStorage::$system->allowedNsPrefixes)) {
                 continue;
             }
 
-            $class = new ReflectionClass($className);
-            if ($class->isInstantiable()) {
-                $classes->list[] = $class;
+            try {
+                $class = new ReflectionClass($className);
+                if ($class->isInstantiable()) {
+                    $classes[] = $class;
+                }
+            } catch (ReflectionException) {
             }
         }
 
@@ -189,7 +185,7 @@ final class ActionManager
             $processor->saveCache($caches[$processor::class]);
         }
 
-        $metrics = ['modified' => time(), 'count' => count($this->classesInfo), 'hash' => TextHandler::random()];
+        $metrics = ['modified' => time(), 'count' => count($this->getClassesInfo()), 'hash' => TextHandler::random()];
 
         if (!FileHandler::putVar($this->getMetricsFile(), $metrics)) {
             throw new RuntimeException(sprintf('Unable to write file %s', $this->getMetricsFile()));
@@ -205,11 +201,15 @@ final class ActionManager
      */
     private function getClassesInfo(): array
     {
+        static $classesInfo;
+        if (isset($classesInfo)) {
+            return $classesInfo;
+        }
+
         $allowedNsRoots = [];
         foreach (ConfigStorage::$system->allowedNsPrefixes as $nsPrefix) {
-            $chunks = explode(self::NAMESPACE_SEPARATOR, $nsPrefix, 2);
-            if (count($chunks) > 1) {
-                $allowedNsRoots[] = $chunks[0] . self::NAMESPACE_SEPARATOR;
+            if (preg_match('/^[^\\\\]+\\\\/', $nsPrefix, $M)) {
+                $allowedNsRoots[] = $M[0];
             } else {
                 $allowedNsRoots[] = $nsPrefix;
             }
@@ -226,13 +226,11 @@ final class ActionManager
                  * @var RecursiveDirectoryIterator $info
                  */
                 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir)) as $info) {
-                    if (!$info->isFile() || false === $info->getMTime() || !preg_match(self::PSR4_CLASS_FILE_PATTERN, $info->getFilename())) {
+                    if (!$info->isFile() || false === $info->getMTime() || !preg_match('/^[A-Z][A-Za-z\d]*\.php$/', $info->getFilename())) {
                         continue;
                     }
 
-                    $croppedFile = substr($info->getPathname(), strlen($dir) + 1, -4);
-
-                    $className = $namespace . strtr($croppedFile, DIRECTORY_SEPARATOR, self::NAMESPACE_SEPARATOR);
+                    $className = $namespace . strtr(substr($info->getPathname(), strlen($dir) + 1, -4), DIRECTORY_SEPARATOR, '\\');
 
                     if (TextHandler::startsWith($className, ConfigStorage::$system->allowedNsPrefixes)) {
                         $classesInfo[$className] = $info->getMTime();

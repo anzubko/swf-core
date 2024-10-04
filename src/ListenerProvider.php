@@ -7,24 +7,12 @@ use LogicException;
 use Psr\EventDispatcher\ListenerProviderInterface;
 use ReflectionException;
 use ReflectionFunction;
-use RuntimeException;
 use SWF\Exception\ExitSimulationException;
 use function count;
 use function in_array;
 
 final class ListenerProvider implements ListenerProviderInterface
 {
-    private ?ActionCache $cache;
-
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
-    public function __construct()
-    {
-        $this->cache = i(ActionManager::class)->getCache(ListenerProcessor::class);
-    }
-
     /**
      * Adds listener.
      *
@@ -37,18 +25,17 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function addListener(callable $callback, float $priority = 0.0, bool $disposable = false, bool $persistent = false): void
     {
-        if (null === $this->cache) {
-            return;
-        }
-
-        foreach (ListenerProcessor::getTypes(new ReflectionFunction($callback(...))) as $typeName) {
-            $this->cache->data['listeners'][] = [
-                'callback' => $callback,
-                'type' => $typeName,
-                'priority' => $priority,
-                'disposable' => $disposable,
-                'persistent' => $persistent,
-            ];
+        try {
+            foreach (i(ListenerProcessor::class)->getTypes(new ReflectionFunction($callback(...))) as $typeName) {
+                ListenerStorage::$cache[] = [
+                    'callback' => $callback,
+                    'type' => $typeName,
+                    'priority' => $priority,
+                    'disposable' => $disposable,
+                    'persistent' => $persistent,
+                ];
+            }
+        } catch (ReflectionException) {
         }
     }
 
@@ -59,14 +46,12 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function removeListenersByType(array|string $types, bool $force = false): void
     {
-        if (null === $this->cache) {
-            return;
-        }
-
-        foreach ($this->cache->data['listeners'] as $i => $listener) {
-            if (($force || !($listener['persistent'] ?? false)) && in_array($listener['type'], (array) $types, true)) {
-                unset($this->cache->data['listeners'][$i]);
+        foreach (ListenerStorage::$cache as $i => $listener) {
+            if (!$force && ($listener['persistent'] ?? false) || !in_array($listener['type'], (array) $types, true)) {
+                continue;
             }
+
+            unset(ListenerStorage::$cache[$i]);
         }
     }
 
@@ -75,17 +60,15 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function removeAllListeners(bool $force = false): void
     {
-        if (null === $this->cache) {
-            return;
-        }
-
         if ($force) {
-            $this->cache->data['listeners'] = [];
+            ListenerStorage::$cache = [];
         } else {
-            foreach ($this->cache->data['listeners'] as $i => $listener) {
-                if (!($listener['persistent'] ?? false)) {
-                    unset($this->cache->data['listeners'][$i]);
+            foreach (ListenerStorage::$cache as $i => $listener) {
+                if ($listener['persistent'] ?? false) {
+                    continue;
                 }
+
+                unset(ListenerStorage::$cache[$i]);
             }
         }
     }
@@ -99,12 +82,8 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function getListenersForEvent(object $event, bool $removeDisposables = false): iterable
     {
-        if (null === $this->cache) {
-            return [];
-        }
-
         $listeners = [];
-        foreach ($this->cache->data['listeners'] as $i => &$listener) {
+        foreach (ListenerStorage::$cache as $i => &$listener) {
             if (!$event instanceof $listener['type']) {
                 continue;
             }
@@ -114,7 +93,7 @@ final class ListenerProvider implements ListenerProviderInterface
             $listeners[] = $listener;
 
             if ($removeDisposables && ($listener['disposable'] ?? false)) {
-                unset($this->cache->data['listeners'][$i]);
+                unset(ListenerStorage::$cache[$i]);
             }
         }
 
@@ -128,12 +107,8 @@ final class ListenerProvider implements ListenerProviderInterface
      */
     public function listAll(): void
     {
-        if (null === $this->cache) {
-            return;
-        }
-
         $listenersByType = [];
-        foreach ($this->cache->data['listeners'] as $listener) {
+        foreach (ListenerStorage::$cache as $listener) {
             $listenersByType[$listener['type']][] = $listener;
         }
 

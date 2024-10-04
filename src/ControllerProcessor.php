@@ -19,11 +19,11 @@ final class ControllerProcessor extends AbstractActionProcessor
         return self::RELATIVE_CACHE_FILE;
     }
 
-    public function buildCache(ActionClasses $classes): ActionCache
+    public function buildCache(array $classes): array
     {
-        $cache = new ActionCache(['static' => [], 'dynamic' => [], 'urls' => [], 'actions' => []]);
+        $cache = ['static' => [], 'dynamic' => [], 'urls' => [], 'actions' => []];
 
-        foreach ($classes->list as $class) {
+        foreach ($classes as $class) {
             foreach ($class->getMethods() as $method) {
                 try {
                     foreach ($method->getAttributes(AsController::class) as $attribute) {
@@ -41,9 +41,9 @@ final class ControllerProcessor extends AbstractActionProcessor
                             foreach ($httpMethods as $httpMethod) {
                                 $fullMethodName = sprintf('%s::%s', $class->name, $method->name);
                                 if (null !== $instance->alias) {
-                                    $cache->data['static'][$url][strtoupper($httpMethod)] = [$fullMethodName, $instance->alias];
+                                    $cache['static'][$url][strtoupper($httpMethod)] = [$fullMethodName, $instance->alias];
                                 } else {
-                                    $cache->data['static'][$url][strtoupper($httpMethod)] = $fullMethodName;
+                                    $cache['static'][$url][strtoupper($httpMethod)] = $fullMethodName;
                                 }
                             }
                         }
@@ -55,19 +55,19 @@ final class ControllerProcessor extends AbstractActionProcessor
         }
 
         $regex = [];
-        foreach ($cache->data['static'] as $url => $actions) {
+        foreach ($cache['static'] as $url => $actions) {
             if (preg_match_all('/{([^}]+)}/', $url, $M)) {
-                unset($cache->data['static'][$url]);
+                unset($cache['static'][$url]);
 
-                $regex[] = sprintf('%s(*:%d)', preg_replace('/\\\\{[^}]+}/', '([^/]+)', preg_quote($url)), count($cache->data['dynamic']));
+                $regex[] = sprintf('%s(*:%d)', preg_replace('/\\\\{[^}]+}/', '([^/]+)', preg_quote($url)), count($cache['dynamic']));
 
-                $cache->data['dynamic'][] = [$actions, $M[1]];
+                $cache['dynamic'][] = [$actions, $M[1]];
 
-                $cache->data['urls'][] = preg_split('/({[^}]+})/', $url, flags: PREG_SPLIT_DELIM_CAPTURE);
+                $cache['urls'][] = preg_split('/({[^}]+})/', $url, flags: PREG_SPLIT_DELIM_CAPTURE);
 
                 $paramsCount = count($M[1]);
             } else {
-                $cache->data['urls'][] = $url;
+                $cache['urls'][] = $url;
 
                 $paramsCount = 0;
             }
@@ -79,14 +79,19 @@ final class ControllerProcessor extends AbstractActionProcessor
 
                 foreach ($action as $name) {
                     if (null !== $name) {
-                        $cache->data['actions'][sprintf('%s:%s', $name, $paramsCount)] = count($cache->data['urls']) - 1;
+                        $cache['actions'][sprintf('%s:%s', $name, $paramsCount)] = count($cache['urls']) - 1;
                     }
                 }
             }
         }
 
-        $cache->data['regex'] = sprintf('{^(?|%s)$}', implode('|', $regex));
+        $cache['regex'] = sprintf('{^(?|%s)$}', implode('|', $regex));
 
         return $cache;
+    }
+
+    public function putCacheToStorage(array $cache): void
+    {
+        ControllerStorage::$cache = $cache;
     }
 }

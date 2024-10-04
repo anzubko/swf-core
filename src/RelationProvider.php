@@ -2,22 +2,8 @@
 
 namespace SWF;
 
-use LogicException;
-use RuntimeException;
-
 final class RelationProvider
 {
-    private ?ActionCache $cache;
-
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
-    public function __construct()
-    {
-        $this->cache = i(ActionManager::class)->getCache(RelationProcessor::class);
-    }
-
     /**
      * Accesses child classes of some class/interface.
      *
@@ -29,6 +15,6 @@ final class RelationProvider
      */
     public function getChildren(string $className): array
     {
-        return $this->cache?->data['relations'][$className] ?? [];
+        return RelationStorage::$cache[$className] ?? [];
     }
 }

@@ -9,14 +9,13 @@ use RuntimeException;
 use SWF\Enum\ActionTypeEnum;
 use SWF\Enum\CommandValueEnum;
 use SWF\Exception\ExitSimulationException;
+use function array_key_exists;
 use function count;
 use function strlen;
 
 final class CommandProvider
 {
-    private ?ActionCache $cache;
-
-    private ?string $alias = null;
+    private ?string $alias;
 
     private ?CommandDefinition $command = null;
 
@@ -26,16 +25,12 @@ final class CommandProvider
      */
     public function __construct()
     {
-        $this->cache = i(ActionManager::class)->getCache(CommandProcessor::class);
-        if (null == $this->cache) {
+        $this->alias = $_SERVER['argv'][1] ?? null;
+        if (null === $this->alias || !array_key_exists($this->alias, CommandStorage::$cache)) {
             return;
         }
 
-        $this->alias = $_SERVER['argv'][1] ?? null;
-
-        if (isset($this->cache->data['commands'][$this->alias])) {
-            $this->command = i(CommandHelper::class)->arrayToCommandDefinition($this->alias, $this->cache->data['commands'][$this->alias]);
-        }
+        $this->command = i(CommandHelper::class)->arrayToCommandDefinition($this->alias, CommandStorage::$cache[$this->alias]);
     }
 
     /**
@@ -49,7 +44,7 @@ final class CommandProvider
             return new CurrentActionInfo(ActionTypeEnum::COMMAND, implode('::', [self::class, 'listAll']));
         }
 
-        if (null === $this->cache || null === $this->command) {
+        if (null === $this->command) {
             return new CurrentActionInfo(ActionTypeEnum::COMMAND, alias: $this->alias);
         }
 
@@ -91,11 +86,7 @@ final class CommandProvider
      */
     public function listAll(): void
     {
-        if (null === $this->cache) {
-            return;
-        }
-
-        $commands = $this->cache->data['commands'];
+        $commands = CommandStorage::$cache;
         if (count($commands) === 0) {
             i(CommandLineManager::class)->writeLn('No commands found')->exit();
         }
