@@ -10,12 +10,7 @@ use SWF\AbstractEvent;
 class HttpErrorEvent extends AbstractEvent
 {
     public function __construct(
-        private readonly int $code,
+        public readonly int $code,
     ) {
-    }
-
-    public function getCode(): int
-    {
-        return $this->code;
     }
 }
