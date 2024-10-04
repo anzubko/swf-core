@@ -22,7 +22,10 @@ final class ActionManager
 
     private const LOCK_KEY = '.system/action.manager';
 
-    private const PROCESSOR_CLASS_NAMES = [
+    /**
+     * @var array<class-string<AbstractActionProcessor>>
+     */
+    private array $processors = [
         CommandProcessor::class,
         ControllerProcessor::class,
         ListenerProcessor::class,
@@ -30,26 +33,22 @@ final class ActionManager
     ];
 
     /**
-     * @var array<class-string<AbstractActionProcessor>, AbstractActionProcessor>
-     */
-    private array $processors = [];
-
-    public function __construct()
-    {
-        foreach (self::PROCESSOR_CLASS_NAMES as $processorClassName) {
-            $this->processors[$processorClassName] = i($processorClassName);
-        }
-    }
-
-    /**
      * @throws LogicException
      * @throws RuntimeException
      */
     public function prepare(): void
     {
-        foreach ($this->readOrRebuildCaches() as $processorClassName => $cache) {
-            $this->processors[$processorClassName]->putCacheToStorage($cache);
+        foreach ($this->readOrRebuildCaches() as $class => $cache) {
+            $this->getProcessor($class)->storageCache($cache);
         }
+    }
+
+    /**
+     * @param class-string<AbstractActionProcessor> $class
+     */
+    private function getProcessor(string $class): AbstractActionProcessor
+    {
+        return i($class);
     }
 
     /**
@@ -97,13 +96,13 @@ final class ActionManager
     private function readCaches(): ?array
     {
         $caches = [];
-        foreach ($this->processors as $processor) {
-            $cache = @include $processor->getCacheFile();
+        foreach ($this->processors as $class) {
+            $cache = @include $this->getProcessor($class)->getCacheFile();
             if (!is_array($cache)) {
                 return null;
             }
 
-            $caches[$processor::class] = $cache;
+            $caches[$class] = $cache;
         }
 
         return $caches;
@@ -136,11 +135,11 @@ final class ActionManager
      */
     private function isOutdated(array $metrics): bool
     {
-        if (count($this->getClassesInfo()) !== $metrics['count']) {
+        if (count($this->getAllowedClasses()) !== $metrics['count']) {
             return true;
         }
 
-        foreach ($this->getClassesInfo() as $modified) {
+        foreach ($this->getAllowedClasses() as $modified) {
             if ($modified > $metrics['modified']) {
                 return true;
             }
@@ -159,33 +158,33 @@ final class ActionManager
      */
     private function rebuild(): array
     {
-        foreach ($this->getClassesInfo() as $className => $modified) {
-            class_exists($className);
+        foreach ($this->getAllowedClasses() as $class => $modified) {
+            class_exists($class);
         }
 
-        $classes = [];
-        foreach (get_declared_classes() as $className) {
-            if (!TextHandler::startsWith($className, ConfigStorage::$system->allowedNsPrefixes)) {
+        $rClasses = [];
+        foreach (get_declared_classes() as $class) {
+            if (!TextHandler::startsWith($class, ConfigStorage::$system->allowedNsPrefixes)) {
                 continue;
             }
 
             try {
-                $class = new ReflectionClass($className);
-                if ($class->isInstantiable()) {
-                    $classes[] = $class;
+                $rClass = new ReflectionClass($class);
+                if ($rClass->isInstantiable()) {
+                    $rClasses[] = $rClass;
                 }
             } catch (ReflectionException) {
             }
         }
 
         $caches = [];
-        foreach ($this->processors as $processor) {
-            $caches[$processor::class] = $processor->buildCache($classes);
+        foreach ($this->processors as $class) {
+            $caches[$class] = $this->getProcessor($class)->buildCache($rClasses);
 
-            $processor->saveCache($caches[$processor::class]);
+            $this->getProcessor($class)->saveCache($caches[$class]);
         }
 
-        $metrics = ['modified' => time(), 'count' => count($this->getClassesInfo()), 'hash' => TextHandler::random()];
+        $metrics = ['modified' => time(), 'count' => count($this->getAllowedClasses()), 'hash' => TextHandler::random()];
 
         if (!FileHandler::putVar($this->getMetricsFile(), $metrics)) {
             throw new RuntimeException(sprintf('Unable to write file %s', $this->getMetricsFile()));
@@ -199,11 +198,11 @@ final class ActionManager
      *
      * @throws RuntimeException
      */
-    private function getClassesInfo(): array
+    private function getAllowedClasses(): array
     {
-        static $classesInfo;
-        if (isset($classesInfo)) {
-            return $classesInfo;
+        static $classes;
+        if (isset($classes)) {
+            return $classes;
         }
 
         $allowedNsRoots = [];
@@ -215,7 +214,7 @@ final class ActionManager
             }
         }
 
-        $classesInfo = [];
+        $classes = [];
         foreach ($this->getLoader()->getPrefixesPsr4() as $namespace => $dirs) {
             if (!TextHandler::startsWith($namespace, $allowedNsRoots)) {
                 continue;
@@ -230,16 +229,16 @@ final class ActionManager
                         continue;
                     }
 
-                    $className = $namespace . strtr(substr($info->getPathname(), strlen($dir) + 1, -4), DIRECTORY_SEPARATOR, '\\');
+                    $class = $namespace . strtr(substr($info->getPathname(), strlen($dir) + 1, -4), DIRECTORY_SEPARATOR, '\\');
 
-                    if (TextHandler::startsWith($className, ConfigStorage::$system->allowedNsPrefixes)) {
-                        $classesInfo[$className] = $info->getMTime();
+                    if (TextHandler::startsWith($class, ConfigStorage::$system->allowedNsPrefixes)) {
+                        $classes[$class] = $info->getMTime();
                     }
                 }
             }
         }
 
-        return $classesInfo;
+        return $classes;
     }
 
     /**
@@ -247,14 +246,14 @@ final class ActionManager
      */
     private function getLoader(): ClassLoader
     {
-        foreach (get_declared_classes() as $className) {
-            if (!str_starts_with($className, 'ComposerAutoloaderInit')) {
+        foreach (get_declared_classes() as $class) {
+            if (!str_starts_with($class, 'ComposerAutoloaderInit')) {
                 continue;
             }
 
-            $loaderGetter = [$className, 'getLoader'];
-            if (is_callable($loaderGetter)) {
-                return $loaderGetter();
+            $getter = [$class, 'getLoader'];
+            if (is_callable($getter)) {
+                return $getter();
             }
         }
 

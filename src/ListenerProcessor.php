@@ -22,21 +22,21 @@ final class ListenerProcessor extends AbstractActionProcessor
         return self::RELATIVE_CACHE_FILE;
     }
 
-    public function buildCache(array $classes): array
+    public function buildCache(array $rClasses): array
     {
         $cache = [];
-        foreach ($classes as $class) {
-            foreach ($class->getMethods() as $method) {
+        foreach ($rClasses as $rClass) {
+            foreach ($rClass->getMethods() as $rMethod) {
                 try {
-                    foreach ($method->getAttributes(AsListener::class) as $attribute) {
-                        if ($method->isConstructor()) {
+                    foreach ($rMethod->getAttributes(AsListener::class) as $rAttribute) {
+                        if ($rMethod->isConstructor()) {
                             throw new LogicException("Constructor can't be a listener");
                         }
 
-                        $instance = $attribute->newInstance();
+                        $instance = $rAttribute->newInstance();
 
-                        foreach ($this->getTypes($method) as $type) {
-                            $listener = ['callback' => sprintf('%s::%s', $class->name, $method->name), 'type' => $type];
+                        foreach ($this->getTypes($rMethod) as $type) {
+                            $listener = ['callback' => sprintf('%s::%s', $rClass->name, $rMethod->name), 'type' => $type];
 
                             if (0.0 !== $instance->priority) {
                                 $listener['priority'] = $instance->priority;
@@ -52,7 +52,7 @@ final class ListenerProcessor extends AbstractActionProcessor
                         }
                     }
                 } catch (LogicException $e) {
-                    throw ExceptionHandler::overrideFileAndLine($e, (string) $method->getFileName(), (int) $method->getStartLine());
+                    throw ExceptionHandler::overrideFileAndLine($e, (string) $rMethod->getFileName(), (int) $rMethod->getStartLine());
                 }
             }
         }
@@ -60,7 +60,7 @@ final class ListenerProcessor extends AbstractActionProcessor
         return $cache;
     }
 
-    public function putCacheToStorage(array $cache): void
+    public function storageCache(array $cache): void
     {
         ListenerStorage::$cache = $cache;
     }

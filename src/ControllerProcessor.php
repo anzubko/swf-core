@@ -19,19 +19,19 @@ final class ControllerProcessor extends AbstractActionProcessor
         return self::RELATIVE_CACHE_FILE;
     }
 
-    public function buildCache(array $classes): array
+    public function buildCache(array $rClasses): array
     {
         $cache = ['static' => [], 'dynamic' => [], 'urls' => [], 'actions' => []];
 
-        foreach ($classes as $class) {
-            foreach ($class->getMethods() as $method) {
+        foreach ($rClasses as $rClass) {
+            foreach ($rClass->getMethods() as $rMethod) {
                 try {
-                    foreach ($method->getAttributes(AsController::class) as $attribute) {
-                        if ($method->isConstructor()) {
+                    foreach ($rMethod->getAttributes(AsController::class) as $rAttribute) {
+                        if ($rMethod->isConstructor()) {
                             throw new LogicException("Constructor can't be a controller");
                         }
 
-                        $instance = $attribute->newInstance();
+                        $instance = $rAttribute->newInstance();
                         foreach ((array) $instance->url as $url) {
                             $httpMethods = (array) $instance->method;
                             if (count($httpMethods) === 0) {
@@ -39,17 +39,17 @@ final class ControllerProcessor extends AbstractActionProcessor
                             }
 
                             foreach ($httpMethods as $httpMethod) {
-                                $fullMethodName = sprintf('%s::%s', $class->name, $method->name);
+                                $method = sprintf('%s::%s', $rClass->name, $rMethod->name);
                                 if (null !== $instance->alias) {
-                                    $cache['static'][$url][strtoupper($httpMethod)] = [$fullMethodName, $instance->alias];
+                                    $cache['static'][$url][strtoupper($httpMethod)] = [$method, $instance->alias];
                                 } else {
-                                    $cache['static'][$url][strtoupper($httpMethod)] = $fullMethodName;
+                                    $cache['static'][$url][strtoupper($httpMethod)] = $method;
                                 }
                             }
                         }
                     }
                 } catch (LogicException $e) {
-                    throw ExceptionHandler::overrideFileAndLine($e, (string) $method->getFileName(), (int) $method->getStartLine());
+                    throw ExceptionHandler::overrideFileAndLine($e, (string) $rMethod->getFileName(), (int) $rMethod->getStartLine());
                 }
             }
         }
@@ -90,7 +90,7 @@ final class ControllerProcessor extends AbstractActionProcessor
         return $cache;
     }
 
-    public function putCacheToStorage(array $cache): void
+    public function storageCache(array $cache): void
     {
         ControllerStorage::$cache = $cache;
     }

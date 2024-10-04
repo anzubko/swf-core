@@ -26,20 +26,20 @@ final class CommandProcessor extends AbstractActionProcessor
         return self::RELATIVE_CACHE_FILE;
     }
 
-    public function buildCache(array $classes): array
+    public function buildCache(array $rClasses): array
     {
         $cache = [];
-        foreach ($classes as $class) {
-            foreach ($class->getMethods() as $method) {
+        foreach ($rClasses as $rClass) {
+            foreach ($rClass->getMethods() as $rMethod) {
                 try {
-                    foreach ($method->getAttributes(AsCommand::class) as $attribute) {
-                        if ($method->isConstructor()) {
+                    foreach ($rMethod->getAttributes(AsCommand::class) as $rAttribute) {
+                        if ($rMethod->isConstructor()) {
                             throw new LogicException("Constructor can't be a command");
                         }
 
-                        $instance = $attribute->newInstance();
+                        $instance = $rAttribute->newInstance();
 
-                        $command = ['method' => sprintf('%s::%s', $class->name, $method->name)];
+                        $command = ['method' => sprintf('%s::%s', $rClass->name, $rMethod->name)];
 
                         if (null !== $instance->description) {
                             $command['description'] = $instance->description;
@@ -60,7 +60,7 @@ final class CommandProcessor extends AbstractActionProcessor
                         $cache[$instance->alias] = $command;
                     }
                 } catch (LogicException $e) {
-                    throw ExceptionHandler::overrideFileAndLine($e, (string) $method->getFileName(), (int) $method->getStartLine());
+                    throw ExceptionHandler::overrideFileAndLine($e, (string) $rMethod->getFileName(), (int) $rMethod->getStartLine());
                 }
             }
         }
@@ -68,7 +68,7 @@ final class CommandProcessor extends AbstractActionProcessor
         return $cache;
     }
 
-    public function putCacheToStorage(array $cache): void
+    public function storageCache(array $cache): void
     {
         CommandStorage::$cache = $cache;
     }

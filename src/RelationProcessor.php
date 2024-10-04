@@ -16,33 +16,33 @@ final class RelationProcessor extends AbstractActionProcessor
         return self::RELATIVE_CACHE_FILE;
     }
 
-    public function buildCache(array $classes): array
+    public function buildCache(array $rClasses): array
     {
         $cache = $priorities = [];
-        foreach ($classes as $class) {
-            foreach ($class->getInterfaceNames() as $interfaceName) {
-                $cache[$interfaceName][] = $class->name;
+        foreach ($rClasses as $rClass) {
+            foreach ($rClass->getInterfaceNames() as $interface) {
+                $cache[$interface][] = $rClass->name;
             }
 
-            for ($parentClass = $class->getParentClass(); false !== $parentClass; $parentClass = $parentClass->getParentClass()) {
-                $cache[$parentClass->name][] = $class->name;
+            for ($rClassParent = $rClass->getParentClass(); false !== $rClassParent; $rClassParent = $rClassParent->getParentClass()) {
+                $cache[$rClassParent->name][] = $rClass->name;
             }
 
-            foreach ($class->getAttributes(Priority::class) as $attribute) {
-                $priorities[$class->name] = $attribute->newInstance()->priority;
+            foreach ($rClass->getAttributes(Priority::class) as $rAttribute) {
+                $priorities[$rClass->name] = $rAttribute->newInstance()->priority;
             }
         }
 
-        foreach ($cache as $className => $childrenNames) {
-            usort($childrenNames, fn($a, $b) => ($priorities[$b] ?? 0) <=> ($priorities[$a] ?? 0));
+        foreach ($cache as $class => $children) {
+            usort($children, fn($a, $b) => ($priorities[$b] ?? 0) <=> ($priorities[$a] ?? 0));
 
-            $cache[$className] = $childrenNames;
+            $cache[$class] = $children;
         }
 
         return $cache;
     }
 
-    public function putCacheToStorage(array $cache): void
+    public function storageCache(array $cache): void
     {
         RelationStorage::$cache = $cache;
     }

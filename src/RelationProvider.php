@@ -9,12 +9,12 @@ final class RelationProvider
      *
      * @template T
      *
-     * @param class-string<T> $className
+     * @param class-string<T> $class
      *
      * @return array<class-string<T>>
      */
-    public function getChildren(string $className): array
+    public function getChildren(string $class): array
     {
-        return RelationStorage::$cache[$className] ?? [];
+        return RelationStorage::$cache[$class] ?? [];
     }
 }

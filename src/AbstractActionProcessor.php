@@ -19,18 +19,18 @@ abstract class AbstractActionProcessor
     }
 
     /**
-     * @param array<ReflectionClass<object>> $classes
+     * @param array<ReflectionClass<object>> $rClasses
      *
      * @return mixed[]
      *
      * @throws LogicException
      */
-    abstract public function buildCache(array $classes): array;
+    abstract public function buildCache(array $rClasses): array;
 
     /**
      * @param mixed[] $cache
      */
-    abstract public function putCacheToStorage(array $cache): void;
+    abstract public function storageCache(array $cache): void;
 
     /**
      * @param mixed[] $cache
