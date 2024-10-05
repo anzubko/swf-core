@@ -31,7 +31,7 @@ final class ResponseManager
      */
     public function send(mixed $body, int $code = 200): void
     {
-        $body = i(EventDispatcher::class)->dispatch(new ResponseEvent($this->headers, $body))->body;
+        $body = i(EventDispatcher::class)->dispatch(new ResponseEvent($this->headers, $body))->getBody();
 
         http_response_code($code);
 
