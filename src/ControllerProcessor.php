@@ -32,16 +32,16 @@ final class ControllerProcessor extends AbstractActionProcessor
                         }
 
                         $instance = $rAttribute->newInstance();
-                        foreach ((array) $instance->url as $url) {
-                            $httpMethods = (array) $instance->method;
+                        foreach ((array) $instance->getUrl() as $url) {
+                            $httpMethods = (array) $instance->getMethod();
                             if (count($httpMethods) === 0) {
                                 $httpMethods[] = 'ANY';
                             }
 
                             foreach ($httpMethods as $httpMethod) {
                                 $method = sprintf('%s::%s', $rClass->name, $rMethod->name);
-                                if (null !== $instance->alias) {
-                                    $cache['static'][$url][strtoupper($httpMethod)] = [$method, $instance->alias];
+                                if (null !== $instance->getAlias()) {
+                                    $cache['static'][$url][strtoupper($httpMethod)] = [$method, $instance->getAlias()];
                                 } else {
                                     $cache['static'][$url][strtoupper($httpMethod)] = $method;
                                 }

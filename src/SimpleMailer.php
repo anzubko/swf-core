@@ -317,9 +317,9 @@ final class SimpleMailer
      *
      * @throws InvalidArgumentException
      */
-    public function setBody(string $body, bool $isHtml = true): self
+    public function setBody(string $body, bool $html = true): self
     {
-        if ($isHtml) {
+        if ($html) {
             try {
                 $this->mailer->msgHTML($body);
             } catch (PHPMailerException $e) {

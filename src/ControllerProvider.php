@@ -12,14 +12,14 @@ final class ControllerProvider
     /**
      * Gets current action.
      */
-    public function getCurrentAction(): CurrentActionInfo
+    public function getCurrentAction(): CurrentAction
     {
         $path = explode('?', $_SERVER['REQUEST_URI'], 2)[0];
 
         $actions = ControllerStorage::$cache['static'][$path] ?? null;
         if (null === $actions) {
             if (empty(ControllerStorage::$cache)) {
-                return new CurrentActionInfo(ActionTypeEnum::CONTROLLER);
+                return new CurrentAction(ActionTypeEnum::CONTROLLER);
             }
 
             if (preg_match(ControllerStorage::$cache['regex'], $path, $M)) {
@@ -32,19 +32,19 @@ final class ControllerProvider
         }
 
         if (null === $actions) {
-            return new CurrentActionInfo(ActionTypeEnum::CONTROLLER);
+            return new CurrentAction(ActionTypeEnum::CONTROLLER);
         }
 
         $action = $actions[$_SERVER['REQUEST_METHOD']] ?? $actions['ANY'] ?? null;
         if (null === $action) {
-            return new CurrentActionInfo(ActionTypeEnum::CONTROLLER);
+            return new CurrentAction(ActionTypeEnum::CONTROLLER);
         }
 
         if (is_string($action)) {
             $action = [$action, null];
         }
 
-        return new CurrentActionInfo(ActionTypeEnum::CONTROLLER, ...$action);
+        return new CurrentAction(ActionTypeEnum::CONTROLLER, ...$action);
     }
 
     /**

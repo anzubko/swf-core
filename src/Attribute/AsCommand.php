@@ -17,9 +17,27 @@ final readonly class AsCommand
      * @param array<string, CommandOption|CommandArgument> $params Parameters of command line, what will be parsed into $_REQUEST array.
      */
     public function __construct(
-        public string $alias,
-        public ?string $description = null,
-        public array $params = [],
+        private string $alias,
+        private ?string $description = null,
+        private array $params = [],
     ) {
+    }
+
+    public function getAlias(): string
+    {
+        return $this->alias;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    /**
+     * @return array<string, CommandOption|CommandArgument>
+     */
+    public function getParams(): array
+    {
+        return $this->params;
     }
 }

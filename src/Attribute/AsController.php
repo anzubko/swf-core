@@ -15,9 +15,30 @@ final readonly class AsController
      * @param string|null $alias Alias of controller.
      */
     public function __construct(
-        public string|array $url,
-        public string|array $method = [],
-        public ?string $alias = null,
+        private string|array $url,
+        private string|array $method = [],
+        private ?string $alias = null,
     ) {
+    }
+
+    /**
+     * @return string|string[]
+     */
+    public function getUrl(): array|string
+    {
+        return $this->url;
+    }
+
+    /**
+     * @return string|string[]
+     */
+    public function getMethod(): array|string
+    {
+        return $this->method;
+    }
+
+    public function getAlias(): ?string
+    {
+        return $this->alias;
     }
 }

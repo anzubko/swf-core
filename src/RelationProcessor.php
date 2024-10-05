@@ -29,7 +29,7 @@ final class RelationProcessor extends AbstractActionProcessor
             }
 
             foreach ($rClass->getAttributes(Priority::class) as $rAttribute) {
-                $priorities[$rClass->name] = $rAttribute->newInstance()->priority;
+                $priorities[$rClass->name] = $rAttribute->newInstance()->getPriority();
             }
         }
 

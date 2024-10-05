@@ -41,11 +41,11 @@ final class CommandProcessor extends AbstractActionProcessor
 
                         $command = ['method' => sprintf('%s::%s', $rClass->name, $rMethod->name)];
 
-                        if (null !== $instance->description) {
-                            $command['description'] = $instance->description;
+                        if (null !== $instance->getDescription()) {
+                            $command['description'] = $instance->getDescription();
                         }
 
-                        foreach ($instance->params as $key => $param) {
+                        foreach ($instance->getParams() as $key => $param) {
                             if (in_array($key, self::RESTRICTED_KEYS, true)) {
                                 throw new LogicException(sprintf('Key %s is restricted for use', $key));
                             } elseif ($param instanceof CommandArgument) {
@@ -57,7 +57,7 @@ final class CommandProcessor extends AbstractActionProcessor
                             }
                         }
 
-                        $cache[$instance->alias] = $command;
+                        $cache[$instance->getAlias()] = $command;
                     }
                 } catch (LogicException $e) {
                     throw ExceptionHandler::overrideFileAndLine($e, (string) $rMethod->getFileName(), (int) $rMethod->getStartLine());
@@ -81,17 +81,17 @@ final class CommandProcessor extends AbstractActionProcessor
     private function decomposeArgument(array $command, string $key, CommandArgument $param): array
     {
         $argument = [];
-        if (null !== $param->description) {
-            $argument['description'] = $param->description;
+        if (null !== $param->getDescription()) {
+            $argument['description'] = $param->getDescription();
         }
-        if ($param->isArray) {
+        if ($param->isArray()) {
             $argument['isArray'] = true;
         }
-        if ($param->isRequired) {
+        if ($param->isRequired()) {
             $argument['isRequired'] = true;
         }
-        if (CommandTypeEnum::STRING !== $param->type) {
-            $argument['type'] = $param->type->value;
+        if (CommandTypeEnum::STRING !== $param->getType()) {
+            $argument['type'] = $param->getType()->value;
         }
 
         $command['arguments'][$key] = $argument;
@@ -112,7 +112,7 @@ final class CommandProcessor extends AbstractActionProcessor
     {
         $option = [];
 
-        $name = $param->name ?? $key;
+        $name = $param->getName() ?? $key;
         if (in_array($name, self::RESTRICTED_OPTION_NAMES)) {
             throw new LogicException(sprintf('Option name --%s is restricted for use', $name));
         }
@@ -122,38 +122,38 @@ final class CommandProcessor extends AbstractActionProcessor
 
         $command['optionNames'][$name] = $key;
 
-        if (null !== $param->shortcut) {
-            if (mb_strlen($param->shortcut) !== 1) {
+        if (null !== $param->getShortcut()) {
+            if (mb_strlen($param->getShortcut()) !== 1) {
                 throw new LogicException(sprintf('Malformed shortcut in option with key %s', $key));
             }
-            if (in_array($param->shortcut, self::RESTRICTED_OPTION_SHORTCUTS)) {
-                throw new LogicException(sprintf('Option shortcut -%s is restricted for use', $param->shortcut));
+            if (in_array($param->getShortcut(), self::RESTRICTED_OPTION_SHORTCUTS)) {
+                throw new LogicException(sprintf('Option shortcut -%s is restricted for use', $param->getShortcut()));
             }
-            if (isset($command['optionShortcuts'][$param->shortcut])) {
-                throw new LogicException(sprintf('Option shortcut -%s already exists', $param->shortcut));
+            if (isset($command['optionShortcuts'][$param->getShortcut()])) {
+                throw new LogicException(sprintf('Option shortcut -%s already exists', $param->getShortcut()));
             }
 
-            $command['optionShortcuts'][$param->shortcut] = $key;
+            $command['optionShortcuts'][$param->getShortcut()] = $key;
         }
 
-        if (CommandValueEnum::NONE === $param->value && CommandTypeEnum::BOOL !== $param->type) {
+        if (CommandValueEnum::NONE === $param->getValue() && CommandTypeEnum::BOOL !== $param->getType()) {
             throw new LogicException(sprintf('Type NONE can be used only with BOOL value type in option %s', $key));
         }
 
-        if (null !== $param->description) {
-            $option['description'] = $param->description;
+        if (null !== $param->getDescription()) {
+            $option['description'] = $param->getDescription();
         }
-        if ($param->isRequired) {
+        if ($param->isRequired()) {
             $option['isRequired'] = true;
         }
-        if ($param->isArray) {
+        if ($param->isArray()) {
             $option['isArray'] = true;
         }
-        if (CommandTypeEnum::STRING !== $param->type) {
-            $option['type'] = $param->type->value;
+        if (CommandTypeEnum::STRING !== $param->getType()) {
+            $option['type'] = $param->getType()->value;
         }
-        if (CommandValueEnum::OPTIONAL !== $param->value) {
-            $option['value'] = $param->value->value;
+        if (CommandValueEnum::OPTIONAL !== $param->getValue()) {
+            $option['value'] = $param->getValue()->value;
         }
 
         $command['options'][$key] = $option;

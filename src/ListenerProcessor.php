@@ -38,13 +38,13 @@ final class ListenerProcessor extends AbstractActionProcessor
                         foreach ($this->getTypes($rMethod) as $type) {
                             $listener = ['callback' => sprintf('%s::%s', $rClass->name, $rMethod->name), 'type' => $type];
 
-                            if (0.0 !== $instance->priority) {
-                                $listener['priority'] = $instance->priority;
+                            if (0.0 !== $instance->getPriority()) {
+                                $listener['priority'] = $instance->getPriority();
                             }
-                            if ($instance->disposable) {
+                            if ($instance->isDisposable()) {
                                 $listener['disposable'] = true;
                             }
-                            if ($instance->persistent) {
+                            if ($instance->isPersistent()) {
                                 $listener['persistent'] = true;
                             }
 

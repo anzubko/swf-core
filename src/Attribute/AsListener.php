@@ -15,9 +15,24 @@ final readonly class AsListener
      * @param bool $persistent Listener can only be removed with the force parameter.
      */
     public function __construct(
-        public float $priority = 0.0,
-        public bool $disposable = false,
-        public bool $persistent = false,
+        private float $priority = 0.0,
+        private bool $disposable = false,
+        private bool $persistent = false,
     ) {
+    }
+
+    public function getPriority(): float
+    {
+        return $this->priority;
+    }
+
+    public function isDisposable(): bool
+    {
+        return $this->disposable;
+    }
+
+    public function isPersistent(): bool
+    {
+        return $this->persistent;
     }
 }

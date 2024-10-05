@@ -43,20 +43,20 @@ final class Runner
     {
         try {
             $action = i(ControllerProvider::class)->getCurrentAction();
-            if (null === $action->method) {
+            if (null === $action->getMethod()) {
                 i(ResponseManager::class)->error(404);
             }
 
-            $_SERVER['ACTION_TYPE'] = $action->type->value;
+            $_SERVER['ACTION_TYPE'] = $action->getType()->value;
 
-            $_SERVER['ACTION_METHOD'] = $action->method;
+            $_SERVER['ACTION_METHOD'] = $action->getMethod();
 
-            $_SERVER['ACTION_ALIAS'] = $action->alias;
+            $_SERVER['ACTION_ALIAS'] = $action->getAlias();
 
             i(EventDispatcher::class)->dispatch(new BeforeControllerEvent());
 
             try {
-                CallbackHandler::normalize($action->method)();
+                CallbackHandler::normalize($action->getMethod())();
             } catch (ExitSimulationException) {
             }
 
@@ -70,20 +70,20 @@ final class Runner
     {
         try {
             $action = i(CommandProvider::class)->getCurrentAction();
-            if (null === $action->method) {
-                i(CommandLineManager::class)->error(sprintf('Command %s not found', $action->alias));
+            if (null === $action->getMethod()) {
+                i(CommandLineManager::class)->error(sprintf('Command %s not found', $action->getAlias()));
             }
 
-            $_SERVER['ACTION_TYPE'] = $action->type->value;
+            $_SERVER['ACTION_TYPE'] = $action->getType()->value;
 
-            $_SERVER['ACTION_METHOD'] = $action->method;
+            $_SERVER['ACTION_METHOD'] = $action->getMethod();
 
-            $_SERVER['ACTION_ALIAS'] = $action->alias;
+            $_SERVER['ACTION_ALIAS'] = $action->getAlias();
 
             i(EventDispatcher::class)->dispatch(new BeforeCommandEvent());
 
             try {
-                CallbackHandler::normalize($action->method)();
+                CallbackHandler::normalize($action->getMethod())();
             } catch (ExitSimulationException) {
             }
 
