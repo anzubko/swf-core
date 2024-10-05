@@ -25,12 +25,12 @@
         "ext-zlib": "*",
         "ext-mbstring": "*",
         "psr/log": "^3.0.2",
-        "psr/event-dispatcher": "^1.0.0",
+        "psr/event-dispatcher": "^1.0",
         "mrclay/jsmin-php": "^2.4.3",
         "phpmailer/phpmailer": "^6.9.1",
         "anzubko/swf-cacher": "*",
         "anzubko/swf-databaser": "*",
-        "anzubko/swf-paginator": "^1.0.0",
+        "anzubko/swf-paginator": "^1.0",
         "anzubko/swf-templater": "*"
     }
 }
