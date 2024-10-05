@@ -11,13 +11,28 @@ use Throwable;
  */
 class LogEvent extends AbstractEvent
 {
+    public function __construct(
+        private readonly string $level,
+        private readonly string $complexMessage,
+        private readonly ?Throwable $exception,
+    ) {
+    }
+
     /**
      * @see LogLevel
      */
-    public function __construct(
-        public readonly string $level,
-        public readonly string $complexMessage,
-        public readonly ?Throwable $exception,
-    ) {
+    public function getLevel(): string
+    {
+        return $this->level;
+    }
+
+    public function getComplexMessage(): string
+    {
+        return $this->complexMessage;
+    }
+
+    public function getException(): ?Throwable
+    {
+        return $this->exception;
     }
 }

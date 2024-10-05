@@ -11,8 +11,18 @@ use SWF\Exception\DatabaserException;
 class TransactionFailEvent extends AbstractEvent
 {
     public function __construct(
-        public readonly DatabaserException $exception,
-        public readonly int $retries,
+        private readonly DatabaserException $exception,
+        private readonly int $retries,
     ) {
+    }
+
+    public function getException(): DatabaserException
+    {
+        return $this->exception;
+    }
+
+    public function getRetries(): int
+    {
+        return $this->retries;
     }
 }
