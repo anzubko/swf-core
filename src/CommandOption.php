@@ -13,6 +13,7 @@ final readonly class CommandOption
      * @param string|null $description Optional description.
      * @param bool $required Option will be required.
      * @param bool $array If you need multiple option.
+     * @param bool $hidden Hide this option at options section of help page.
      * @param CommandTypeEnum $type You will get exactly that type.
      * @param CommandValueEnum $value Value definition.
      */
@@ -22,6 +23,7 @@ final readonly class CommandOption
         private ?string $description = null,
         private bool $required = false,
         private bool $array = false,
+        private bool $hidden = false,
         private CommandTypeEnum $type = CommandTypeEnum::STRING,
         private CommandValueEnum $value = CommandValueEnum::OPTIONAL,
     ) {
@@ -50,6 +52,11 @@ final readonly class CommandOption
     public function isArray(): bool
     {
         return $this->array;
+    }
+
+    public function isHidden(): bool
+    {
+        return $this->hidden;
     }
 
     public function getType(): CommandTypeEnum

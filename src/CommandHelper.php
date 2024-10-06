@@ -11,6 +11,23 @@ use function array_key_exists;
  */
 final class CommandHelper
 {
+    private const EXTRA_OPTIONS = [
+        'quiet' => [
+            'name' => 'quiet',
+            'shortcut' => 'q',
+            'type' => CommandTypeEnum::BOOL->value,
+            'value' => CommandValueEnum::NONE->value,
+            'hidden' => true,
+        ],
+        'help' => [
+            'name' => 'help',
+            'shortcut' => 'h',
+            'type' => CommandTypeEnum::BOOL->value,
+            'value' => CommandValueEnum::NONE->value,
+            'hidden' => true,
+        ],
+    ];
+
     /**
      * @param mixed[] $command
      */
@@ -38,6 +55,12 @@ final class CommandHelper
             }
         }
 
+        foreach (self::EXTRA_OPTIONS as $key => $option) {
+            $command['optionNames'][$option['name']] = $key;
+            $command['optionShortcuts'][$option['shortcut']] = $key;
+            $command['options'][$key] = $option;
+        }
+
         if (array_key_exists('options', $command)) {
             foreach ($command['options'] as $key => $option) {
                 if (array_key_exists('type', $option)) {
@@ -51,6 +74,8 @@ final class CommandHelper
             }
         }
 
-        return new CommandDefinition(...['alias' => $alias] + $command);
+        $command['alias'] = $alias;
+
+        return new CommandDefinition(...$command);
     }
 }

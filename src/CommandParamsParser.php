@@ -45,7 +45,6 @@ final readonly class CommandParamsParser
             if (CommandValueEnum::NONE === $option->getValue()) {
                 throw new InvalidArgumentException(sprintf("Option --%s of command %s can't have value", $name, $this->command->getAlias()));
             }
-
             $this->store($key, $this->typify($option->getType(), $value), $option->isArray());
         } elseif (CommandValueEnum::NONE === $option->getValue()) {
             $this->store($key, true, $option->isArray());
@@ -145,13 +144,11 @@ final readonly class CommandParamsParser
                 if (!filter_var($value, FILTER_VALIDATE_INT)) {
                     throw new InvalidArgumentException(sprintf('Expected an integer value, got "%s" for command %s', $value, $this->command->getAlias()));
                 }
-
                 return (int) $value;
             case CommandTypeEnum::FLOAT:
                 if (!filter_var($value, FILTER_VALIDATE_FLOAT)) {
                     throw new InvalidArgumentException(sprintf('Expected an float value, got "%s" for command %s', $value, $this->command->getAlias()));
                 }
-
                 return (float) $value;
             case CommandTypeEnum::BOOL:
                 return filter_var($value, FILTER_VALIDATE_BOOL);

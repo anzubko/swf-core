@@ -7,12 +7,23 @@ use SWF\Exception\ExitSimulationException;
 
 final class CommandLineManager
 {
+    private bool $quiet = false;
+
+    public function setQuiet(bool $quiet): self
+    {
+        $this->quiet = $quiet;
+
+        return $this;
+    }
+
     /**
      * Wrapped echo.
      */
     public function write(string $string = ''): self
     {
-        echo $string;
+        if (!$this->quiet) {
+            echo $string;
+        }
 
         return $this;
     }
@@ -22,7 +33,9 @@ final class CommandLineManager
      */
     public function writeLn(string $string = ''): self
     {
-        echo $string, "\n";
+        if (!$this->quiet) {
+            echo $string, "\n";
+        }
 
         return $this;
     }

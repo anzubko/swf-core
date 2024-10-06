@@ -75,6 +75,8 @@ final class CommandProvider
             i(CommandLineManager::class)->error($e->getMessage());
         }
 
+        i(CommandLineManager::class)->setQuiet($_REQUEST['quiet'] ?? false);
+
         return new CurrentAction(ActionTypeEnum::COMMAND, $this->command->getMethod(), $this->alias);
     }
 
@@ -86,13 +88,15 @@ final class CommandProvider
 
         $maxLength = 0;
         $arguments = $options = [];
-
         foreach ($this->command->getArguments() as $key => $argument) {
             $arguments[$key] = (string) $key;
             $maxLength = max($maxLength, mb_strlen((string) $key));
         }
 
         foreach ($this->command->getOptions() as $key => $option) {
+            if ($option->isHidden()) {
+                continue;
+            }
             if (null === $option->getShortcut()) {
                 $chunk = sprintf('    --%s', $option->getName());
             } else {
@@ -119,7 +123,7 @@ final class CommandProvider
             i(CommandLineManager::class)->write(sprintf("Description:\n  %s\n\n", $this->command->getDescription()));
         }
 
-        i(CommandLineManager::class)->write(sprintf("Usage:\n  %s\n", $this->genUsage(false)));
+        i(CommandLineManager::class)->write(sprintf("Usage:\n  %s\n", $this->genUsage()));
 
         if (count($arguments) > 0) {
             i(CommandLineManager::class)->write(sprintf("\nArguments:\n  %s\n", implode("\n  ", $arguments)));
@@ -130,14 +134,13 @@ final class CommandProvider
         }
     }
 
-    private function genUsage(bool $withHelp = true): ?string
+    private function genUsage(): ?string
     {
         if (null === $this->command) {
             return null;
         }
 
         $argumentsUsage = $optionsUsage = [];
-
         foreach ($this->command->getArguments() as $key => $argument) {
             $chunk = sprintf('<%s:%s>', $key, $argument->getType()->name);
             if ($argument->isArray()) {
@@ -169,10 +172,6 @@ final class CommandProvider
             }
 
             $optionsUsage[] = $chunk;
-        }
-
-        if ($withHelp) {
-            $optionsUsage[] = '[-h|--help]';
         }
 
         return implode(' ', [$this->alias, ...$optionsUsage, ...$argumentsUsage]);

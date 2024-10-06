@@ -15,11 +15,9 @@ final class CommandProcessor extends AbstractActionProcessor
 {
     private const RELATIVE_CACHE_FILE = '/.system/commands.php';
 
-    private const RESTRICTED_KEYS = ['help'];
+    private const RESTRICTED_OPTION_KEYS_NAMES = ['help', 'quiet'];
 
-    private const RESTRICTED_OPTION_NAMES = ['help'];
-
-    private const RESTRICTED_OPTION_SHORTCUTS = ['h'];
+    private const RESTRICTED_OPTION_SHORTCUTS = ['h', 'q'];
 
     protected function getRelativeCacheFile(): string
     {
@@ -46,7 +44,7 @@ final class CommandProcessor extends AbstractActionProcessor
                         }
 
                         foreach ($instance->getParams() as $key => $param) {
-                            if (in_array($key, self::RESTRICTED_KEYS, true)) {
+                            if (in_array($key, self::RESTRICTED_OPTION_KEYS_NAMES, true)) {
                                 throw new LogicException(sprintf('Key %s is restricted for use', $key));
                             } elseif ($param instanceof CommandArgument) {
                                 $command = $this->decomposeArgument($command, (string) $key, $param);
@@ -85,10 +83,10 @@ final class CommandProcessor extends AbstractActionProcessor
             $argument['description'] = $param->getDescription();
         }
         if ($param->isArray()) {
-            $argument['isArray'] = true;
+            $argument['array'] = true;
         }
         if ($param->isRequired()) {
-            $argument['isRequired'] = true;
+            $argument['required'] = true;
         }
         if (CommandTypeEnum::STRING !== $param->getType()) {
             $argument['type'] = $param->getType()->value;
@@ -113,7 +111,7 @@ final class CommandProcessor extends AbstractActionProcessor
         $option = [];
 
         $name = $param->getName() ?? $key;
-        if (in_array($name, self::RESTRICTED_OPTION_NAMES)) {
+        if (in_array($name, self::RESTRICTED_OPTION_KEYS_NAMES)) {
             throw new LogicException(sprintf('Option name --%s is restricted for use', $name));
         }
         if (isset($command['optionNames'][$name])) {
@@ -144,10 +142,13 @@ final class CommandProcessor extends AbstractActionProcessor
             $option['description'] = $param->getDescription();
         }
         if ($param->isRequired()) {
-            $option['isRequired'] = true;
+            $option['required'] = true;
         }
         if ($param->isArray()) {
-            $option['isArray'] = true;
+            $option['array'] = true;
+        }
+        if ($param->isHidden()) {
+            $option['hidden'] = true;
         }
         if (CommandTypeEnum::STRING !== $param->getType()) {
             $option['type'] = $param->getType()->value;
