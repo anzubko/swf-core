@@ -21,7 +21,7 @@ final class ListenerUtil
         }
 
         if (count($listenersByType) === 0) {
-            i(CommandLineManager::class)->writeLn('No listeners found')->exit();
+            i(CommandLineManager::class)->writeLn('No listeners found')->end();
         }
 
         i(CommandLineManager::class)->writeLn('Registered listeners:');

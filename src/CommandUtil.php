@@ -17,7 +17,7 @@ final class CommandUtil
     {
         $commands = CommandStorage::$cache;
         if (count($commands) === 0) {
-            i(CommandLineManager::class)->writeLn('No commands found')->exit();
+            i(CommandLineManager::class)->writeLn('No commands found')->end();
         }
 
         i(CommandLineManager::class)->writeLn('Available commands:');

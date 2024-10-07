@@ -40,7 +40,7 @@ final class ControllerUtil
         }
 
         if (count($controllers) === 0) {
-            i(CommandLineManager::class)->writeLn('No controllers found')->exit();
+            i(CommandLineManager::class)->writeLn('No controllers found')->end();
         }
 
         i(CommandLineManager::class)->writeLn('Available controllers:');
