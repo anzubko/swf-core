@@ -109,7 +109,7 @@ final class CommonLogger implements LoggerInterface
     }
 
     /**
-     * Logs with an arbitrary level.
+     * @inheritDoc
      *
      * @param mixed[] $context
      * @param mixed[] $options
