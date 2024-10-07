@@ -12,7 +12,7 @@ class TransactionFailEvent extends AbstractEvent
 {
     public function __construct(
         private readonly DatabaserException $exception,
-        private readonly int $retries,
+        private readonly int $retriesLeft,
     ) {
     }
 
@@ -21,8 +21,8 @@ class TransactionFailEvent extends AbstractEvent
         return $this->exception;
     }
 
-    public function getRetries(): int
+    public function getRetriesLeft(): int
     {
-        return $this->retries;
+        return $this->retriesLeft;
     }
 }
