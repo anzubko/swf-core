@@ -6,8 +6,6 @@ use InvalidArgumentException;
 use LogicException;
 use SWF\Event\AfterCommandEvent;
 use SWF\Event\AfterControllerEvent;
-use SWF\Event\TransactionCommitEvent;
-use SWF\Interface\DatabaserInterface;
 use Throwable;
 
 final class DelayedNotifier
@@ -33,30 +31,18 @@ final class DelayedNotifier
     }
 
     /**
-     * Adds notify to queue only if current transaction successful commit, or it's called outside of transaction.
+     * Adds notify to queue.
      *
      * @throws InvalidArgumentException
      * @throws LogicException
      */
     public function add(AbstractNotify $notify): void
     {
-        foreach (InstanceStorage::$instances as $instance) {
-            if ($instance instanceof DatabaserInterface && $instance->isInTrans()) {
-                i(ListenerProvider::class)->addListener(
-                    callback: function (TransactionCommitEvent $event) use ($notify): void {
-                        $this->add($notify);
-                    },
-                    disposable: true,
-                );
-                return;
-            }
-        }
-
         $this->notifies[] = $notify;
     }
 
     /**
-     * Calls send() method at all notifies and remove them from queue.
+     * Sends all notifies.
      */
     public function sendAll(): void
     {

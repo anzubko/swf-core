@@ -2,9 +2,7 @@
 
 namespace SWF;
 
-use SWF\Event\TransactionCommitEvent;
 use SWF\Event\TransactionFailEvent;
-use SWF\Event\TransactionRollbackEvent;
 use SWF\Exception\DatabaserException;
 use SWF\Interface\DatabaserInterface;
 use Throwable;
@@ -24,18 +22,12 @@ final class TransactionRunner
     {
         while (--$retries >= 0) {
             try {
-                i(ListenerProvider::class)->removeListenersByType([TransactionCommitEvent::class, TransactionRollbackEvent::class]);
-
                 $db->begin($isolation);
 
                 if (false !== $body()) {
                     $db->commit();
-
-                    i(EventDispatcher::class)->dispatch(new TransactionCommitEvent());
                 } else {
                     $db->rollback();
-
-                    i(EventDispatcher::class)->dispatch(new TransactionRollbackEvent());
                 }
 
                 return;
