@@ -32,9 +32,6 @@ final class DelayedNotifier
 
     /**
      * Adds notify to queue.
-     *
-     * @throws InvalidArgumentException
-     * @throws LogicException
      */
     public function add(AbstractNotify $notify): void
     {
