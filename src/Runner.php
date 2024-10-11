@@ -2,6 +2,7 @@
 
 namespace SWF;
 
+use Composer\Autoload\ClassLoader;
 use Exception;
 use InvalidArgumentException;
 use SWF\Event\AfterCommandEvent;
@@ -18,11 +19,13 @@ final class Runner
 {
     private static self $instance;
 
-    public function __construct(AbstractSystemConfig $systemConfig)
+    public function __construct(ClassLoader $loader, AbstractSystemConfig $systemConfig)
     {
         if (isset(self::$instance)) {
             self::$instance->shutdown(ExceptionHandler::removeFileAndLine(new Exception('Runner can be instantiated only once')), true);
         }
+
+        LoaderStorage::$loader = $loader;
 
         ConfigStorage::$system = $systemConfig;
 

@@ -2,8 +2,6 @@
 
 namespace SWF;
 
-use Composer\Autoload\ClassLoader;
-use LogicException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
@@ -33,7 +31,11 @@ final class ActionManager
     ];
 
     /**
-     * @throws LogicException
+     * @var array<string, int>
+     */
+    private array $allowedClasses;
+
+    /**
      * @throws RuntimeException
      */
     public function prepare(): void
@@ -54,7 +56,6 @@ final class ActionManager
     /**
      * @return array<class-string<AbstractActionProcessor>, mixed[]>
      *
-     * @throws LogicException
      * @throws RuntimeException
      */
     private function readOrRebuildCaches(): array
@@ -130,8 +131,6 @@ final class ActionManager
 
     /**
      * @param mixed[] $metrics
-     *
-     * @throws RuntimeException
      */
     private function isOutdated(array $metrics): bool
     {
@@ -153,7 +152,6 @@ final class ActionManager
      *
      * @return array<class-string<AbstractActionProcessor>, mixed[]>
      *
-     * @throws LogicException
      * @throws RuntimeException
      */
     private function rebuild(): array
@@ -195,20 +193,28 @@ final class ActionManager
 
     /**
      * @return array<string, int>
-     *
-     * @throws RuntimeException
      */
     private function getAllowedClasses(): array
     {
-        static $classes;
-        if (isset($classes)) {
-            return $classes;
+        return $this->allowedClasses ??= $this->findAllowedClasses();
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function findAllowedClasses(): array
+    {
+        $allowedNsRoots = [];
+        foreach (ConfigStorage::$system->allowedNsPrefixes as $nsPrefix) {
+            if (preg_match('/^[^\\\\]+\\\\/', $nsPrefix, $M)) {
+                $allowedNsRoots[] = $M[0];
+            } else {
+                $allowedNsRoots[] = $nsPrefix;
+            }
         }
 
-        $allowedNsRoots = $this->getAllowedNsRoots();
-
-        $classes = [];
-        foreach ($this->getLoader()->getPrefixesPsr4() as $namespace => $dirs) {
+        $allowedClasses = [];
+        foreach (LoaderStorage::$loader->getPrefixesPsr4() as $namespace => $dirs) {
             if (!TextHandler::startsWith($namespace, $allowedNsRoots)) {
                 continue;
             }
@@ -225,48 +231,12 @@ final class ActionManager
                     $class = $namespace . strtr(substr($info->getPathname(), strlen($dir) + 1, -4), DIRECTORY_SEPARATOR, '\\');
 
                     if (TextHandler::startsWith($class, ConfigStorage::$system->allowedNsPrefixes)) {
-                        $classes[$class] = $info->getMTime();
+                        $allowedClasses[$class] = $info->getMTime();
                     }
                 }
             }
         }
 
-        return $classes;
-    }
-
-    /**
-     * @return string[]
-     */
-    private function getAllowedNsRoots(): array
-    {
-        $allowedNsRoots = [];
-        foreach (ConfigStorage::$system->allowedNsPrefixes as $nsPrefix) {
-            if (preg_match('/^[^\\\\]+\\\\/', $nsPrefix, $M)) {
-                $allowedNsRoots[] = $M[0];
-            } else {
-                $allowedNsRoots[] = $nsPrefix;
-            }
-        }
-
-        return $allowedNsRoots;
-    }
-
-    /**
-     * @throws RuntimeException
-     */
-    private function getLoader(): ClassLoader
-    {
-        foreach (get_declared_classes() as $class) {
-            if (!str_starts_with($class, 'ComposerAutoloaderInit')) {
-                continue;
-            }
-
-            $getter = [$class, 'getLoader'];
-            if (is_callable($getter)) {
-                return $getter();
-            }
-        }
-
-        throw new RuntimeException('Unable to find composer loader');
+        return $allowedClasses;
     }
 }
