@@ -11,13 +11,13 @@ final class SimpleMailer
 {
     private PHPMailer $mailer;
 
-    private bool $strict = true;
+    private bool $strict;
 
     /**
      * @param bool $enabled Is mailer enabled or not.
      * @param array{string, string|null}|string|null $sender Default sender: 'EMAIL' or array('EMAIL'[, 'NAME']) or null
-     * @param array{string, string|null}[]|null $recipients Override recipients: ?array('EMAIL' or array('EMAIL'[, 'NAME']), ...)
-     * @param array{string, string|null}[]|null $replies Default replies: ?array('EMAIL' or array('EMAIL'[, 'NAME']), ...)
+     * @param array<array{string, string|null}>|null $recipients Override recipients: ?array('EMAIL' or array('EMAIL'[, 'NAME']), ...)
+     * @param array<array{string, string|null}>|null $replies Default replies: ?array('EMAIL' or array('EMAIL'[, 'NAME']), ...)
      * @param bool $strict Adding wrong recipients, cc, replies and errors on sending will throw exceptions.
      *
      * @throws InvalidArgumentException
@@ -30,17 +30,16 @@ final class SimpleMailer
         bool $strict = false,
     ) {
         $this->mailer = new PHPMailer(true);
-
         $this->mailer->CharSet = PHPMailer::CHARSET_UTF8;
+
+        $this->strict = true;
 
         if (null !== $sender) {
             $this->setFrom(...(array) $sender);
         }
-
         if (null !== $recipients) {
             $this->addRecipients($recipients);
         }
-
         if (null !== $replies) {
             $this->addReplies($replies);
         }
@@ -97,7 +96,7 @@ final class SimpleMailer
     /**
      * Adds recipients.
      *
-     * @param array{string, string|null}[] $recipients
+     * @param array<array{string, string|null}> $recipients
      *
      * @throws InvalidArgumentException
      */
@@ -113,7 +112,7 @@ final class SimpleMailer
     /**
      * Sets recipients.
      *
-     * @param array{string, string|null}[] $recipients
+     * @param array<array{string, string|null}> $recipients
      *
      * @throws InvalidArgumentException
      */
@@ -157,7 +156,7 @@ final class SimpleMailer
     /**
      * Adds CC's.
      *
-     * @param array{string, string|null}[] $copies
+     * @param array<array{string, string|null}> $copies
      *
      * @throws InvalidArgumentException
      */
@@ -173,7 +172,7 @@ final class SimpleMailer
     /**
      * Sets CC's.
      *
-     * @param array{string, string|null}[] $copies
+     * @param array<array{string, string|null}> $copies
      *
      * @throws InvalidArgumentException
      */
@@ -217,7 +216,7 @@ final class SimpleMailer
     /**
      * Adds replies.
      *
-     * @param array{string, string|null}[] $replies
+     * @param array<array{string, string|null}> $replies
      *
      * @throws InvalidArgumentException
      */
@@ -233,7 +232,7 @@ final class SimpleMailer
     /**
      * Sets replies.
      *
-     * @param array{string, string|null}[] $replies
+     * @param array<array{string, string|null}> $replies
      *
      * @throws InvalidArgumentException
      */
@@ -275,7 +274,7 @@ final class SimpleMailer
     /**
      * Adds custom headers.
      *
-     * @param array{string, string|null}[] $headers
+     * @param array<array{string, string|null}> $headers
      *
      * @throws InvalidArgumentException
      */
@@ -291,7 +290,7 @@ final class SimpleMailer
     /**
      * Sets custom headers.
      *
-     * @param array{string, string|null}[] $headers
+     * @param array<array{string, string|null}> $headers
      *
      * @throws InvalidArgumentException
      */
@@ -363,7 +362,7 @@ final class SimpleMailer
     /**
      * Adds attachment files.
      *
-     * @param array{string, string|null, string|null}[] $attachments
+     * @param array<array{string, string|null, string|null}> $attachments
      *
      * @throws InvalidArgumentException
      */
@@ -379,7 +378,7 @@ final class SimpleMailer
     /**
      * Sets attachment files.
      *
-     * @param array{string, string|null, string|null}[] $attachments
+     * @param array<array{string, string|null, string|null}> $attachments
      *
      * @throws InvalidArgumentException
      */
@@ -421,7 +420,7 @@ final class SimpleMailer
     /**
      * Adds attachment strings as files.
      *
-     * @param array{string, string, string|null}[] $attachments
+     * @param array<array{string, string, string|null}> $attachments
      *
      * @throws InvalidArgumentException
      */
@@ -437,7 +436,7 @@ final class SimpleMailer
     /**
      * Sets attachment strings as files.
      *
-     * @param array{string, string, string|null}[] $attachments
+     * @param array<array{string, string, string|null}> $attachments
      *
      * @throws InvalidArgumentException
      */
