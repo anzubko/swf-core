@@ -4,19 +4,43 @@ namespace SWF;
 
 use SWF\Event\TransactionRetryEvent;
 use SWF\Exception\DatabaserException;
+use SWF\Interface\DatabaserInterface;
 use Throwable;
+use function count;
 use function in_array;
 
 final class TransactionRunner
 {
     /**
-     * @param TransactionDeclaration[] $declarations
-     *
+     * @var TransactionDeclaration[] $declarations
+     */
+    private array $declarations = [];
+
+    public function __construct(
+        private readonly DatabaserInterface $defaultDb,
+    ) {
+    }
+
+    public function with(DatabaserInterface $db, ?string $isolation = null, string ...$states): self
+    {
+        $this->declarations[] = new TransactionDeclaration($db, $isolation, $states);
+
+        return $this;
+    }
+
+    /**
      * @throws DatabaserException
      * @throws Throwable
      */
-    public function run(callable $body, array $declarations, int $retries = 3): void
+    public function run(callable $body, int $retries = 3): void
     {
+        $declarations = $this->declarations;
+        if (count($declarations) === 0) {
+            $declarations[] = new TransactionDeclaration($this->defaultDb);
+        } else {
+            $this->declarations = [];
+        }
+
         for ($retry = 0; $retry <= $retries; $retry++) {
             try {
                 foreach ($declarations as $declaration) {
