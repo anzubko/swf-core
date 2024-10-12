@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace SWF;
 
-use InvalidArgumentException;
-use LogicException;
 use SWF\Attribute\AsListener;
 use SWF\Event\AfterCommandEvent;
 use SWF\Event\AfterControllerEvent;
@@ -28,21 +26,6 @@ final class DelayedNotifier
     private int $id = 1;
 
     private bool $inTrans = false;
-
-    /**
-     * @throws InvalidArgumentException
-     * @throws LogicException
-     */
-    public function __construct()
-    {
-        i(ListenerProvider::class)->addListener(
-            callback: function (AfterCommandEvent | AfterControllerEvent $event): void {
-                $this->sendAll();
-            },
-            priority: PHP_FLOAT_MIN,
-            persistent: true,
-        );
-    }
 
     /**
      * Adds notify to queue and returns notify identifier.
@@ -144,5 +127,14 @@ final class DelayedNotifier
                 i(CommonLogger::class)->error($e);
             }
         }
+    }
+
+    /**
+     * @phpstan-ignore method.unused
+     */
+    #[AsListener(priority: PHP_FLOAT_MIN, persistent: true)]
+    private function autoSendAll(AfterCommandEvent | AfterControllerEvent $event): void
+    {
+        $this->sendAll();
     }
 }
