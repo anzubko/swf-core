@@ -55,7 +55,7 @@ final class TransactionRunner
 
                 if (false === $body()) {
                     foreach ($declarations as $declaration) {
-                        $declaration->getDb()->rollback(true);
+                        $declaration->getDb()->rollback();
                     }
 
                     i(EventDispatcher::class)->dispatch(new TransactionRollbackEvent());
@@ -70,7 +70,7 @@ final class TransactionRunner
                 return;
             } catch (Throwable $e) {
                 foreach ($declarations as $declaration) {
-                    $declaration->getDb()->rollback(true);
+                    $declaration->getDb()->rollback();
                 }
 
                 i(EventDispatcher::class)->dispatch(new TransactionRollbackEvent());
