@@ -3,7 +3,10 @@ declare(strict_types=1);
 
 namespace SWF;
 
+use SWF\Event\TransactionBeginEvent;
+use SWF\Event\TransactionCommitEvent;
 use SWF\Event\TransactionRetryEvent;
+use SWF\Event\TransactionRollbackEvent;
 use SWF\Exception\DatabaserException;
 use SWF\Interface\DatabaserInterface;
 use Throwable;
@@ -48,24 +51,29 @@ final class TransactionRunner
                     $declaration->getDb()->begin($declaration->getIsolation());
                 }
 
+                i(EventDispatcher::class)->dispatch(new TransactionBeginEvent());
+
                 if (false === $body()) {
                     foreach ($declarations as $declaration) {
-                        $declaration->getDb()->rollback();
+                        $declaration->getDb()->rollback(true);
                     }
+
+                    i(EventDispatcher::class)->dispatch(new TransactionRollbackEvent());
                 } else {
                     foreach ($declarations as $declaration) {
                         $declaration->getDb()->commit();
                     }
+
+                    i(EventDispatcher::class)->dispatch(new TransactionCommitEvent());
                 }
 
                 return;
             } catch (Throwable $e) {
                 foreach ($declarations as $declaration) {
-                    try {
-                        $declaration->getDb()->rollback(true);
-                    } catch (DatabaserException) {
-                    }
+                    $declaration->getDb()->rollback(true);
                 }
+
+                i(EventDispatcher::class)->dispatch(new TransactionRollbackEvent());
 
                 if ($e instanceof DatabaserException && $retry < $retries) {
                     foreach ($declarations as $declaration) {
