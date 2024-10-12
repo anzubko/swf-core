@@ -146,6 +146,12 @@ final class Runner
             return true;
         }
 
+        if (in_array($code, [E_WARNING, E_USER_WARNING, E_STRICT], true)) {
+            i(CommonLogger::class)->warning($message, options: ['file' => $file, 'line' => $line]);
+
+            return true;
+        }
+
         throw ExceptionHandler::overrideFileAndLine(new Exception($message), $file, $line);
     }
 

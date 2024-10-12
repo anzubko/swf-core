@@ -7,10 +7,13 @@ use Exception;
 use JSMin\JSMin;
 use LogicException;
 use RuntimeException;
+use function count;
 use function is_array;
 
 final class AssetsMerger
 {
+    private const MAX_FILESIZE_TO_ENCODE = 32 * 1024;
+
     /**
      * @var string[][][]
      */
@@ -112,22 +115,22 @@ final class AssetsMerger
             $oldTargets[] = $M[2];
         }
 
-        $this->scannedFiles ??= $this->scanForFiles();
-
+        $count = 0;
         $newTargets = [];
-        foreach (array_keys($this->scannedFiles) as $type) {
-            foreach ($this->scannedFiles[$type] as $target => $files) {
+        foreach (array_keys($this->getScannedFiles()) as $type) {
+            foreach ($this->getScannedFiles()[$type] as $target => $files) {
                 foreach ($files as $file) {
                     if ((int) filemtime($file) > $metrics['modified']) {
                         return true;
                     }
                 }
 
+                $count += count($files);
                 $newTargets[] = $target;
             }
         }
 
-        if ($newTargets !== $oldTargets) {
+        if ($count !== $metrics['count'] || $newTargets !== $oldTargets) {
             return true;
         }
 
@@ -144,23 +147,24 @@ final class AssetsMerger
     {
         DirHandler::clear($this->dir);
 
-        $this->scannedFiles ??= $this->scanForFiles();
+        $metrics = ['modified' => time(), 'count' => 0, 'debug' => ConfigStorage::$system->debug, 'hash' => TextHandler::random()];
 
-        $metrics = ['modified' => time(), 'debug' => ConfigStorage::$system->debug, 'hash' => TextHandler::random()];
-
-        foreach (array_keys($this->scannedFiles) as $type) {
-            foreach ($this->scannedFiles[$type] as $target => $files) {
+        foreach (array_keys($this->getScannedFiles()) as $type) {
+            foreach ($this->getScannedFiles()[$type] as $target => $files) {
                 $file = sprintf('%s/%s.%s', $this->dir, $metrics['modified'], $target);
 
-                $contents = match ($type) {
-                    'js' => $this->mergeJs($files),
-                    'css' => $this->mergeCss($files),
-                    default => '',
-                };
+                $contents = '';
+                if ('js' === $type) {
+                    $contents = $this->mergeJs($files);
+                } elseif ('css' === $type) {
+                    $contents = $this->mergeCss($files);
+                }
 
                 if (!FileHandler::put($file, $contents)) {
                     throw new RuntimeException(sprintf('Unable to write file: %s', $file));
                 }
+
+                $metrics['count'] += count($files);
             }
         }
 
@@ -169,6 +173,14 @@ final class AssetsMerger
         }
 
         return $metrics;
+    }
+
+    /**
+     * @return string[][][]
+     */
+    private function getScannedFiles(): array
+    {
+        return $this->scannedFiles ??= $this->scanForFiles();
     }
 
     /**
@@ -231,14 +243,7 @@ final class AssetsMerger
         }
 
         $callback = function (array $M): string {
-            $data = $type = null;
-
-            if (
-                preg_match('/\.(gif|png|jpg|jpeg|svg|woff|woff2)$/ui', $M[1], $N)
-                && str_starts_with($M[1], '/')
-                && !str_starts_with($M[1], '//')
-                && !str_contains($M[1], '..')
-            ) {
+            if (preg_match('/\.(gif|png|jpg|jpeg|svg|woff|woff2)$/ui', $M[1], $N) && str_starts_with($M[1], '/') && !str_starts_with($M[1], '//') && !str_contains($M[1], '..')) {
                 $type = strtolower($N[1]);
                 if ('jpg' === $type) {
                     $type = 'jpeg';
@@ -248,16 +253,15 @@ final class AssetsMerger
 
                 $file = sprintf('%s/%s', $this->docRoot, $M[1]);
                 $size = @filesize($file);
-                if (false !== $size && $size <= 32 * 1024) {
+                if (false !== $size && $size <= self::MAX_FILESIZE_TO_ENCODE) {
                     $data = FileHandler::get($file);
+                    if (null !== $data) {
+                        return sprintf('url(data:image/%s;base64,%s)', $type, base64_encode($data));
+                    }
                 }
             }
 
-            if (null !== $data) {
-                return sprintf('url(data:image/%s;base64,%s)', $type, base64_encode($data));
-            } else {
-                return sprintf('url(%s)', $M[1]);
-            }
+            return sprintf('url(%s)', $M[1]);
         };
 
         return (string) preg_replace_callback('/url\(\s*(.+?)\s*\)/u', $callback, $merged);
@@ -272,14 +276,9 @@ final class AssetsMerger
     {
         $merged = [];
         foreach ($files as $file) {
-            $contents = FileHandler::get($file);
-            if (null === $contents) {
-                throw new RuntimeException(sprintf('Unable to read file %s', $file));
-            }
-
-            $merged[] = $contents;
+            $merged[] = FileHandler::get($file) ?? throw new RuntimeException(sprintf('Unable to read file %s', $file));
         }
 
-        return implode("\n", $merged);
+        return implode("\n\n", $merged);
     }
 }

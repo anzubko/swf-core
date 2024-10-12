@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace SWF;
 
 use RuntimeException;
+use Throwable;
 
 final class DirHandler
 {
@@ -37,13 +38,7 @@ final class DirHandler
             }
 
             $dirWItem = sprintf('%s/%s', $dir, $item);
-            if (!$recursive || is_file($dirWItem)) {
-                if ($withDir) {
-                    $scanned[] = $dirWItem;
-                } else {
-                    $scanned[] = $item;
-                }
-            } else {
+            if ($recursive && is_dir($dirWItem)) {
                 foreach (self::scan($dirWItem, true, false, $order) as $subItem) {
                     if ($withDir) {
                         $scanned[] = sprintf('%s/%s', $dirWItem, $subItem);
@@ -51,6 +46,10 @@ final class DirHandler
                         $scanned[] = sprintf('%s/%s', $item, $subItem);
                     }
                 }
+            } elseif ($withDir) {
+                $scanned[] = $dirWItem;
+            } else {
+                $scanned[] = $item;
             }
         }
 
@@ -209,7 +208,11 @@ final class DirHandler
                             register_shutdown_function(
                                 function () {
                                     foreach (self::$tempSubDirs as $dir) {
-                                        self::remove($dir);
+                                        try {
+                                            self::remove($dir);
+                                        } catch (Throwable $e) {
+                                            i(CommonLogger::class)->error($e->getMessage());
+                                        }
                                     }
                                 }
                             );

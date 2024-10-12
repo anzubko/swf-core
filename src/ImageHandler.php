@@ -4,18 +4,15 @@ declare(strict_types=1);
 namespace SWF;
 
 use GdImage;
+use function is_string;
 
 final class ImageHandler
 {
     /**
      * Reads image from string.
      */
-    public static function fromString(string|false|null $string): ?GdImage
+    public static function fromString(string $string): ?GdImage
     {
-        if (empty($string)) {
-            return null;
-        }
-
         $image = imagecreatefromstring($string);
         if (false === $image) {
             return null;
@@ -29,35 +26,86 @@ final class ImageHandler
      */
     public static function fromFile(string $file): ?GdImage
     {
-        return self::fromString(FileHandler::get($file));
+        $contents = FileHandler::get($file);
+        if (null === $contents) {
+            return null;
+        }
+
+        return self::fromString($contents);
     }
 
     /**
-     * Saves as PNG to file or returns as string.
+     * Transform image to PNG.
      */
-    public static function savePng(GdImage $image, ?string $file = null, int $quality = 0): string|bool
+    public static function toPng(GdImage $image, int $quality = 0): ?string
+    {
+        if (!ob_start(fn() => null)) {
+            return null;
+        }
+
+        imagesavealpha($image, true);
+        imagepng($image, null, $quality);
+
+        $contents = ob_get_clean();
+        if (false === $contents) {
+            return null;
+        }
+
+        return $contents;
+    }
+
+    /**
+     * Saves as PNG.
+     *
+     * @param resource|string $file
+     */
+    public static function savePng(GdImage $image, mixed $file, int $quality = 0): bool
     {
         imagesavealpha($image, true);
 
-        if (null !== $file) {
-            $success = imagepng($image, $file, $quality);
-            if ($success) {
-                @chmod($file, ConfigStorage::$system->fileMode);
-            }
-
-            return $success;
+        $success = imagepng($image, $file, $quality);
+        if ($success && is_string($file)) {
+            @chmod($file, ConfigStorage::$system->fileMode);
         }
 
-        ob_start(fn() => null);
-        imagepng($image, null, $quality);
-
-        return ob_get_clean();
+        return $success;
     }
 
     /**
-     * Saves as JPEG to file or returns as string.
+     * Transform image to JPEG.
      */
-    public static function saveJpeg(GdImage $image, ?string $file = null, int $quality = 80): string|bool
+    public static function toJpg(GdImage $image, int $quality = 100): ?string
+    {
+        if (!ob_start(fn() => null)) {
+            return null;
+        }
+
+        imagejpeg(self::fixJpeg($image), null, $quality);
+
+        $contents = ob_get_clean();
+        if (false === $contents) {
+            return null;
+        }
+
+        return $contents;
+    }
+
+    /**
+     * Saves as JPEG.
+     *
+     * @param resource|string $file
+     */
+    public static function saveJpeg(GdImage $image, mixed $file, int $quality = 100): bool
+    {
+        $success = imagejpeg(self::fixJpeg($image), $file, $quality);
+        if ($success && is_string($file)) {
+            @chmod($file, ConfigStorage::$system->fileMode);
+        }
+
+        return $success;
+    }
+
+    private static function fixJpeg(GdImage $image): GdImage
     {
         $w = (int) imagesx($image);
         $h = (int) imagesy($image);
@@ -70,19 +118,7 @@ final class ImageHandler
         imagecopy($fixed, $image, 0, 0, 0, 0, $w, $h);
         imageinterlace($fixed, true);
 
-        if (null !== $file) {
-            $success = imagejpeg($fixed, $file, $quality);
-            if ($success) {
-                @chmod($file, ConfigStorage::$system->fileMode);
-            }
-
-            return $success;
-        }
-
-        ob_start(fn() => null);
-        imagejpeg($fixed, null, $quality);
-
-        return ob_get_clean();
+        return $fixed;
     }
 
     /**

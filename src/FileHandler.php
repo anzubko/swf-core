@@ -11,8 +11,11 @@ final class FileHandler
     public static function get(string $file): ?string
     {
         $contents = file_get_contents($file);
+        if (false === $contents) {
+            return null;
+        }
 
-        return false === $contents ? null : $contents;
+        return $contents;
     }
 
     /**
@@ -34,7 +37,7 @@ final class FileHandler
      */
     public static function putVar(string $file, mixed $variable, int $flags = 0, bool $createDir = true): bool
     {
-        $contents = sprintf("<?php\n\nreturn %s;\n", var_export($variable, true));
+        $contents = sprintf('<?php return %s;', var_export($variable, true),);
         if (!self::put($file, $contents, $flags, $createDir)) {
             return false;
         }
