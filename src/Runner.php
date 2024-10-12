@@ -146,7 +146,7 @@ final class Runner
             return true;
         }
 
-        if (in_array($code, [E_WARNING, E_USER_WARNING, E_STRICT], true)) {
+        if (in_array($code, [E_WARNING, E_USER_WARNING, E_STRICT], true) && !ConfigStorage::$system->strict) {
             i(CommonLogger::class)->warning($message, options: ['file' => $file, 'line' => $line]);
 
             return true;

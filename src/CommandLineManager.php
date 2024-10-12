@@ -52,7 +52,7 @@ final class CommandLineManager
     }
 
     /**
-     * Exit from current command through special exception.
+     * Exits from current command through special exception.
      *
      * @throws ExitSimulationException
      */

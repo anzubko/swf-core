@@ -56,7 +56,7 @@ final class TextHandler
     }
 
     /**
-     * Trim both sides.
+     * Trims both sides.
      */
     public static function trim(?string $string): string
     {
@@ -68,7 +68,7 @@ final class TextHandler
     }
 
     /**
-     * Trim right side.
+     * Trims right side.
      */
     public static function rTrim(?string $string): string
     {
@@ -80,7 +80,7 @@ final class TextHandler
     }
 
     /**
-     * Trim left side.
+     * Trims left side.
      */
     public static function lTrim(?string $string): string
     {
@@ -92,7 +92,7 @@ final class TextHandler
     }
 
     /**
-     * Trim both sides and convert all sequential spaces to one.
+     * Trims both sides and converts all sequential spaces to one.
      */
     public static function fTrim(?string $string, int $limit = 0): string
     {
@@ -109,7 +109,7 @@ final class TextHandler
     }
 
     /**
-     * Trim both sides and convert all sequential spaces to one, but leave new lines.
+     * Trims both sides and converts all sequential spaces to one, but leaves new lines.
      */
     public static function mTrim(?string $string, int $limit = 0): string
     {

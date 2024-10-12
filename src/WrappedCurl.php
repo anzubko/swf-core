@@ -19,7 +19,7 @@ final class WrappedCurl
     private array $headers = [];
 
     /**
-     * Do Curl request with optional conversion to utf-8.
+     * Does Curl request with optional conversion to utf-8.
      *
      * @param mixed[] $options
      */

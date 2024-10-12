@@ -88,7 +88,7 @@ final class ResponseManager
     }
 
     /**
-     * Exit from current controller through special exception.
+     * Exits from current controller through special exception.
      *
      * @throws ExitSimulationException
      */

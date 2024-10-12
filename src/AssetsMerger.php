@@ -38,7 +38,7 @@ final class AssetsMerger
     }
 
     /**
-     * Merging if needed and returns merged paths.
+     * Merges (if needed) and returns merged paths.
      *
      * @return string[]
      *

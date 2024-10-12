@@ -35,7 +35,7 @@ final class ImageHandler
     }
 
     /**
-     * Transform image to PNG.
+     * Transforms image to PNG.
      */
     public static function toPng(GdImage $image, int $quality = 0): ?string
     {
@@ -72,7 +72,7 @@ final class ImageHandler
     }
 
     /**
-     * Transform image to JPEG.
+     * Transforms image to JPEG.
      */
     public static function toJpg(GdImage $image, int $quality = 100): ?string
     {

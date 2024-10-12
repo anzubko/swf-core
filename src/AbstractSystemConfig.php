@@ -26,6 +26,11 @@ abstract class AbstractSystemConfig extends AbstractConfig
     public string $timezone = 'UTC';
 
     /**
+     * In strict mode all warnings are replaced by exceptions.
+     */
+    public bool $strict = false;
+
+    /**
      * Default mode for created directories.
      */
     public int $dirMode = 0777;
