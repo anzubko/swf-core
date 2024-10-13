@@ -8,9 +8,9 @@ use SWF\Attribute\Priority;
 /**
  * @internal
  */
-final class RelationProcessor extends AbstractActionProcessor
+final class SubclassProcessor extends AbstractActionProcessor
 {
-    private const RELATIVE_CACHE_FILE = '/.system/relations.php';
+    private const RELATIVE_CACHE_FILE = '/.system/subclasses.php';
 
     protected function getRelativeCacheFile(): string
     {
@@ -45,6 +45,6 @@ final class RelationProcessor extends AbstractActionProcessor
 
     public function storageCache(array $cache): void
     {
-        RelationStorage::$cache = $cache;
+        SubclassStorage::$cache = $cache;
     }
 }

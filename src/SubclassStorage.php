@@ -6,7 +6,7 @@ namespace SWF;
 /**
  * @internal
  */
-final class RelationStorage
+final class SubclassStorage
 {
     /**
      * @var mixed[]

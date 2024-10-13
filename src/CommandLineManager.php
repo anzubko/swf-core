@@ -10,6 +10,19 @@ final class CommandLineManager
 {
     private bool $quiet = false;
 
+    /**
+     * Gets quiet status.
+     */
+    public function isQuiet(): bool
+    {
+        return $this->quiet;
+    }
+
+    /**
+     * Sets quiet status.
+     *
+     * Automatically sets to true when command called with --quiet option.
+     */
     public function setQuiet(bool $quiet): self
     {
         $this->quiet = $quiet;

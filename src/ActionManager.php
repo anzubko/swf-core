@@ -17,7 +17,7 @@ use function strlen;
  */
 final class ActionManager
 {
-    private const RELATIVE_METRICS_FILE = '/.system/actions.metrics.php';
+    private const RELATIVE_METRICS_FILE = '/.system/action.metrics.php';
 
     private const LOCK_KEY = '.system/action.manager';
 
@@ -28,7 +28,7 @@ final class ActionManager
         CommandProcessor::class,
         ControllerProcessor::class,
         ListenerProcessor::class,
-        RelationProcessor::class,
+        SubclassProcessor::class,
     ];
 
     /**
