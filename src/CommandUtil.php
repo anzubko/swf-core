@@ -14,24 +14,25 @@ final class CommandUtil
     /**
      * @throws ExitSimulationException
      */
-    public function listAll(): void
+    public static function listAll(): void
     {
         $commands = CommandStorage::$cache;
         if (count($commands) === 0) {
-            i(CommandLineManager::class)->writeLn('No commands found')->end();
+            CommandLineManager::writeLn('No commands found');
+            CommandLineManager::end();
         }
 
-        i(CommandLineManager::class)->writeLn('Available commands:');
+        CommandLineManager::writeLn('Available commands:');
 
         ksort($commands);
         foreach ($commands as $name => $command) {
-            i(CommandLineManager::class)->write(sprintf("\n%s --> %s\n", $name, $command['method']));
+            CommandLineManager::write(sprintf("\n%s --> %s\n", $name, $command['method']));
 
             if (isset($command['description'])) {
-                i(CommandLineManager::class)->writeLn(sprintf('  %s', $command['description']));
+                CommandLineManager::writeLn(sprintf('  %s', $command['description']));
             }
         }
 
-        i(CommandLineManager::class)->writeLn();
+        CommandLineManager::writeLn();
     }
 }

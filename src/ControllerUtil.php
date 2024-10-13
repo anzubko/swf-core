@@ -14,7 +14,7 @@ final class ControllerUtil
     /**
      * @throws ExitSimulationException
      */
-    public function listAll(): void
+    public static function listAll(): void
     {
         if (empty(ControllerStorage::$cache)) {
             return;
@@ -41,20 +41,21 @@ final class ControllerUtil
         }
 
         if (count($controllers) === 0) {
-            i(CommandLineManager::class)->writeLn('No controllers found')->end();
+            CommandLineManager::writeLn('No controllers found');
+            CommandLineManager::end();
         }
 
-        i(CommandLineManager::class)->writeLn('Available controllers:');
+        CommandLineManager::writeLn('Available controllers:');
 
         ksort($controllers);
         foreach ($controllers as $path => $controller) {
-            i(CommandLineManager::class)->write(sprintf("\n%s %s --> %s\n", implode('|', $controller['methods']), $path, $controller['action'][0]));
+            CommandLineManager::write(sprintf("\n%s %s --> %s\n", implode('|', $controller['methods']), $path, $controller['action'][0]));
 
             if (isset($controller['action'][1])) {
-                i(CommandLineManager::class)->writeLn(sprintf('  alias: %s', $controller['action'][1]));
+                CommandLineManager::writeLn(sprintf('  alias: %s', $controller['action'][1]));
             }
         }
 
-        i(CommandLineManager::class)->writeLn();
+        CommandLineManager::writeLn();
     }
 }

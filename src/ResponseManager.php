@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace SWF;
 
 use Exception;
-use LogicException;
 use SWF\Event\HttpErrorEvent;
 use SWF\Event\ResponseEvent;
 use SWF\Exception\ExitSimulationException;
@@ -14,21 +13,14 @@ use function is_string;
 
 final class ResponseManager
 {
-    private HeaderRegistry $headers;
-
-    public function __construct()
-    {
-        if ('cli' === PHP_SAPI) {
-            throw new LogicException('Please, do not use this class in CLI mode');
-        }
-    }
+    private static HeaderRegistry $headers;
 
     /**
      * Returns headers registry.
      */
-    public function headers(): HeaderRegistry
+    public static function headers(): HeaderRegistry
     {
-        return $this->headers ??= new HeaderRegistry();
+        return self::$headers ??= new HeaderRegistry();
     }
 
     /**
@@ -38,13 +30,13 @@ final class ResponseManager
      *
      * @throws Throwable
      */
-    public function send(mixed $body, int $code = 200): void
+    public static function send(mixed $body, int $code = 200): void
     {
-        $body = i(EventDispatcher::class)->dispatch(new ResponseEvent($this->headers, $body))->getBody();
+        $body = i(EventDispatcher::class)->dispatch(new ResponseEvent(self::headers(), $body))->getBody();
 
         http_response_code($code);
 
-        foreach ($this->headers()->getAllLines() as $line) {
+        foreach (self::headers()->getAllLines() as $line) {
             header($line);
         }
 
@@ -62,7 +54,7 @@ final class ResponseManager
     /**
      * Redirects to specified url.
      */
-    public function redirect(string $url, int $code = 302): void
+    public static function redirect(string $url, int $code = 302): void
     {
         header(sprintf('Location: %s', $url), true, $code);
     }
@@ -70,7 +62,7 @@ final class ResponseManager
     /**
      * Shows error page.
      */
-    public function errorPage(int $code): void
+    public static function errorPage(int $code): void
     {
         if (headers_sent()) {
             return;
@@ -90,7 +82,7 @@ final class ResponseManager
      *
      * @throws Exception
      */
-    public function error(int $code = 500, string $message = ''): never
+    public static function error(int $code = 500, string $message = ''): never
     {
         throw new Exception($message, $code);
     }
@@ -100,7 +92,7 @@ final class ResponseManager
      *
      * @throws ExitSimulationException
      */
-    public function end(): never
+    public static function end(): never
     {
         throw new ExitSimulationException();
     }

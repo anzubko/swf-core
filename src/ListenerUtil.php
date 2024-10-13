@@ -14,7 +14,7 @@ final class ListenerUtil
     /**
      * @throws ExitSimulationException
      */
-    public function listAll(): void
+    public static function listAll(): void
     {
         $listenersByType = [];
         foreach (ListenerStorage::$cache as $listener) {
@@ -22,26 +22,27 @@ final class ListenerUtil
         }
 
         if (count($listenersByType) === 0) {
-            i(CommandLineManager::class)->writeLn('No listeners found')->end();
+            CommandLineManager::writeLn('No listeners found');
+            CommandLineManager::end();
         }
 
-        i(CommandLineManager::class)->writeLn('Registered listeners:');
+        CommandLineManager::writeLn('Registered listeners:');
 
         ksort($listenersByType);
         foreach ($listenersByType as $type => $listeners) {
-            i(CommandLineManager::class)->write(sprintf("\n%s -->\n", $type));
+            CommandLineManager::write(sprintf("\n%s -->\n", $type));
 
             usort($listeners, fn ($a, $b) => ($b['priority'] ?? 0.0) <=> ($a['priority'] ?? 0.0));
 
             foreach ($listeners as $listener) {
                 if (($listener['priority'] ?? 0.0) === 0.0) {
-                    i(CommandLineManager::class)->writeLn(sprintf('  %s', $listener['callback']));
+                    CommandLineManager::writeLn(sprintf('  %s', $listener['callback']));
                 } else {
-                    i(CommandLineManager::class)->writeLn(sprintf('  %s (priority %s)', $listener['callback'], $listener['priority']));
+                    CommandLineManager::writeLn(sprintf('  %s (priority %s)', $listener['callback'], $listener['priority']));
                 }
             }
         }
 
-        i(CommandLineManager::class)->writeLn();
+        CommandLineManager::writeLn();
     }
 }

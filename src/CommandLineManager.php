@@ -4,26 +4,18 @@ declare(strict_types=1);
 namespace SWF;
 
 use Exception;
-use LogicException;
 use SWF\Exception\ExitSimulationException;
 
 final class CommandLineManager
 {
-    private bool $quiet = false;
-
-    public function __construct()
-    {
-        if ('cli' !== PHP_SAPI) {
-            throw new LogicException('Please, use this class only in CLI mode');
-        }
-    }
+    private static bool $quiet = false;
 
     /**
      * Gets quiet status.
      */
-    public function isQuiet(): bool
+    public static function isQuiet(): bool
     {
-        return $this->quiet;
+        return self::$quiet;
     }
 
     /**
@@ -31,35 +23,29 @@ final class CommandLineManager
      *
      * Automatically sets to true when command called with --quiet option.
      */
-    public function setQuiet(bool $quiet): self
+    public static function setQuiet(bool $quiet): void
     {
-        $this->quiet = $quiet;
-
-        return $this;
+        self::$quiet = $quiet;
     }
 
     /**
      * Wrapped echo.
      */
-    public function write(string $string = ''): self
+    public static function write(string $string = ''): void
     {
-        if (!$this->quiet) {
+        if (!self::$quiet) {
             echo $string;
         }
-
-        return $this;
     }
 
     /**
      * Wrapped echo with new line.
      */
-    public function writeLn(string $string = ''): self
+    public static function writeLn(string $string = ''): void
     {
-        if (!$this->quiet) {
+        if (!self::$quiet) {
             echo $string, "\n";
         }
-
-        return $this;
     }
 
     /**
@@ -67,7 +53,7 @@ final class CommandLineManager
      *
      * @throws Exception
      */
-    public function error(string $message = '', int $code = 1): never
+    public static function error(string $message = '', int $code = 1): never
     {
         throw ExceptionHandler::removeFileAndLine(new Exception($message, $code));
     }
@@ -77,7 +63,7 @@ final class CommandLineManager
      *
      * @throws ExitSimulationException
      */
-    public function end(): never
+    public static function end(): never
     {
         throw new ExitSimulationException();
     }

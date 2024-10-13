@@ -5,24 +5,21 @@ namespace SWF;
 
 use Exception;
 use InvalidArgumentException;
-use LogicException;
-use RuntimeException;
 use SWF\Enum\ActionTypeEnum;
 use SWF\Enum\CommandValueEnum;
 use function array_key_exists;
 use function count;
 use function strlen;
 
+/**
+ * @internal
+ */
 final class CommandProvider
 {
     private ?string $alias;
 
     private ?CommandDefinition $command = null;
 
-    /**
-     * @throws LogicException
-     * @throws RuntimeException
-     */
     public function __construct()
     {
         $this->alias = $_SERVER['argv'][1] ?? null;
@@ -34,8 +31,6 @@ final class CommandProvider
     }
 
     /**
-     * Gets current action.
-     *
      * @throws Exception
      */
     public function getCurrentAction(): CurrentAction
@@ -70,18 +65,18 @@ final class CommandProvider
         } catch (InvalidArgumentException $e) {
             $usage = $this->genUsage();
             if (null !== $usage) {
-                i(CommandLineManager::class)->writeLn(sprintf("Usage:\n  %s\n", $usage));
+                CommandLineManager::writeLn(sprintf("Usage:\n  %s\n", $usage));
             }
 
-            i(CommandLineManager::class)->error($e->getMessage());
+            CommandLineManager::error($e->getMessage());
         }
 
-        i(CommandLineManager::class)->setQuiet($_REQUEST['quiet'] ?? false);
+        CommandLineManager::setQuiet($_REQUEST['quiet'] ?? false);
 
         return new CurrentAction(ActionTypeEnum::COMMAND, $this->command->getMethod(), $this->alias);
     }
 
-    private function showHelp(): void
+    public function showHelp(): void
     {
         if (null === $this->command) {
             return;
@@ -121,17 +116,17 @@ final class CommandProvider
         }
 
         if (null !== $this->command->getDescription()) {
-            i(CommandLineManager::class)->write(sprintf("Description:\n  %s\n\n", $this->command->getDescription()));
+            CommandLineManager::write(sprintf("Description:\n  %s\n\n", $this->command->getDescription()));
         }
 
-        i(CommandLineManager::class)->write(sprintf("Usage:\n  %s\n", $this->genUsage()));
+        CommandLineManager::write(sprintf("Usage:\n  %s\n", $this->genUsage()));
 
         if (count($arguments) > 0) {
-            i(CommandLineManager::class)->write(sprintf("\nArguments:\n  %s\n", implode("\n  ", $arguments)));
+            CommandLineManager::write(sprintf("\nArguments:\n  %s\n", implode("\n  ", $arguments)));
         }
 
         if (count($options) > 0) {
-            i(CommandLineManager::class)->write(sprintf("\nOptions:\n  %s\n", implode("\n  ", $options)));
+            CommandLineManager::write(sprintf("\nOptions:\n  %s\n", implode("\n  ", $options)));
         }
     }
 

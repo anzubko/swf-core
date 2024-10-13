@@ -3,16 +3,14 @@ declare(strict_types=1);
 
 namespace SWF;
 
-use LogicException;
 use SWF\Enum\ActionTypeEnum;
-use function count;
 use function is_string;
 
+/**
+ * @internal
+ */
 final class ControllerProvider
 {
-    /**
-     * Gets current action.
-     */
     public function getCurrentAction(): CurrentAction
     {
         $path = explode('?', $_SERVER['REQUEST_URI'], 2)[0];
@@ -46,41 +44,5 @@ final class ControllerProvider
         }
 
         return new CurrentAction(ActionTypeEnum::CONTROLLER, ...$action);
-    }
-
-    /**
-     * Generates URL by action and optional parameters.
-     *
-     * @throws LogicException
-     */
-    public function genUrl(string $action, string|int|float|null ...$params): string
-    {
-        if (empty(ControllerStorage::$cache)) {
-            return '/';
-        }
-
-        $parametrizedAction = sprintf('%s:%s', $action, count($params));
-
-        $index = ControllerStorage::$cache['actions'][$parametrizedAction] ?? null;
-        if (null === $index) {
-            if (count($params) === 0) {
-                throw new LogicException(sprintf('Unable to make URL by action %s', $action));
-            }
-
-            throw new LogicException(sprintf('Unable to make URL by action %s and %s parameter%s', $action, count($params), count($params) > 1 ? 's' : ''));
-        }
-
-        $url = ControllerStorage::$cache['urls'][$index];
-        if (count($params) === 0) {
-            return $url;
-        }
-
-        foreach ($params as $i => $value) {
-            if (null !== $value) {
-                $url[(int) $i * 2 + 1] = $value;
-            }
-        }
-
-        return implode($url);
     }
 }

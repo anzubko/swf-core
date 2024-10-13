@@ -22,7 +22,7 @@ class SystemCommand
     {
         DirHandler::clear(ConfigStorage::$system->cacheDir);
 
-        i(CommandLineManager::class)->writeLn('Done!');
+        CommandLineManager::writeLn('Done!');
     }
 
     /**
@@ -31,7 +31,7 @@ class SystemCommand
     #[AsCommand('system:commands', 'List all commands')]
     public function listAllCommands(): void
     {
-        i(CommandUtil::class)->listAll();
+        CommandUtil::listAll();
     }
 
     /**
@@ -40,7 +40,7 @@ class SystemCommand
     #[AsCommand('system:controllers', 'List all controllers')]
     public function listAllControllers(): void
     {
-        i(ControllerUtil::class)->listAll();
+        ControllerUtil::listAll();
     }
 
     /**
@@ -49,6 +49,6 @@ class SystemCommand
     #[AsCommand('system:listeners', 'List all listeners')]
     public function listAllListeners(): void
     {
-        i(ListenerUtil::class)->listAll();
+        ListenerUtil::listAll();
     }
 }

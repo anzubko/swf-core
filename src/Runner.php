@@ -48,7 +48,7 @@ final class Runner
         try {
             $action = i(ControllerProvider::class)->getCurrentAction();
             if (null === $action->getMethod()) {
-                i(ResponseManager::class)->error(404);
+                ResponseManager::error(404);
             }
 
             $_SERVER['ACTION_TYPE'] = $action->getType()->value;
@@ -75,7 +75,7 @@ final class Runner
         try {
             $action = i(CommandProvider::class)->getCurrentAction();
             if (null === $action->getMethod()) {
-                i(CommandLineManager::class)->error(sprintf('Command %s not found', $action->getAlias()));
+                CommandLineManager::error(sprintf('Command %s not found', $action->getAlias()));
             }
 
             $_SERVER['ACTION_TYPE'] = $action->getType()->value;
@@ -171,7 +171,7 @@ final class Runner
             exit(is_int($code) ? min(max($code, 1), 254) : 1);
         }
 
-        i(ResponseManager::class)->errorPage(is_int($code) && $code > 0 ? min(max($code, 100), 599) : 500);
+        ResponseManager::errorPage(is_int($code) && $code > 0 ? min(max($code, 100), 599) : 500);
 
         if ($hard) {
             exit(1);
