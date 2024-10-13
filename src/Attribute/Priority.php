@@ -9,9 +9,9 @@ use Attribute;
 final readonly class Priority
 {
     /**
-     * Sets class priority for children() function.
+     * Sets subclass priority.
      *
-     * @param float $priority Class with higher priority will be earlier in returned list.
+     * @param float $priority Subclass with higher priority will be earlier in returned list.
      */
     public function __construct(
         private float $priority,
