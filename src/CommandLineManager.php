@@ -4,11 +4,19 @@ declare(strict_types=1);
 namespace SWF;
 
 use Exception;
+use LogicException;
 use SWF\Exception\ExitSimulationException;
 
 final class CommandLineManager
 {
     private bool $quiet = false;
+
+    public function __construct()
+    {
+        if ('cli' !== PHP_SAPI) {
+            throw new LogicException('Please, use this class only in CLI mode');
+        }
+    }
 
     /**
      * Gets quiet status.

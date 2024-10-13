@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace SWF;
 
 use Exception;
+use LogicException;
 use SWF\Event\HttpErrorEvent;
 use SWF\Event\ResponseEvent;
 use SWF\Exception\ExitSimulationException;
@@ -14,6 +15,13 @@ use function is_string;
 final class ResponseManager
 {
     private HeaderRegistry $headers;
+
+    public function __construct()
+    {
+        if ('cli' === PHP_SAPI) {
+            throw new LogicException('Please, do not use this class in CLI mode');
+        }
+    }
 
     /**
      * Returns headers registry.
