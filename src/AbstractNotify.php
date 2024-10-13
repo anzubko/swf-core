@@ -6,7 +6,7 @@ namespace SWF;
 abstract class AbstractNotify
 {
     /**
-     * This method will be called after controller, command and all lisneters finish works.
+     * This method will be called after controller, command and all listeners finish works.
      */
     abstract public function send(): void;
 }
