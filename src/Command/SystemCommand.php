@@ -7,6 +7,7 @@ use SWF\Attribute\AsCommand;
 use SWF\CommandLineManager;
 use SWF\CommandUtil;
 use SWF\ConfigStorage;
+use SWF\ConsumerUtil;
 use SWF\ControllerUtil;
 use SWF\DirHandler;
 use SWF\ListenerUtil;
@@ -32,6 +33,15 @@ class SystemCommand
     public function listAllCommands(): void
     {
         CommandUtil::listAll();
+    }
+
+    /**
+     * @throws Throwable
+     */
+    #[AsCommand('system:consumers', 'List all consumers')]
+    public function listAllConsumers(): void
+    {
+        ConsumerUtil::listAll();
     }
 
     /**

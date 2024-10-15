@@ -26,6 +26,7 @@ final class ActionManager
      */
     private array $processors = [
         CommandProcessor::class,
+        ConsumerProcessor::class,
         ControllerProcessor::class,
         ListenerProcessor::class,
         SubclassProcessor::class,

@@ -73,7 +73,7 @@ final class ListenerProvider implements ListenerProviderInterface
     }
 
     /**
-     * @inheritDoc
+     * Returns listeners that are applicable to that event.
      *
      * @return iterable<callable>
      *
