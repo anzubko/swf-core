@@ -17,6 +17,9 @@ abstract class AbstractEvent implements StoppableEventInterface
         return $this->propagationStopped;
     }
 
+    /**
+     * Stops propagation of this event to other listeners.
+     */
     public function stopPropagation(): static
     {
         $this->propagationStopped = true;
