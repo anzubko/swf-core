@@ -37,13 +37,13 @@ final class ConsumerProcessor extends AbstractActionProcessor
                         $instance = $rAttribute->newInstance();
 
                         foreach ($this->getTypes($rMethod) as $type) {
-                            $listener = ['callback' => sprintf('%s::%s', $rClass->name, $rMethod->name), 'type' => $type];
+                            $consumer = ['callback' => sprintf('%s::%s', $rClass->name, $rMethod->name), 'type' => $type];
 
                             if (0.0 !== $instance->getPriority()) {
-                                $listener['priority'] = $instance->getPriority();
+                                $consumer['priority'] = $instance->getPriority();
                             }
 
-                            $cache[] = $listener;
+                            $cache[] = $consumer;
                         }
                     }
                 } catch (LogicException $e) {
