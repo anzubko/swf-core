@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace SWF;
 
-use SWF\Interface\StoppableEventInterface;
+use SWF\Interface\StoppableMessageInterface;
 
-abstract class AbstractEvent implements StoppableEventInterface
+abstract class AbstractMessage implements StoppableMessageInterface
 {
     private bool $propagationStopped = false;
 

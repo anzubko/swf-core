@@ -3,22 +3,18 @@ declare(strict_types=1);
 
 namespace SWF;
 
-use ReflectionException;
+use SWF\Interface\ConsumerProviderInterface;
 
-final class ConsumerProvider
+final class ConsumerProvider implements ConsumerProviderInterface
 {
     /**
-     * Returns consumers that are applicable to that event.
-     *
-     * @return iterable<callable>
-     *
-     * @throws ReflectionException
+     * @inheritDoc
      */
-    public function getConsumersForEvent(object $event): iterable
+    public function getConsumersForMessage(object $message): iterable
     {
         $consumers = [];
         foreach (ConsumerStorage::$cache as &$consumer) {
-            if (!$event instanceof $consumer['type']) {
+            if (!$message instanceof $consumer['type']) {
                 continue;
             }
 

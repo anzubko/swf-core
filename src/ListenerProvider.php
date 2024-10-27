@@ -3,26 +3,17 @@ declare(strict_types=1);
 
 namespace SWF;
 
-use InvalidArgumentException;
-use LogicException;
-use Psr\EventDispatcher\ListenerProviderInterface;
 use ReflectionException;
 use ReflectionFunction;
+use SWF\Interface\ListenerProviderInterface;
 use function in_array;
 
 final class ListenerProvider implements ListenerProviderInterface
 {
     /**
-     * Adds listener.
-     *
-     * @param float $priority Listener with higher priority will be called earlier.
-     * @param bool $disposable Listener can be called only once.
-     * @param bool $persistent Listener can only be removed with the force parameter.
-     *
-     * @throws InvalidArgumentException
-     * @throws LogicException
+     * @inheritDoc
      */
-    public function addListener(callable $callback, float $priority = 0.0, bool $disposable = false, bool $persistent = false): void
+    public function add(callable $callback, float $priority = 0.0, bool $disposable = false, bool $persistent = false): void
     {
         try {
             foreach (i(ListenerProcessor::class)->getTypes(new ReflectionFunction($callback(...))) as $typeName) {
@@ -39,11 +30,9 @@ final class ListenerProvider implements ListenerProviderInterface
     }
 
     /**
-     * Removes listeners by event type.
-     *
-     * @param string|string[] $types
+     * @inheritDoc
      */
-    public function removeListenersByType(array|string $types, bool $force = false): void
+    public function removeByType(array|string $types, bool $force = false): void
     {
         foreach (ListenerStorage::$cache as $i => $listener) {
             if (!$force && ($listener['persistent'] ?? false) || !in_array($listener['type'], (array) $types, true)) {
@@ -55,9 +44,9 @@ final class ListenerProvider implements ListenerProviderInterface
     }
 
     /**
-     * Removes all listeners.
+     * @inheritDoc
      */
-    public function removeAllListeners(bool $force = false): void
+    public function removeAll(bool $force = false): void
     {
         if ($force) {
             ListenerStorage::$cache = [];
@@ -73,11 +62,7 @@ final class ListenerProvider implements ListenerProviderInterface
     }
 
     /**
-     * Returns listeners that are applicable to that event.
-     *
-     * @return iterable<callable>
-     *
-     * @throws ReflectionException
+     * @inheritDoc
      */
     public function getListenersForEvent(object $event, bool $removeDisposables = false): iterable
     {

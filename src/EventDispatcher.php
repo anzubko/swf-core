@@ -3,24 +3,15 @@ declare(strict_types=1);
 
 namespace SWF;
 
-use Psr\EventDispatcher\EventDispatcherInterface;
-use Psr\EventDispatcher\StoppableEventInterface;
-use Throwable;
+use SWF\Interface\EventDispatcherInterface;
+use SWF\Interface\StoppableEventInterface;
 
 final class EventDispatcher implements EventDispatcherInterface
 {
     /**
      * @inheritDoc
-     *
-     * @template T of object
-     *
-     * @param T $event
-     *
-     * @return T
-     *
-     * @throws Throwable
      */
-    public function dispatch(object $event)
+    public function dispatch(mixed $event)
     {
         foreach (i(ListenerProvider::class)->getListenersForEvent($event, true) as $listener) {
             if ($event instanceof StoppableEventInterface && $event->isPropagationStopped()) {
