@@ -5,7 +5,7 @@ namespace SWF;
 
 use SWF\Enum\CommandTypeEnum;
 
-final readonly class CommandArgument
+final readonly class CommandArgument extends AbstractCommandParam
 {
     /**
      * @param string|null $description Optional description

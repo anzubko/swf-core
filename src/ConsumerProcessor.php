@@ -34,6 +34,7 @@ final class ConsumerProcessor extends AbstractActionProcessor
                             throw new LogicException("Constructor can't be a consumer");
                         }
 
+                        /** @var AsConsumer $instance */
                         $instance = $rAttribute->newInstance();
 
                         foreach ($this->getTypes($rMethod) as $type) {

@@ -34,6 +34,7 @@ final class ListenerProcessor extends AbstractActionProcessor
                             throw new LogicException("Constructor can't be a listener");
                         }
 
+                        /** @var AsListener $instance */
                         $instance = $rAttribute->newInstance();
 
                         foreach ($this->getTypes($rMethod) as $type) {

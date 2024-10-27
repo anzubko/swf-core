@@ -14,39 +14,43 @@ use Throwable;
 final class DelayedNotifier
 {
     /**
-     * @var AbstractNotify[]
+     * @var array<int, AbstractNotify>
      */
-    private array $primaryQueue = [];
+    private array $notifies = [];
 
     /**
-     * @var AbstractNotify[]
+     * @var array<int, AbstractNotify>
      */
-    private array $secondaryQueue = [];
+    private array $deferredNotifies = [];
 
     private int $id = 1;
 
     private bool $inTrans = false;
 
     /**
-     * Adds notify to queue and returns notify identifier.
+     * Adds notify to local queue and returns identifier.
      */
     public function add(AbstractNotify $notify): int
     {
         if ($this->inTrans) {
-            $this->secondaryQueue[$this->id] = $notify;
+            $this->deferredNotifies[$this->id] = $notify;
         } else {
-            $this->primaryQueue[$this->id] = $notify;
+            $this->notifies[$this->id] = $notify;
         }
 
         return $this->id++;
     }
 
     /**
-     * Removes notify from queue.
+     * Removes notifies from local queue.
+     *
+     * @param int[] $ids
      */
-    public function remove(int $id): self
+    public function remove(array $ids): self
     {
-        unset($this->primaryQueue[$id], $this->secondaryQueue[$id]);
+        foreach ($ids as $id) {
+            unset($this->notifies[$id], $this->deferredNotifies[$id]);
+        }
 
         return $this;
     }
@@ -77,8 +81,8 @@ final class DelayedNotifier
     {
         if ($this->inTrans) {
             $this->inTrans = false;
-            $this->primaryQueue += $this->secondaryQueue;
-            $this->secondaryQueue = [];
+            $this->notifies += $this->deferredNotifies;
+            $this->deferredNotifies = [];
         }
 
         return $this;
@@ -100,7 +104,7 @@ final class DelayedNotifier
     {
         if ($this->inTrans) {
             $this->inTrans = false;
-            $this->secondaryQueue = [];
+            $this->deferredNotifies = [];
         }
 
         return $this;
@@ -116,13 +120,13 @@ final class DelayedNotifier
     }
 
     /**
-     * Sends all notifies.
+     * Sends notifies.
      */
-    public function sendAll(): void
+    public function send(): void
     {
-        while ($this->primaryQueue) {
+        while ($this->notifies) {
             try {
-                array_shift($this->primaryQueue)->send();
+                array_shift($this->notifies)->send();
             } catch (Throwable $e) {
                 i(CommonLogger::class)->error($e);
             }
@@ -133,8 +137,8 @@ final class DelayedNotifier
      * @phpstan-ignore method.unused
      */
     #[AsListener(priority: PHP_FLOAT_MIN, persistent: true)]
-    private function autoSendAll(AfterCommandEvent | AfterControllerEvent $event): void
+    private function autoSend(AfterCommandEvent | AfterControllerEvent $event): void
     {
-        $this->sendAll();
+        $this->send();
     }
 }

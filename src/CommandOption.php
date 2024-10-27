@@ -6,7 +6,7 @@ namespace SWF;
 use SWF\Enum\CommandTypeEnum;
 use SWF\Enum\CommandValueEnum;
 
-final readonly class CommandOption
+final readonly class CommandOption extends AbstractCommandParam
 {
     /**
      * @param string|null $name Name of option. If null, then key will be used.

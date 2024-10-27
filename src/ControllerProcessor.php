@@ -32,6 +32,7 @@ final class ControllerProcessor extends AbstractActionProcessor
                             throw new LogicException("Constructor can't be a controller");
                         }
 
+                        /** @var AsController $instance  */
                         $instance = $rAttribute->newInstance();
                         foreach ((array) $instance->getUrl() as $url) {
                             $httpMethods = (array) $instance->getMethod();

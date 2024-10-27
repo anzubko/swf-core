@@ -4,8 +4,7 @@ declare(strict_types=1);
 namespace SWF\Attribute;
 
 use Attribute;
-use SWF\CommandArgument;
-use SWF\CommandOption;
+use SWF\AbstractCommandParam;
 
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 final readonly class AsCommand
@@ -15,7 +14,7 @@ final readonly class AsCommand
      *
      * @param string $alias Alias of command for use in command line.
      * @param string|null $description Optional description.
-     * @param array<string, CommandOption|CommandArgument> $params Parameters of command line, what will be parsed into $_REQUEST array.
+     * @param array<string, AbstractCommandParam> $params Parameters of command line, what will be parsed into $_REQUEST array.
      */
     public function __construct(
         private string $alias,
@@ -35,7 +34,7 @@ final readonly class AsCommand
     }
 
     /**
-     * @return array<string, CommandOption|CommandArgument>
+     * @return array<string, AbstractCommandParam>
      */
     public function getParams(): array
     {

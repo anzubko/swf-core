@@ -36,6 +36,7 @@ final class CommandProcessor extends AbstractActionProcessor
                             throw new LogicException("Constructor can't be a command");
                         }
 
+                        /** @var AsCommand $instance  */
                         $instance = $rAttribute->newInstance();
 
                         $command = ['method' => sprintf('%s::%s', $rClass->name, $rMethod->name)];

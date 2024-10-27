@@ -110,9 +110,7 @@ final class ImageHandler
         $w = (int) imagesx($image);
         $h = (int) imagesy($image);
 
-        /**
-         * @var GdImage $fixed
-         */
+        /** @var GdImage $fixed */
         $fixed = imagecreatetruecolor($w, $h);
         imagefill($fixed, 0, 0, (int) imagecolorallocate($fixed, 255, 255, 255));
         imagecopy($fixed, $image, 0, 0, 0, 0, $w, $h);
@@ -157,9 +155,7 @@ final class ImageHandler
         $cX = (int) round(($nW - $cW) / 2);
         $cY = (int) round(($nH - $cH) / 2);
 
-        /**
-         * @var GdImage $resized
-         */
+        /** @var GdImage $resized */
         $resized = imagecreatetruecolor($nW, $nH);
         imagefill($resized, 0, 0, (int) imagecolorallocatealpha($resized, 0, 0, 0, 127));
         imagecopyresampled($resized, $image, $cX, $cY, 0, 0, $cW, $cH, $oW, $oH);
@@ -176,9 +172,7 @@ final class ImageHandler
             $nH = (int) round($nW / $ratio);
         }
 
-        /**
-         * @var GdImage $resized
-         */
+        /** @var GdImage $resized */
         $resized = imagecreatetruecolor($nW, $nH);
         imagefill($resized, 0, 0, (int) imagecolorallocatealpha($resized, 0, 0, 0, 127));
         imagecopyresampled($resized, $image, 0, 0, 0, 0, $nW, $nH, $oW, $oH);

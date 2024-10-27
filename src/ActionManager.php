@@ -222,9 +222,7 @@ final class ActionManager
             }
 
             foreach ($dirs as $dir) {
-                /**
-                 * @var RecursiveDirectoryIterator $info
-                 */
+                /** @var RecursiveDirectoryIterator $info */
                 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir)) as $info) {
                     if (!$info->isFile() || false === $info->getMTime() || !preg_match('/^[A-Z][A-Za-z\d]*\.php$/', $info->getFilename())) {
                         continue;
