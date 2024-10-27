@@ -7,7 +7,7 @@ use Attribute;
 use SWF\AbstractCommandParam;
 
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
-final readonly class AsCommand
+readonly class AsCommand
 {
     /**
      * Registers command.

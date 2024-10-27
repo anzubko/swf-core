@@ -13,16 +13,14 @@ use SWF\Event\TransactionRollbackEvent;
 final class DelayedPublisher
 {
     /**
-     * @var array<int, array{producer:class-string<AbstractRabbitMQProducer>, body:string}>
+     * @var array<array{producer:class-string<AbstractRabbitMQProducer>, body:string}>
      */
     private array $messages = [];
 
     /**
-     * @var array<int, array{producer:class-string<AbstractRabbitMQProducer>, body:string}>
+     * @var array<array{producer:class-string<AbstractRabbitMQProducer>, body:string}>
      */
-    private array $defferedMessages = [];
-
-    private int $id = 1;
+    private array $deferredMessages = [];
 
     private bool $inTrans = false;
 
@@ -31,28 +29,14 @@ final class DelayedPublisher
      *
      * @param class-string<AbstractRabbitMQProducer> $producer
      */
-    public function add(string $producer, string $body): int
+    public function add(string $producer, string $body): self
     {
         $message = ['producer' => $producer, 'body' => $body];
 
         if ($this->inTrans) {
-            $this->defferedMessages[$this->id] = $message;
+            $this->deferredMessages[] = $message;
         } else {
-            $this->messages[$this->id] = $message;
-        }
-
-        return $this->id++;
-    }
-
-    /**
-     * Removes messages from local queue.
-     *
-     * @param int[] $ids
-     */
-    public function remove(array $ids): self
-    {
-        foreach ($ids as $id) {
-            unset($this->messages[$id], $this->defferedMessages[$id]);
+            $this->messages[] = $message;
         }
 
         return $this;
@@ -84,8 +68,8 @@ final class DelayedPublisher
     {
         if ($this->inTrans) {
             $this->inTrans = false;
-            $this->messages += $this->defferedMessages;
-            $this->defferedMessages = [];
+            $this->messages += $this->deferredMessages;
+            $this->deferredMessages = [];
         }
 
         return $this;
@@ -107,7 +91,7 @@ final class DelayedPublisher
     {
         if ($this->inTrans) {
             $this->inTrans = false;
-            $this->defferedMessages = [];
+            $this->deferredMessages = [];
         }
 
         return $this;

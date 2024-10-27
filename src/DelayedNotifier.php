@@ -14,42 +14,26 @@ use Throwable;
 final class DelayedNotifier
 {
     /**
-     * @var array<int, AbstractNotify>
+     * @var AbstractNotify[]
      */
     private array $notifies = [];
 
     /**
-     * @var array<int, AbstractNotify>
+     * @var AbstractNotify[]
      */
     private array $deferredNotifies = [];
-
-    private int $id = 1;
 
     private bool $inTrans = false;
 
     /**
      * Adds notify to local queue and returns identifier.
      */
-    public function add(AbstractNotify $notify): int
+    public function add(AbstractNotify $notify): self
     {
         if ($this->inTrans) {
-            $this->deferredNotifies[$this->id] = $notify;
+            $this->deferredNotifies[] = $notify;
         } else {
-            $this->notifies[$this->id] = $notify;
-        }
-
-        return $this->id++;
-    }
-
-    /**
-     * Removes notifies from local queue.
-     *
-     * @param int[] $ids
-     */
-    public function remove(array $ids): self
-    {
-        foreach ($ids as $id) {
-            unset($this->notifies[$id], $this->deferredNotifies[$id]);
+            $this->notifies[] = $notify;
         }
 
         return $this;

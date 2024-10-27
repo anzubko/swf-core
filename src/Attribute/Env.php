@@ -6,7 +6,7 @@ namespace SWF\Attribute;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_PROPERTY | Attribute::IS_REPEATABLE)]
-final readonly class Env
+readonly class Env
 {
     /**
      * Overrides configuration property by some ENV value.
