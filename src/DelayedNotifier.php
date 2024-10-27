@@ -26,7 +26,7 @@ final class DelayedNotifier
     private bool $inTrans = false;
 
     /**
-     * Adds notify to local queue and returns identifier.
+     * Adds notify to local queue.
      */
     public function add(AbstractNotify $notify): self
     {

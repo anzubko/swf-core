@@ -13,26 +13,22 @@ use SWF\Event\TransactionRollbackEvent;
 final class DelayedPublisher
 {
     /**
-     * @var array<array{producer:class-string<AbstractRabbitMQProducer>, body:string}>
+     * @var AbstractMessage[]
      */
     private array $messages = [];
 
     /**
-     * @var array<array{producer:class-string<AbstractRabbitMQProducer>, body:string}>
+     * @var AbstractMessage[]
      */
     private array $deferredMessages = [];
 
     private bool $inTrans = false;
 
     /**
-     * Adds message to local queue and returns identifier.
-     *
-     * @param class-string<AbstractRabbitMQProducer> $producer
+     * Adds message to local queue.
      */
-    public function add(string $producer, string $body): self
+    public function add(AbstractMessage $message): self
     {
-        $message = ['producer' => $producer, 'body' => $body];
-
         if ($this->inTrans) {
             $this->deferredMessages[] = $message;
         } else {
