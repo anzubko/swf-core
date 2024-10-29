@@ -22,15 +22,16 @@
         "ext-curl": "*",
         "ext-gd": "*",
         "ext-intl": "*",
-        "ext-zlib": "*",
         "ext-mbstring": "*",
-        "psr/log": "^3.0.2",
-        "psr/event-dispatcher": "^1.0",
-        "mrclay/jsmin-php": "^2.4.3",
-        "phpmailer/phpmailer": "^6.9.1",
+        "ext-zlib": "*",
         "anzubko/swf-cacher": "*",
         "anzubko/swf-databaser": "*",
         "anzubko/swf-paginator": "^1.0",
-        "anzubko/swf-templater": "*"
+        "anzubko/swf-templater": "*",
+        "mrclay/jsmin-php": "^2.4.3",
+        "php-amqplib/php-amqplib": "^3.7",
+        "phpmailer/phpmailer": "^6.9.1",
+        "psr/event-dispatcher": "^1.0",
+        "psr/log": "^3.0.2"
     }
 }
