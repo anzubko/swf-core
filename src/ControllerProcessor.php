@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace SWF;
 
 use LogicException;
+use ReflectionAttribute;
 use SWF\Attribute\AsController;
 use function count;
 use function is_string;
@@ -27,7 +28,7 @@ final class ControllerProcessor extends AbstractActionProcessor
         foreach ($rClasses as $rClass) {
             foreach ($rClass->getMethods() as $rMethod) {
                 try {
-                    foreach ($rMethod->getAttributes(AsController::class) as $rAttribute) {
+                    foreach ($rMethod->getAttributes(AsController::class, ReflectionAttribute::IS_INSTANCEOF) as $rAttribute) {
                         if ($rMethod->isConstructor()) {
                             throw new LogicException("Constructor can't be a controller");
                         }

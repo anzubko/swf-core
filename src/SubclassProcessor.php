@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 namespace SWF;
 
-use SWF\Attribute\Priority;
+use ReflectionAttribute;
+use SWF\Attribute\SetPriority;
 
 /**
  * @internal
@@ -29,7 +30,7 @@ final class SubclassProcessor extends AbstractActionProcessor
                 $cache[$rClassParent->name][] = $rClass->name;
             }
 
-            foreach ($rClass->getAttributes(Priority::class) as $rAttribute) {
+            foreach ($rClass->getAttributes(SetPriority::class, ReflectionAttribute::IS_INSTANCEOF) as $rAttribute) {
                 $priorities[$rClass->name] = $rAttribute->newInstance()->getPriority();
             }
         }

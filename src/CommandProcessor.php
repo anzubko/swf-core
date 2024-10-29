@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace SWF;
 
 use LogicException;
+use ReflectionAttribute;
 use SWF\Attribute\AsCommand;
 use SWF\Enum\CommandTypeEnum;
 use SWF\Enum\CommandValueEnum;
@@ -31,7 +32,7 @@ final class CommandProcessor extends AbstractActionProcessor
         foreach ($rClasses as $rClass) {
             foreach ($rClass->getMethods() as $rMethod) {
                 try {
-                    foreach ($rMethod->getAttributes(AsCommand::class) as $rAttribute) {
+                    foreach ($rMethod->getAttributes(AsCommand::class, ReflectionAttribute::IS_INSTANCEOF) as $rAttribute) {
                         if ($rMethod->isConstructor()) {
                             throw new LogicException("Constructor can't be a command");
                         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace SWF;
 
 use LogicException;
+use ReflectionAttribute;
 use ReflectionFunction;
 use ReflectionIntersectionType;
 use ReflectionMethod;
@@ -29,7 +30,7 @@ final class ConsumerProcessor extends AbstractActionProcessor
         foreach ($rClasses as $rClass) {
             foreach ($rClass->getMethods() as $rMethod) {
                 try {
-                    foreach ($rMethod->getAttributes(AsConsumer::class) as $rAttribute) {
+                    foreach ($rMethod->getAttributes(AsConsumer::class, ReflectionAttribute::IS_INSTANCEOF) as $rAttribute) {
                         if ($rMethod->isConstructor()) {
                             throw new LogicException("Constructor can't be a consumer");
                         }

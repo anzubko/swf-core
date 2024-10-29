@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace SWF;
 
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
-use SWF\Attribute\Env;
+use SWF\Attribute\GetEnv;
 use function array_key_exists;
 use function is_array;
 
@@ -35,7 +36,7 @@ abstract class AbstractConfig
         }
 
         foreach ((new ReflectionClass($this))->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
-            foreach ($property->getAttributes(Env::class) as $attribute) {
+            foreach ($property->getAttributes(GetEnv::class, ReflectionAttribute::IS_INSTANCEOF) as $attribute) {
                 $key = $attribute->newInstance()->getKey();
                 if (!array_key_exists($key, $env)) {
                     continue;

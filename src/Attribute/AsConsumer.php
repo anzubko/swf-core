@@ -5,7 +5,7 @@ namespace SWF\Attribute;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
+#[Attribute(Attribute::TARGET_METHOD)]
 readonly class AsConsumer
 {
     /**
