@@ -14,12 +14,7 @@ readonly class SetPriority
      * @param float $priority Subclass with higher priority will be earlier in returned list.
      */
     public function __construct(
-        private float $priority,
+        public float $priority,
     ) {
-    }
-
-    public function getPriority(): float
-    {
-        return $this->priority;
     }
 }

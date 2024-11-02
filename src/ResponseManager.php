@@ -32,7 +32,7 @@ final class ResponseManager
      */
     public static function send(mixed $body, int $code = 200): void
     {
-        $body = i(EventDispatcher::class)->dispatch(new ResponseEvent(self::headers(), $body))->getBody();
+        $body = i(EventDispatcher::class)->dispatch(new ResponseEvent(self::headers(), $body))->body;
 
         http_response_code($code);
 

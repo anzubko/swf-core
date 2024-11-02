@@ -31,7 +31,9 @@ final class SubclassProcessor extends AbstractActionProcessor
             }
 
             foreach ($rClass->getAttributes(SetPriority::class, ReflectionAttribute::IS_INSTANCEOF) as $rAttribute) {
-                $priorities[$rClass->name] = $rAttribute->newInstance()->getPriority();
+                /** @var SetPriority $instance */
+                $instance = $rAttribute->newInstance();
+                $priorities[$rClass->name] = $instance->priority;
             }
         }
 

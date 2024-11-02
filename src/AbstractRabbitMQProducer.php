@@ -14,4 +14,9 @@ abstract class AbstractRabbitMQProducer implements ProducerInterface
     }
 
     abstract protected function getConnection(): AMQPStreamConnection;
+
+    public function publish(AbstractMessage $message): void
+    {
+
+    }
 }

@@ -1,16 +1,18 @@
 <?php
 declare(strict_types=1);
 
-namespace SWF\Attribute;
+namespace SWF;
 
-use Attribute;
 use SWF\Interface\ProducerInterface;
 
-#[Attribute(Attribute::TARGET_CLASS)]
-readonly class SetProducer
+/**
+ * @internal
+ */
+final readonly class DelayedPublisherPack
 {
     public function __construct(
         public ProducerInterface $producer,
+        public AbstractMessage $message,
     ) {
     }
 }

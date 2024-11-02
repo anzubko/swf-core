@@ -48,20 +48,20 @@ final class TransactionRunner
         for ($retry = 0; $retry <= $retries; $retry++) {
             try {
                 foreach ($declarations as $declaration) {
-                    $declaration->getDb()->begin($declaration->getIsolation());
+                    $declaration->db->begin($declaration->isolation);
                 }
 
                 i(EventDispatcher::class)->dispatch(new TransactionBeginEvent());
 
                 if (false === $body()) {
                     foreach ($declarations as $declaration) {
-                        $declaration->getDb()->rollback();
+                        $declaration->db->rollback();
                     }
 
                     i(EventDispatcher::class)->dispatch(new TransactionRollbackEvent());
                 } else {
                     foreach ($declarations as $declaration) {
-                        $declaration->getDb()->commit();
+                        $declaration->db->commit();
                     }
 
                     i(EventDispatcher::class)->dispatch(new TransactionCommitEvent());
@@ -70,14 +70,14 @@ final class TransactionRunner
                 return;
             } catch (Throwable $e) {
                 foreach ($declarations as $declaration) {
-                    $declaration->getDb()->rollback();
+                    $declaration->db->rollback();
                 }
 
                 i(EventDispatcher::class)->dispatch(new TransactionRollbackEvent());
 
                 if ($e instanceof DatabaserException && $retry < $retries) {
                     foreach ($declarations as $declaration) {
-                        if (in_array($e->getState(), $declaration->getStates(), true)) {
+                        if (in_array($e->getState(), $declaration->states, true)) {
                             i(EventDispatcher::class)->dispatch(new TransactionRetryEvent($declarations, $e, $retry + 1));
 
                             continue 2;

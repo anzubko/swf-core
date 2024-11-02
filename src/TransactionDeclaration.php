@@ -13,27 +13,9 @@ final readonly class TransactionDeclaration
      * @param string[] $states SQL states allowed for retries.
      */
     public function __construct(
-        private DatabaserInterface $db,
-        private ?string $isolation = null,
-        private array $states = [],
+        public DatabaserInterface $db,
+        public ?string $isolation = null,
+        public array $states = [],
     ) {
-    }
-
-    public function getDb(): DatabaserInterface
-    {
-        return $this->db;
-    }
-
-    public function getIsolation(): ?string
-    {
-        return $this->isolation;
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getStates(): array
-    {
-        return $this->states;
     }
 }

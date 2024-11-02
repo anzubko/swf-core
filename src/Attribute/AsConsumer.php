@@ -14,12 +14,7 @@ readonly class AsConsumer
      * @param float $priority Consumer with higher priority will be called earlier.
      */
     public function __construct(
-        private float $priority = 0.0,
+        public float $priority = 0.0,
     ) {
-    }
-
-    public function getPriority(): float
-    {
-        return $this->priority;
     }
 }

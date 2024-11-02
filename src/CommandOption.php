@@ -19,54 +19,14 @@ final readonly class CommandOption extends AbstractCommandParam
      * @param CommandValueEnum $value Value definition.
      */
     public function __construct(
-        private ?string $name = null,
-        private ?string $shortcut = null,
-        private ?string $description = null,
-        private bool $required = false,
-        private bool $array = false,
-        private bool $hidden = false,
-        private CommandTypeEnum $type = CommandTypeEnum::STRING,
-        private CommandValueEnum $value = CommandValueEnum::OPTIONAL,
+        public ?string $name = null,
+        public ?string $shortcut = null,
+        public ?string $description = null,
+        public bool $required = false,
+        public bool $array = false,
+        public bool $hidden = false,
+        public CommandTypeEnum $type = CommandTypeEnum::STRING,
+        public CommandValueEnum $value = CommandValueEnum::OPTIONAL,
     ) {
-    }
-
-    public function getName(): ?string
-    {
-        return $this->name;
-    }
-
-    public function getShortcut(): ?string
-    {
-        return $this->shortcut;
-    }
-
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function isRequired(): bool
-    {
-        return $this->required;
-    }
-
-    public function isArray(): bool
-    {
-        return $this->array;
-    }
-
-    public function isHidden(): bool
-    {
-        return $this->hidden;
-    }
-
-    public function getType(): CommandTypeEnum
-    {
-        return $this->type;
-    }
-
-    public function getValue(): CommandValueEnum
-    {
-        return $this->value;
     }
 }

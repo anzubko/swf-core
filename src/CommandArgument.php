@@ -14,30 +14,10 @@ final readonly class CommandArgument extends AbstractCommandParam
      * @param CommandTypeEnum $type You will get exactly that type.
      */
     public function __construct(
-        private ?string $description = null,
-        private bool $required = false,
-        private bool $array = false,
-        private CommandTypeEnum $type = CommandTypeEnum::STRING,
+        public ?string $description = null,
+        public bool $required = false,
+        public bool $array = false,
+        public CommandTypeEnum $type = CommandTypeEnum::STRING,
     ) {
-    }
-
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function isRequired(): bool
-    {
-        return $this->required;
-    }
-
-    public function isArray(): bool
-    {
-        return $this->array;
-    }
-
-    public function getType(): CommandTypeEnum
-    {
-        return $this->type;
     }
 }

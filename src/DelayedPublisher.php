@@ -3,39 +3,55 @@ declare(strict_types=1);
 
 namespace SWF;
 
+use LogicException;
+use ReflectionAttribute;
+use ReflectionClass;
 use SWF\Attribute\AsListener;
+use SWF\Attribute\SetProducer;
 use SWF\Event\AfterCommandEvent;
 use SWF\Event\AfterControllerEvent;
 use SWF\Event\TransactionBeginEvent;
 use SWF\Event\TransactionCommitEvent;
 use SWF\Event\TransactionRollbackEvent;
+use Throwable;
 
 final class DelayedPublisher
 {
     /**
-     * @var AbstractMessage[]
+     * @var DelayedPublisherPack[]
      */
-    private array $messages = [];
+    private array $packs = [];
 
     /**
-     * @var AbstractMessage[]
+     * @var DelayedPublisherPack[]
      */
-    private array $deferredMessages = [];
+    private array $deferredPacks = [];
 
     private bool $inTrans = false;
 
     /**
      * Adds message to local queue.
+     *
+     * @throws LogicException
      */
     public function add(AbstractMessage $message): self
     {
-        if ($this->inTrans) {
-            $this->deferredMessages[] = $message;
-        } else {
-            $this->messages[] = $message;
+        foreach ((new ReflectionClass($message))->getAttributes(SetProducer::class, ReflectionAttribute::IS_INSTANCEOF) as $rAttribute) {
+            /** @var SetProducer $instance */
+            $instance = $rAttribute->newInstance();
+
+            $pack = new DelayedPublisherPack($instance->producer, $message);
+
+            if ($this->inTrans) {
+                $this->deferredPacks[] = $pack;
+            } else {
+                $this->packs[] = $pack;
+            }
+
+            return $this;
         }
 
-        return $this;
+        throw new LogicException(sprintf('Use SetProducer attribute to set producer for message %s', $message::class));
     }
 
     /**
@@ -64,8 +80,8 @@ final class DelayedPublisher
     {
         if ($this->inTrans) {
             $this->inTrans = false;
-            $this->messages += $this->deferredMessages;
-            $this->deferredMessages = [];
+            $this->packs += $this->deferredPacks;
+            $this->deferredPacks = [];
         }
 
         return $this;
@@ -87,7 +103,7 @@ final class DelayedPublisher
     {
         if ($this->inTrans) {
             $this->inTrans = false;
-            $this->deferredMessages = [];
+            $this->deferredPacks = [];
         }
 
         return $this;
@@ -105,8 +121,21 @@ final class DelayedPublisher
     /**
      * Publish messages.
      */
-    public function publish(): void
+    public function publish(bool $silent = false): void
     {
+        while ($this->packs) {
+            $pack = array_shift($this->packs);
+
+            if ($silent) {
+                try {
+                    $pack->producer->publish($pack->message);
+                } catch (Throwable $e) {
+                    i(CommonLogger::class)->error($e);
+                }
+            } else {
+                $pack->producer->publish($pack->message);
+            }
+        }
     }
 
     /**
@@ -115,6 +144,6 @@ final class DelayedPublisher
     #[AsListener(priority: PHP_FLOAT_MIN, persistent: true)]
     private function autoPublish(AfterCommandEvent | AfterControllerEvent $event): void
     {
-        $this->publish();
+        $this->publish(true);
     }
 }

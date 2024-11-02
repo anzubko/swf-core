@@ -14,12 +14,7 @@ readonly class GetEnv
      * @param string $key Key of some ENV parameter.
      */
     public function __construct(
-        private string $key,
+        public string $key,
     ) {
-    }
-
-    public function getKey(): string
-    {
-        return $this->key;
     }
 }

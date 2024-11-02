@@ -37,15 +37,16 @@ abstract class AbstractConfig
 
         foreach ((new ReflectionClass($this))->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
             foreach ($property->getAttributes(GetEnv::class, ReflectionAttribute::IS_INSTANCEOF) as $attribute) {
-                $key = $attribute->newInstance()->getKey();
-                if (!array_key_exists($key, $env)) {
+                /** @var GetEnv $instance */
+                $instance = $attribute->newInstance();
+                if (!array_key_exists($instance->key, $env)) {
                     continue;
                 }
 
-                if (is_array($env[$key])) {
-                    $this->{$property->name} = $env[$key] + ($this->{$property->name} ?? []);
+                if (is_array($env[$instance->key])) {
+                    $this->{$property->name} = $env[$instance->key] + ($this->{$property->name} ?? []);
                 } else {
-                    $this->{$property->name} = $env[$key];
+                    $this->{$property->name} = $env[$instance->key];
                 }
             }
         }

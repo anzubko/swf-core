@@ -106,13 +106,19 @@ final class DelayedNotifier
     /**
      * Sends notifies.
      */
-    public function send(): void
+    public function send(bool $silent = false): void
     {
-        while ($this->notifies) {
-            try {
+        if ($silent) {
+            while ($this->notifies) {
+                try {
+                    array_shift($this->notifies)->send();
+                } catch (Throwable $e) {
+                    i(CommonLogger::class)->error($e);
+                }
+            }
+        } else {
+            while ($this->notifies) {
                 array_shift($this->notifies)->send();
-            } catch (Throwable $e) {
-                i(CommonLogger::class)->error($e);
             }
         }
     }
@@ -123,6 +129,6 @@ final class DelayedNotifier
     #[AsListener(priority: PHP_FLOAT_MIN, persistent: true)]
     private function autoSend(AfterCommandEvent | AfterControllerEvent $event): void
     {
-        $this->send();
+        $this->send(true);
     }
 }
