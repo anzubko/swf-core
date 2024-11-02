@@ -43,7 +43,7 @@ final class ControllerProcessor extends AbstractActionProcessor
 
                             foreach ($httpMethods as $httpMethod) {
                                 $method = sprintf('%s::%s', $rClass->name, $rMethod->name);
-                                if (null !== $instance->alias) {
+                                if ($instance->alias !== null) {
                                     $cache['static'][$url][strtoupper($httpMethod)] = [$method, $instance->alias];
                                 } else {
                                     $cache['static'][$url][strtoupper($httpMethod)] = $method;
@@ -81,7 +81,7 @@ final class ControllerProcessor extends AbstractActionProcessor
                 }
 
                 foreach ($action as $name) {
-                    if (null !== $name) {
+                    if ($name !== null) {
                         $cache['actions'][sprintf('%s:%s', $name, $paramsCount)] = count($cache['urls']) - 1;
                     }
                 }

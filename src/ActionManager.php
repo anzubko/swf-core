@@ -63,14 +63,14 @@ final class ActionManager
     private function readOrRebuildCaches(): array
     {
         $caches = $this->readCaches();
-        if (null !== $caches && 'prod' === ConfigStorage::$system->env) {
+        if ($caches !== null && ConfigStorage::$system->env === 'prod') {
             return $caches;
         }
 
         $metrics = null;
-        if (null !== $caches) {
+        if ($caches !== null) {
             $metrics = $this->getMetrics();
-            if (null !== $metrics && !$this->isOutdated($metrics)) {
+            if ($metrics !== null && !$this->isOutdated($metrics)) {
                 return $caches;
             }
         }
@@ -78,11 +78,11 @@ final class ActionManager
         i(FileLocker::class)->acquire(self::LOCK_KEY);
 
         try {
-            if (null === $this->getMetrics($metrics)) {
+            if ($this->getMetrics($metrics) === null) {
                 $caches = $this->rebuild();
             } else {
                 $caches = $this->readCaches();
-                if (null === $caches) {
+                if ($caches === null) {
                     $caches = $this->rebuild();
                 }
             }
@@ -136,7 +136,7 @@ final class ActionManager
      */
     private function isOutdated(array $metrics): bool
     {
-        if (count($this->getAllowedClasses()) !== $metrics['count']) {
+        if ($metrics['count'] !== count($this->getAllowedClasses())) {
             return true;
         }
 
@@ -224,7 +224,7 @@ final class ActionManager
             foreach ($dirs as $dir) {
                 /** @var RecursiveDirectoryIterator $info */
                 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir)) as $info) {
-                    if (!$info->isFile() || false === $info->getMTime() || !preg_match('/^[A-Z][A-Za-z\d]*\.php$/', $info->getFilename())) {
+                    if (!$info->isFile() || $info->getMTime() === false || !preg_match('/^[A-Z][A-Za-z\d]*\.php$/', $info->getFilename())) {
                         continue;
                     }
 

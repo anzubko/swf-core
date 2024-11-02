@@ -42,7 +42,7 @@ final class CommandProcessor extends AbstractActionProcessor
 
                         $command = ['method' => sprintf('%s::%s', $rClass->name, $rMethod->name)];
 
-                        if (null !== $instance->description) {
+                        if ($instance->description !== null) {
                             $command['description'] = $instance->description;
                         }
 
@@ -82,7 +82,7 @@ final class CommandProcessor extends AbstractActionProcessor
     private function decomposeArgument(array $command, string $key, CommandArgument $param): array
     {
         $argument = [];
-        if (null !== $param->description) {
+        if ($param->description !== null) {
             $argument['description'] = $param->description;
         }
         if ($param->array) {
@@ -91,7 +91,7 @@ final class CommandProcessor extends AbstractActionProcessor
         if ($param->required) {
             $argument['required'] = true;
         }
-        if (CommandTypeEnum::STRING !== $param->type) {
+        if ($param->type !== CommandTypeEnum::STRING) {
             $argument['type'] = $param->type->value;
         }
 
@@ -123,7 +123,7 @@ final class CommandProcessor extends AbstractActionProcessor
 
         $command['optionNames'][$name] = $key;
 
-        if (null !== $param->shortcut) {
+        if ($param->shortcut !== null) {
             if (mb_strlen($param->shortcut) !== 1) {
                 throw new LogicException(sprintf('Malformed shortcut in option with key %s', $key));
             }
@@ -137,11 +137,11 @@ final class CommandProcessor extends AbstractActionProcessor
             $command['optionShortcuts'][$param->shortcut] = $key;
         }
 
-        if (CommandValueEnum::NONE === $param->value && CommandTypeEnum::BOOL !== $param->type) {
+        if ($param->value === CommandValueEnum::NONE && $param->type !== CommandTypeEnum::BOOL) {
             throw new LogicException(sprintf('Type NONE can be used only with BOOL value type in option %s', $key));
         }
 
-        if (null !== $param->description) {
+        if ($param->description !== null) {
             $option['description'] = $param->description;
         }
         if ($param->required) {
@@ -153,10 +153,10 @@ final class CommandProcessor extends AbstractActionProcessor
         if ($param->hidden) {
             $option['hidden'] = true;
         }
-        if (CommandTypeEnum::STRING !== $param->type) {
+        if ($param->type !== CommandTypeEnum::STRING) {
             $option['type'] = $param->type->value;
         }
-        if (CommandValueEnum::OPTIONAL !== $param->value) {
+        if ($param->value !== CommandValueEnum::OPTIONAL) {
             $option['value'] = $param->value->value;
         }
 

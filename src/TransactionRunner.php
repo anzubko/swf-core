@@ -53,7 +53,7 @@ final class TransactionRunner
 
                 i(EventDispatcher::class)->dispatch(new TransactionBeginEvent());
 
-                if (false === $body()) {
+                if ($body() === false) {
                     foreach ($declarations as $declaration) {
                         $declaration->db->rollback();
                     }

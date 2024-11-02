@@ -11,7 +11,7 @@ final class FileHandler
     public static function get(string $file): ?string
     {
         $contents = file_get_contents($file);
-        if (false === $contents) {
+        if ($contents === false) {
             return null;
         }
 
@@ -23,7 +23,7 @@ final class FileHandler
      */
     public static function put(string $file, mixed $contents, int $flags = 0, bool $createDir = true): bool
     {
-        if ($createDir && !DirHandler::create(dirname($file)) || false === file_put_contents($file, $contents, $flags)) {
+        if ($createDir && !DirHandler::create(dirname($file)) || file_put_contents($file, $contents, $flags) === false) {
             return false;
         }
 
@@ -93,12 +93,12 @@ final class FileHandler
     public static function stats(string $file): ?FileStats
     {
         $fileStats = @stat($file);
-        if (false === $fileStats) {
+        if ($fileStats === false) {
             return null;
         }
 
         $imageSize = @getimagesize($file);
-        if (false === $imageSize) {
+        if ($imageSize === false) {
             $imageSize = [];
         }
 

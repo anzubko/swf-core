@@ -138,7 +138,7 @@ final class HeaderRegistry
             return $this;
         }
 
-        if (null === $charset) {
+        if ($charset === null) {
             $this->headers['content-type'] = [$type];
         } else {
             $this->headers['content-type'] = [sprintf('%s; charset=%s', $type, $charset)];
@@ -202,7 +202,7 @@ final class HeaderRegistry
             return $this;
         }
 
-        if (null === $filename) {
+        if ($filename === null) {
             $this->headers['content-disposition'] = [$disposition];
         } else {
             $this->headers['content-disposition'] = [sprintf("%s; filename*=utf-8''%s", $disposition, rawurlencode($filename))];
@@ -265,7 +265,7 @@ final class HeaderRegistry
         $options['path'] ??= '/';
 
         $chunks = [];
-        if (null === $value) {
+        if ($value === null) {
             $chunks[] = sprintf('%s=deleted', $name);
 
             $options['max-age'] = 0;

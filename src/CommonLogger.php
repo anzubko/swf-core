@@ -15,7 +15,6 @@ use Throwable;
 use function array_key_exists;
 use function count;
 use function is_string;
-use function strlen;
 
 final class CommonLogger implements LoggerInterface
 {
@@ -129,7 +128,7 @@ final class CommonLogger implements LoggerInterface
 
         error_log($complexMessage);
 
-        if (null !== ConfigStorage::$system->customLog) {
+        if (ConfigStorage::$system->customLog !== null) {
             $this->customLog(strtr(ConfigStorage::$system->customLog, ['{ENV}' => ConfigStorage::$system->env]), $complexMessage);
         }
 
@@ -166,7 +165,7 @@ final class CommonLogger implements LoggerInterface
     private function getComplexMessage(string $level, string|Stringable $message, array $context, array $options): string
     {
         if ($message instanceof Throwable) {
-            if (strlen($message->getFile()) > 0) {
+            if ($message->getFile() !== '') {
                 $complexMessage = (string) $message;
             } else {
                 $complexMessage = $message->getMessage();
@@ -202,7 +201,7 @@ final class CommonLogger implements LoggerInterface
     private function getFileAndLine(array $options): array
     {
         if (array_key_exists('file', $options)) {
-            if (strlen((string) $options['file']) > 0) {
+            if ((string) $options['file'] !== '') {
                 return [
                     (string) $options['file'],
                     (int) ($options['line'] ?? 0),
@@ -219,7 +218,7 @@ final class CommonLogger implements LoggerInterface
                 continue;
             }
 
-            if (strlen($trace[$i - 1]['file'] ?? '') > 0) {
+            if (($trace[$i - 1]['file'] ?? '') !== '') {
                 return [
                     $trace[$i - 1]['file'],
                     $trace[$i - 1]['line'] ?? 0,

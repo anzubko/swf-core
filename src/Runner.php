@@ -14,7 +14,6 @@ use SWF\Exception\ExitSimulationException;
 use Throwable;
 use function in_array;
 use function is_int;
-use function strlen;
 
 final class Runner
 {
@@ -47,7 +46,7 @@ final class Runner
     {
         try {
             $action = i(ControllerProvider::class)->getCurrentAction();
-            if (null === $action->method) {
+            if ($action->method === null) {
                 ResponseManager::error(404);
             }
 
@@ -74,7 +73,7 @@ final class Runner
     {
         try {
             $action = i(CommandProvider::class)->getCurrentAction();
-            if (null === $action->method) {
+            if ($action->method === null) {
                 CommandLineManager::error(sprintf('Command %s not found', $action->alias));
             }
 
@@ -120,7 +119,7 @@ final class Runner
 
         $_SERVER['USER_URL'] = $userUrl->getUrl();
 
-        $_SERVER['HTTP_SCHEME'] = empty($_SERVER['HTTPS']) || 'off' === $_SERVER['HTTPS'] ? 'http' : 'https';
+        $_SERVER['HTTP_SCHEME'] = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
 
         $_SERVER['HTTP_HOST'] ??= 'localhost';
 
@@ -161,7 +160,7 @@ final class Runner
             ob_end_clean();
         }
 
-        if (strlen($e->getMessage()) > 0) {
+        if ($e->getMessage() !== '') {
             i(CommonLogger::class)->critical($e);
         }
 

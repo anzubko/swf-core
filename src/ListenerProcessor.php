@@ -41,7 +41,7 @@ final class ListenerProcessor extends AbstractActionProcessor
                         foreach ($this->getTypes($rMethod) as $type) {
                             $listener = ['callback' => sprintf('%s::%s', $rClass->name, $rMethod->name), 'type' => $type];
 
-                            if (0.0 !== $instance->priority) {
+                            if ($instance->priority !== 0.0) {
                                 $listener['priority'] = $instance->priority;
                             }
                             if ($instance->disposable) {
@@ -90,7 +90,7 @@ final class ListenerProcessor extends AbstractActionProcessor
             }
         } elseif ($type instanceof ReflectionIntersectionType) {
             throw new LogicException('Intersection types have no sense for listeners');
-        } elseif (null === $type) {
+        } elseif ($type === null) {
             throw new LogicException('Listener must have first parameter with declared type');
         }
 

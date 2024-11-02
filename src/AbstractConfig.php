@@ -29,7 +29,7 @@ abstract class AbstractConfig
             $env = $_SERVER;
             foreach ($files as $file) {
                 $params = @include APP_DIR . $file;
-                if (false !== $params) {
+                if ($params !== false) {
                     $env += $params;
                 }
             }

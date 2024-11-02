@@ -27,13 +27,13 @@ final class DirHandler
         }
 
         $items = scandir($dir, $order);
-        if (false === $items) {
+        if ($items === false) {
             return [];
         }
 
         $scanned = [];
         foreach ($items as $item) {
-            if ('.' === $item || '..' === $item) {
+            if ($item === '.' || $item === '..') {
                 continue;
             }
 
@@ -85,12 +85,12 @@ final class DirHandler
         $success = true;
         if ($recursive) {
             $items = scandir($dir);
-            if (false === $items) {
+            if ($items === false) {
                 return false;
             }
 
             foreach ($items as $item) {
-                if ('.' === $item || '..' === $item) {
+                if ($item === '.' || $item === '..') {
                     continue;
                 }
 
@@ -122,13 +122,13 @@ final class DirHandler
         }
 
         $items = scandir($dir);
-        if (false === $items) {
+        if ($items === false) {
             return false;
         }
 
         $success = true;
         foreach ($items as $item) {
-            if ('.' === $item || '..' === $item) {
+            if ($item === '.' || $item === '..') {
                 continue;
             }
 
@@ -155,13 +155,13 @@ final class DirHandler
         }
 
         $items = scandir($source);
-        if (false === $items) {
+        if ($items === false) {
             return false;
         }
 
         $success = true;
         foreach ($items as $item) {
-            if ('.' === $item || '..' === $item) {
+            if ($item === '.' || $item === '..') {
                 continue;
             }
 
@@ -197,7 +197,7 @@ final class DirHandler
     {
         if (!isset(self::$tempDir)) {
             $tempDir = realpath(sys_get_temp_dir());
-            if (false === $tempDir) {
+            if ($tempDir === false) {
                 throw new RuntimeException('Invalid system temporary directory');
             }
 

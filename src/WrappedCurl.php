@@ -35,7 +35,7 @@ final class WrappedCurl
         curl_setopt_array($this->curl, $options);
 
         $response = curl_exec($this->curl);
-        if (false === $response) {
+        if ($response === false) {
             return;
         }
 

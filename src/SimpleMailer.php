@@ -32,15 +32,15 @@ final class SimpleMailer
         $this->mailer = new PHPMailer(true);
         $this->mailer->CharSet = PHPMailer::CHARSET_UTF8;
 
-        if (null !== $sender) {
+        if ($sender !== null) {
             $this->setFrom(...(array) $sender);
         }
-        if (null !== $recipients) {
+        if ($recipients !== null) {
             foreach ($recipients as $recipient) {
                 $this->addRecipient(...$recipient);
             }
         }
-        if (null !== $replies) {
+        if ($replies !== null) {
             foreach ($replies as $reply) {
                 $this->addReply(...$reply);
             }

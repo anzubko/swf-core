@@ -16,7 +16,7 @@ final class ControllerProvider
         $path = explode('?', $_SERVER['REQUEST_URI'], 2)[0];
 
         $actions = ControllerStorage::$cache['static'][$path] ?? null;
-        if (null === $actions) {
+        if ($actions === null) {
             if (empty(ControllerStorage::$cache)) {
                 return new CurrentAction(ActionTypeEnum::CONTROLLER);
             }
@@ -30,12 +30,12 @@ final class ControllerProvider
             }
         }
 
-        if (null === $actions) {
+        if ($actions === null) {
             return new CurrentAction(ActionTypeEnum::CONTROLLER);
         }
 
         $action = $actions[$_SERVER['REQUEST_METHOD']] ?? $actions['ANY'] ?? null;
-        if (null === $action) {
+        if ($action === null) {
             return new CurrentAction(ActionTypeEnum::CONTROLLER);
         }
 

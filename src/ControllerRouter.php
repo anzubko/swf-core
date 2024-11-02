@@ -22,7 +22,7 @@ final class ControllerRouter
         $parametrizedAction = sprintf('%s:%s', $action, count($params));
 
         $index = ControllerStorage::$cache['actions'][$parametrizedAction] ?? null;
-        if (null === $index) {
+        if ($index === null) {
             if (count($params) === 0) {
                 throw new LogicException(sprintf('Unable to make URL by action %s', $action));
             }
@@ -36,7 +36,7 @@ final class ControllerRouter
         }
 
         foreach ($params as $i => $value) {
-            if (null !== $value) {
+            if ($value !== null) {
                 $url[(int) $i * 2 + 1] = $value;
             }
         }

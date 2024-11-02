@@ -14,7 +14,7 @@ final class ImageHandler
     public static function fromString(string $string): ?GdImage
     {
         $image = imagecreatefromstring($string);
-        if (false === $image) {
+        if ($image === false) {
             return null;
         }
 
@@ -27,7 +27,7 @@ final class ImageHandler
     public static function fromFile(string $file): ?GdImage
     {
         $contents = FileHandler::get($file);
-        if (null === $contents) {
+        if ($contents === null) {
             return null;
         }
 
@@ -47,7 +47,7 @@ final class ImageHandler
         imagepng($image, null, $quality);
 
         $contents = ob_get_clean();
-        if (false === $contents) {
+        if ($contents === false) {
             return null;
         }
 
@@ -83,7 +83,7 @@ final class ImageHandler
         imagejpeg(self::fixJpeg($image), null, $quality);
 
         $contents = ob_get_clean();
-        if (false === $contents) {
+        if ($contents === false) {
             return null;
         }
 

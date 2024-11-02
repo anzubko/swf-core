@@ -18,7 +18,7 @@ final class UrlNormalizer
      */
     public function __construct(?string $url)
     {
-        if (null === $url) {
+        if ($url === null) {
             return;
         }
 

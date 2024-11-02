@@ -48,7 +48,7 @@ final class AssetsMerger
     public function merge(): array
     {
         $metrics = $this->getMetrics();
-        if (null !== $metrics && !$this->isOutdated($metrics)) {
+        if ($metrics !== null && !$this->isOutdated($metrics)) {
             return $this->getTargetFiles($metrics);
         }
 
@@ -102,13 +102,13 @@ final class AssetsMerger
             return true;
         }
 
-        if ('prod' === ConfigStorage::$system->env) {
+        if (ConfigStorage::$system->env === 'prod') {
             return false;
         }
 
         $oldTargets = [];
         foreach (DirHandler::scan($this->dir, false, true) as $item) {
-            if (!is_file($item) || !preg_match('~/(\d+)\.(.+)$~', $item, $M) || (int) $M[1] !== $metrics['modified']) {
+            if (!is_file($item) || !preg_match('~/(\d+)\.(.+)$~', $item, $M) || $metrics['modified'] !== (int) $M[1]) {
                 return true;
             }
 
@@ -154,9 +154,9 @@ final class AssetsMerger
                 $file = sprintf('%s/%s.%s', $this->dir, $metrics['modified'], $target);
 
                 $contents = '';
-                if ('js' === $type) {
+                if ($type === 'js') {
                     $contents = $this->mergeJs($files);
-                } elseif ('css' === $type) {
+                } elseif ($type === 'css') {
                     $contents = $this->mergeCss($files);
                 }
 
@@ -197,7 +197,7 @@ final class AssetsMerger
 
                 $scannedFiles[$M[1]][$target] ??= [];
                 $items = glob($file);
-                if (false !== $items) {
+                if ($items !== false) {
                     foreach ($items as $item) {
                         if (is_file($item)) {
                             $scannedFiles[$M[1]][$target][] = $item;
@@ -245,17 +245,17 @@ final class AssetsMerger
         $callback = function (array $M): string {
             if (preg_match('/\.(gif|png|jpg|jpeg|svg|woff|woff2)$/ui', $M[1], $N) && str_starts_with($M[1], '/') && !str_starts_with($M[1], '//') && !str_contains($M[1], '..')) {
                 $type = strtolower($N[1]);
-                if ('jpg' === $type) {
+                if ($type === 'jpg') {
                     $type = 'jpeg';
-                } elseif ('svg' === $type) {
+                } elseif ($type === 'svg') {
                     $type = 'svg+xml';
                 }
 
                 $file = sprintf('%s/%s', $this->docRoot, $M[1]);
                 $size = @filesize($file);
-                if (false !== $size && $size <= self::MAX_FILESIZE_TO_ENCODE) {
+                if ($size !== false && $size <= self::MAX_FILESIZE_TO_ENCODE) {
                     $data = FileHandler::get($file);
-                    if (null !== $data) {
+                    if ($data !== null) {
                         return sprintf('url(data:image/%s;base64,%s)', $type, base64_encode($data));
                     }
                 }

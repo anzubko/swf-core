@@ -27,10 +27,10 @@ final readonly class CommandParamsParser
         $pair = explode('=', substr($chunk, 2), 2);
 
         $name = $pair[0];
-        if ('' === $name) {
+        if ($name === '') {
             throw new InvalidArgumentException(sprintf('Malformed option %s of command %s', $chunk, $this->command->alias));
         }
-        if ('help' === $name) {
+        if ($name === 'help') {
             return true;
         }
         if (!array_key_exists($name, $this->command->optionNames)) {
@@ -42,14 +42,14 @@ final readonly class CommandParamsParser
         $option = $this->command->options[$key];
 
         $value = $pair[1] ?? null;
-        if (null !== $value) {
-            if (CommandValueEnum::NONE === $option->value) {
+        if ($value !== null) {
+            if ($option->value === CommandValueEnum::NONE) {
                 throw new InvalidArgumentException(sprintf("Option --%s of command %s can't have value", $name, $this->command->alias));
             }
             $this->store($key, $this->typify($option->type, $value), $option->array);
-        } elseif (CommandValueEnum::NONE === $option->value) {
+        } elseif ($option->value === CommandValueEnum::NONE) {
             $this->store($key, true, $option->array);
-        } elseif (CommandValueEnum::REQUIRED === $option->value) {
+        } elseif ($option->value === CommandValueEnum::REQUIRED) {
             throw new InvalidArgumentException(sprintf('Option --%s of command %s must have value', $name, $this->command->alias));
         }
 
@@ -65,7 +65,7 @@ final readonly class CommandParamsParser
     {
         for ($j = 1, $chunk = $chunks[$i], $nChunk = $chunks[$i + 1] ?? null, $length = mb_strlen($chunk); $j < $length; $j++) {
             $shortcut = mb_substr($chunk, $j, 1);
-            if ('h' === $shortcut) {
+            if ($shortcut === 'h') {
                 return true;
             }
             if (!array_key_exists($shortcut, $this->command->optionShortcuts)) {
@@ -76,19 +76,19 @@ final readonly class CommandParamsParser
 
             $option = $this->command->options[$key];
 
-            if (CommandValueEnum::NONE === $option->value) {
+            if ($option->value === CommandValueEnum::NONE) {
                 $this->store($key, true, $option->array);
             } elseif ($length > $j + 1) {
                 $this->store($key, $this->typify($option->type, mb_substr($chunk, $j + 1)), $option->array);
                 return false;
-            } elseif (isset($nChunk) && ('' === $nChunk || '-' !== $nChunk[0])) {
+            } elseif (isset($nChunk) && ($nChunk === '' || $nChunk[0] !== '-')) {
                 $this->store($key, $this->typify($option->type, $nChunk), $option->array);
                 $i++;
                 return false;
-            } elseif (CommandValueEnum::OPTIONAL === $option->value) {
+            } elseif ($option->value === CommandValueEnum::OPTIONAL) {
                 $this->store($key, null, $option->array);
                 return false;
-            } elseif (CommandValueEnum::REQUIRED === $option->value) {
+            } elseif ($option->value === CommandValueEnum::REQUIRED) {
                 throw new InvalidArgumentException(sprintf('Option -%s of command %s must have value', $shortcut, $this->command->alias));
             }
         }

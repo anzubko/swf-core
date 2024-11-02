@@ -12,7 +12,7 @@ final class TextHandler
      */
     public static function lc(?string $string): string
     {
-        if (null === $string) {
+        if ($string === null) {
             return '';
         }
 
@@ -24,7 +24,7 @@ final class TextHandler
      */
     public static function lcFirst(?string $string): string
     {
-        if (null === $string) {
+        if ($string === null) {
             return '';
         }
 
@@ -36,7 +36,7 @@ final class TextHandler
      */
     public static function uc(?string $string): string
     {
-        if (null === $string) {
+        if ($string === null) {
             return '';
         }
 
@@ -48,7 +48,7 @@ final class TextHandler
      */
     public static function ucFirst(?string $string): string
     {
-        if (null === $string) {
+        if ($string === null) {
             return '';
         }
 
@@ -60,7 +60,7 @@ final class TextHandler
      */
     public static function trim(?string $string): string
     {
-        if (null === $string) {
+        if ($string === null) {
             return '';
         }
 
@@ -72,7 +72,7 @@ final class TextHandler
      */
     public static function rTrim(?string $string): string
     {
-        if (null === $string) {
+        if ($string === null) {
             return '';
         }
 
@@ -84,7 +84,7 @@ final class TextHandler
      */
     public static function lTrim(?string $string): string
     {
-        if (null === $string) {
+        if ($string === null) {
             return '';
         }
 
@@ -96,7 +96,7 @@ final class TextHandler
      */
     public static function fTrim(?string $string, int $limit = 0): string
     {
-        if (null === $string) {
+        if ($string === null) {
             return '';
         }
 
@@ -113,7 +113,7 @@ final class TextHandler
      */
     public static function mTrim(?string $string, int $limit = 0): string
     {
-        if (null === $string) {
+        if ($string === null) {
             return '';
         }
 
@@ -130,7 +130,7 @@ final class TextHandler
      */
     public static function cut(?string $string, int $min, ?int $max = null): string
     {
-        if (null === $string) {
+        if ($string === null) {
             return '';
         }
 
@@ -139,7 +139,7 @@ final class TextHandler
             return $string;
         }
 
-        if (null !== $max) {
+        if ($max !== null) {
             if (preg_match(sprintf('/^(.{%d,%d}?)[^\p{L}\d]/u', $min, $max - 1), $string, $M)) {
                 $string = $M[1];
             } else {

@@ -26,7 +26,7 @@ final class SubclassProcessor extends AbstractActionProcessor
                 $cache[$interface][] = $rClass->name;
             }
 
-            for ($rClassParent = $rClass->getParentClass(); false !== $rClassParent; $rClassParent = $rClassParent->getParentClass()) {
+            for ($rClassParent = $rClass->getParentClass(); $rClassParent !== false; $rClassParent = $rClassParent->getParentClass()) {
                 $cache[$rClassParent->name][] = $rClass->name;
             }
 

@@ -23,7 +23,7 @@ final class CommandProvider
     public function __construct()
     {
         $this->alias = $_SERVER['argv'][1] ?? null;
-        if (null === $this->alias || !array_key_exists($this->alias, CommandStorage::$cache)) {
+        if ($this->alias === null || !array_key_exists($this->alias, CommandStorage::$cache)) {
             return;
         }
 
@@ -35,11 +35,11 @@ final class CommandProvider
      */
     public function getCurrentAction(): CurrentAction
     {
-        if (null === $this->alias) {
+        if ($this->alias === null) {
             return new CurrentAction(ActionTypeEnum::COMMAND, implode('::', [CommandUtil::class, 'listAll']));
         }
 
-        if (null === $this->command) {
+        if ($this->command === null) {
             return new CurrentAction(ActionTypeEnum::COMMAND, alias: $this->alias);
         }
 
@@ -48,9 +48,9 @@ final class CommandProvider
         try {
             for ($i = 0, $chunks = array_slice($_SERVER['argv'], 2); $i < count($chunks); $i++) {
                 $chunk = $chunks[$i];
-                if (strlen($chunk) > 2 && '-' === $chunk[0] && '-' === $chunk[1]) {
+                if (strlen($chunk) > 2 && $chunk[0] === '-' && $chunk[1] === '-') {
                     $needHelp = $paramsParser->processOption($chunk);
-                } elseif (strlen($chunk) > 1 && '-' === $chunk[0] && '-' !== $chunk[1]) {
+                } elseif (strlen($chunk) > 1 && $chunk[0] === '-' && $chunk[1] !== '-') {
                     $needHelp = $paramsParser->processShortOption($i, $chunks);
                 } else {
                     $needHelp = $paramsParser->processArgument($chunk);
@@ -64,7 +64,7 @@ final class CommandProvider
             $paramsParser->checkForRequires();
         } catch (InvalidArgumentException $e) {
             $usage = $this->genUsage();
-            if (null !== $usage) {
+            if ($usage !== null) {
                 CommandLineManager::writeLn(sprintf("Usage:\n  %s\n", $usage));
             }
 
@@ -78,7 +78,7 @@ final class CommandProvider
 
     public function showHelp(): void
     {
-        if (null === $this->command) {
+        if ($this->command === null) {
             return;
         }
 
@@ -93,7 +93,7 @@ final class CommandProvider
             if ($option->hidden) {
                 continue;
             }
-            if (null === $option->shortcut) {
+            if ($option->shortcut === null) {
                 $chunk = sprintf('    --%s', $option->name);
             } else {
                 $chunk = sprintf('-%s, --%s', $option->shortcut, $option->name);
@@ -104,18 +104,18 @@ final class CommandProvider
         }
 
         foreach ($arguments as $key => $argument) {
-            if (null !== $this->command->arguments[$key]->description) {
+            if ($this->command->arguments[$key]->description !== null) {
                 $arguments[$key] = mb_str_pad($argument, $maxLength + 2) . $this->command->arguments[$key]->description;
             }
         }
 
         foreach ($options as $key => $option) {
-            if (null !== $this->command->options[$key]->description) {
+            if ($this->command->options[$key]->description !== null) {
                 $options[$key] = mb_str_pad($option, $maxLength + 2) . $this->command->options[$key]->description;
             }
         }
 
-        if (null !== $this->command->description) {
+        if ($this->command->description !== null) {
             CommandLineManager::write(sprintf("Description:\n  %s\n\n", $this->command->description));
         }
 
@@ -132,7 +132,7 @@ final class CommandProvider
 
     private function genUsage(): ?string
     {
-        if (null === $this->command) {
+        if ($this->command === null) {
             return null;
         }
 
@@ -150,14 +150,14 @@ final class CommandProvider
         }
 
         foreach ($this->command->options as $option) {
-            if (null === $option->shortcut) {
+            if ($option->shortcut === null) {
                 $chunk = sprintf('--%s', $option->name);
             } else {
                 $chunk = sprintf('-%s|--%s', $option->shortcut, $option->name);
             }
-            if (CommandValueEnum::REQUIRED === $option->value) {
+            if ($option->value === CommandValueEnum::REQUIRED) {
                 $chunk = sprintf('%s=%s', $chunk, $option->type->name);
-            } elseif (CommandValueEnum::OPTIONAL === $option->value) {
+            } elseif ($option->value === CommandValueEnum::OPTIONAL) {
                 $chunk = sprintf('%s[=%s]', $chunk, $option->value->name);
             }
             if ($option->array) {

@@ -41,7 +41,7 @@ final class ConsumerProcessor extends AbstractActionProcessor
                         foreach ($this->getTypes($rMethod) as $type) {
                             $consumer = ['callback' => sprintf('%s::%s', $rClass->name, $rMethod->name), 'type' => $type];
 
-                            if (0.0 !== $instance->priority) {
+                            if ($instance->priority !== 0.0) {
                                 $consumer['priority'] = $instance->priority;
                             }
 
@@ -84,7 +84,7 @@ final class ConsumerProcessor extends AbstractActionProcessor
             }
         } elseif ($type instanceof ReflectionIntersectionType) {
             throw new LogicException('Intersection types have no sense for consumers');
-        } elseif (null === $type) {
+        } elseif ($type === null) {
             throw new LogicException('Consumer must have first parameter with declared type');
         }
 

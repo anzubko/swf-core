@@ -29,13 +29,13 @@ final class FileLocker
         $file = sprintf('%s/%s', ConfigStorage::$system->locksDir, $key);
 
         $handle = @fopen($file, 'cb+');
-        if (false === $handle) {
+        if ($handle === false) {
             if (!DirHandler::create(dirname($file))) {
                 throw new RuntimeException(sprintf('Unable to create directory %s', dirname($file)));
             }
 
             $handle = fopen($file, 'cb+');
-            if (false === $handle) {
+            if ($handle === false) {
                 throw new RuntimeException(sprintf('Unable to open file %s', $file));
             }
         }
